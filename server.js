@@ -10,14 +10,12 @@ if (process.env.NODE_ENV !== 'production') {
     webpackHelper.useWebpackMiddleware(app)
 } else {
     console.log('PRODUCTION ENVIRONMENT');
-    app.use('/js', express.static(__dirname + '/dist/js'))
+    app.use('/client.bundle.js', express.static('client.bundle.js'));
+    app.use('/style.bundle.css', express.static('style.bundle.css'));
 }
 
 app.use('static', express.static('static'));
-app.use('/client.bundle.js', express.static('client.bundle.js'));
-app.use('/style.bundle.css', express.static('style.bundle.css'));
 
-app.use(require('./server/helpers/reactHelper').apiSubdomain);
 app.use(require('./server/helpers/reactHelper').reactMiddleware);
 
 app.use('/', require("./server/routes/index"));

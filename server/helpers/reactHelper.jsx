@@ -1,5 +1,4 @@
 import React from "react";
-import subdomain from 'express-subdomain';
 import ReactDOMServer from 'react-dom/server';
 import {StaticRouter} from "react-router";
 import index from '../views/index.handlebars';
@@ -12,31 +11,34 @@ const tagsToReplace = {
     '>': "&gt;",
 };
 
-export const apiSubdomain = subdomain('api', (req, res, next) => {
-    req.api = true;
-    next();
-});
-
 export function reactMiddleware(req, res, next) {
     res.react = initialData => {
         res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
         res.header('Expires', '-1');
         res.header('Pragma', 'no-cache');
 
-        if(req.api) {
-            res.json(initialData)
-        } else {
-            const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
+        switch(req.accepts(['json', 'html'])) {
+            case "json":
+                res.json(initialData);
+                break;
 
-            res.send(index({
-                reactContent: ReactDOMServer.renderToString(
-                    <StaticRouter location={req.originalUrl} context={{}}>
-                        <App initialData={initialData} />
-                    </StaticRouter>
-                ),
-                initialData: initialDataJSON,
-                production: process.env.NODE_ENV === 'production',
-            }));
+            case "html":
+                const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
+
+                res.send(index({
+                    reactContent: ReactDOMServer.renderToString(
+                        <StaticRouter location={req.originalUrl} context={{}}>
+                            <App initialData={initialData} />
+                        </StaticRouter>
+                    ),
+                    initialData: initialDataJSON,
+                    production: process.env.NODE_ENV === 'production',
+                }));
+                break;
+
+            default:
+                res.status(406).send();
+                break
         }
     };
     next();

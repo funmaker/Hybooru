@@ -15,7 +15,7 @@ export default class Index extends React.Component {
 
     async componentDidMount() {
         this.setState({
-            kek: await fetchInitialData().kek,
+            kek: (await fetchInitialData()).kek,
         });
         this.interval = setInterval(() => {
             this.setState({counter: (this.state.counter + 1) % busyBraile.length})
@@ -29,7 +29,9 @@ export default class Index extends React.Component {
     render() {
         return (
             <div className="indexPage">
-                {busyBraile[this.state.counter]} {this.state.kek} {busyBraile[this.state.counter]}
+                {busyBraile[this.state.counter]}
+                {this.state.kek}
+                {busyBraile[this.state.counter]}
             </div>
         )
     }

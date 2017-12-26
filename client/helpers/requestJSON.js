@@ -3,18 +3,20 @@ import axios from 'axios';
 
 const CancelToken = axios.CancelToken;
 
-export default function requestJSON({method, href, host, pathname, search, cancelCb}) {
+export default async function requestJSON({method, href, host, pathname, search, cancelCb}) {
     if(isNode) return new Promise(() => {});
 
-    host = host || `api.${location.hostname}`;
+    host = host || location.host;
     pathname = pathname || location.pathname;
     search = search || location.search;
-    href = href || `${host}${pathname}${search}`;
+    href = href || `//${host}${pathname}${search}`;
     method = method || "GET";
 
-    return axios.create({
+    const response = await axios({
         method: method.toLowerCase(),
         url: href,
         cancelToken: new CancelToken(cancelCb),
     });
+
+    return response.data;
 }
