@@ -8,14 +8,14 @@ export default class Index extends React.Component {
         super();
 
         this.state = {
-            kek: getInitialData() ? getInitialData().kek : null,
+            ...getInitialData(),
             counter: 0,
         };
     }
 
     async componentDidMount() {
         this.setState({
-            kek: (await fetchInitialData()).kek,
+            ...(await fetchInitialData()),
         });
         this.interval = setInterval(() => {
             this.setState({counter: (this.state.counter + 1) % busyBraile.length})

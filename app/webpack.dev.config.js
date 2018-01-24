@@ -3,6 +3,7 @@ const webpack = require('webpack')
 
 module.exports = {
     entry: [
+        'react-hot-loader/patch',
         'babel-polyfill',
         'webpack-hot-middleware/client',
         'webpack/hot/dev-server',
@@ -13,7 +14,7 @@ module.exports = {
     output: {
         filename: 'client.bundle.js',
         path: '/',
-        publicPath: 'http://localhost:3000/'
+        publicPath: '/'
     },
     cache: true,
     resolve: {
@@ -24,14 +25,19 @@ module.exports = {
             {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
-                use: [{
-                    loader: 'react-hot-loader'
-                }, {
+                use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ["react", "env"]
+                        presets: [
+                            ['env', {modules: false}],
+                            'react',
+                        ],
+                        plugins: [
+                            'react-hot-loader/babel',
+                            'transform-object-rest-spread'
+                        ]
                     }
-                }]
+                }
             }, {
                 test: /\.json?$/,
                 loader: 'json-loader'
@@ -44,6 +50,12 @@ module.exports = {
                 }, {
                     loader: "less-loader" // compiles Less to CSS
                 }]
+            }, {
+                test: /\.css$/,
+                use: [
+                    'style-loader',
+                    'css-loader'
+                ]
             }
         ]
     },

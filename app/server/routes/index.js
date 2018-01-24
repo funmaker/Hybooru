@@ -1,5 +1,5 @@
 import os from 'os';
-const router = module.exports = require('express-promise-router')();
+export const router = require('express-promise-router')();
 
 router.get('/', (req, res) => {
     const initialData = {};

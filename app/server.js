@@ -1,9 +1,13 @@
 import express from "express";
 import expressHandlebars from 'express-handlebars';
+import bodyParser from 'body-parser';
 import * as webpackHelper from "./server/helpers/webpackHelper";
 
 const app = express();
 const hbs = expressHandlebars.create({});
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({limit: "10mb"}));
 
 if (process.env.NODE_ENV !== 'production') {
     console.log('DEVOLOPMENT ENVIRONMENT: Turning on WebPack Middleware...');
@@ -18,7 +22,7 @@ app.use('static', express.static('static'));
 
 app.use(require('./server/helpers/reactHelper').reactMiddleware);
 
-app.use('/', require("./server/routes/index"));
+app.use('/', require("./server/routes/index").router);
 
 const port = process.env.DOCKERIZED ? 80 : 3000;
 app.listen(port);
