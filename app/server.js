@@ -1,3 +1,4 @@
+import fs from "fs";
 import express from "express";
 import expressHandlebars from 'express-handlebars';
 import bodyParser from 'body-parser';
@@ -24,6 +25,7 @@ app.use(require('./server/helpers/reactHelper').reactMiddleware);
 
 app.use('/', require("./server/routes/index").router);
 
-const port = process.env.DOCKERIZED ? 80 : 3000;
+let port = JSON.parse(fs.readFileSync("package.json")).port || 3000;
+if(process.env.DOCKERIZED) port = 80;
 app.listen(port);
 console.log(`Listening on port ${port}`);
