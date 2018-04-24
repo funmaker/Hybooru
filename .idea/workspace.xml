@@ -2,17 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="06604412-10b9-47fe-aa3d-be44a68b5d76" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dbnavigator.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/client.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/client.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/client/helpers/requestJSON.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/client/helpers/requestJSON.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/client/routes/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/client/routes/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/client/style/style.less" beforeDir="false" afterPath="$PROJECT_DIR$/app/client/style/style.scss" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/webpack.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/webpack.config.js" afterDir="false" />
@@ -29,35 +18,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="client.jsx" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/client.jsx">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="68">
-              <caret line="4" column="31" selection-start-line="4" selection-start-column="31" selection-end-line="4" selection-end-column="31" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="style.scss" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/client/style/style.scss">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="17">
-              <caret line="1" column="12" selection-start-line="1" selection-start-column="12" selection-end-line="1" selection-end-column="12" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/README.md">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="102">
-              <caret line="6" column="6" selection-start-line="6" selection-start-column="6" selection-end-line="6" selection-end-column="6" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -106,11 +67,11 @@
         <option value="$PROJECT_DIR$/app/server.js" />
         <option value="$PROJECT_DIR$/app/client/helpers/requestJSON.js" />
         <option value="$PROJECT_DIR$/app/client/routes/index.jsx" />
-        <option value="$PROJECT_DIR$/app/webpack.config.js" />
-        <option value="$PROJECT_DIR$/app/webpack.dev.config.js" />
         <option value="$PROJECT_DIR$/app/client.jsx" />
         <option value="$PROJECT_DIR$/app/package.json" />
         <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/app/webpack.config.js" />
+        <option value="$PROJECT_DIR$/app/webpack.dev.config.js" />
       </list>
     </option>
   </component>
@@ -381,7 +342,7 @@
       <workItem from="1519824856666" duration="1270000" />
       <workItem from="1522848082177" duration="935000" />
       <workItem from="1523198397575" duration="16000" />
-      <workItem from="1524575746340" duration="246000" />
+      <workItem from="1524575746340" duration="847000" />
     </task>
     <task id="LOCAL-00001" summary="Added README">
       <created>1514245578738</created>
@@ -397,24 +358,30 @@
       <option name="project" value="LOCAL" />
       <updated>1516791921325</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Migrated from Less to Scss">
+      <created>1524576105073</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1524576105073</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="41244000" />
+    <option name="totallyTimeSpent" value="41845000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1919" y="0" width="1922" height="1051" extended-state="6" />
-    <editor active="true" />
+    <frame x="1919" y="0" width="1922" height="1051" extended-state="7" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="12" />
       <window_info anchor="bottom" id="Event Log" order="1" sideWeight="0.50319827" side_tool="true" weight="0.32936078" />
-      <window_info anchor="bottom" id="Version Control" order="2" sideWeight="0.4978678" weight="0.32901832" />
-      <window_info anchor="bottom" id="Run" order="8" sideWeight="0.4968017" visible="true" weight="0.32792208" />
+      <window_info anchor="bottom" id="Version Control" order="2" sideWeight="0.4978678" weight="0.32900432" />
+      <window_info anchor="bottom" id="Run" order="8" sideWeight="0.4968017" weight="0.32792208" />
       <window_info anchor="right" id="Mongo Explorer" order="3" />
-      <window_info anchor="bottom" id="Terminal" order="3" sideWeight="0.4978678" weight="0.4069264" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="3" sideWeight="0.4978678" visible="true" weight="0.4069264" />
       <window_info anchor="right" id="FAQ Robot" order="3" />
-      <window_info active="true" content_ui="combo" id="Project" order="6" visible="true" weight="0.2603834" />
+      <window_info content_ui="combo" id="Project" order="6" visible="true" weight="0.2603834" />
       <window_info anchor="bottom" id="MaxCompute Console" order="4" />
       <window_info anchor="bottom" id="MaxCompute Job" order="5" />
       <window_info id="MaxCompute Job Explorer" order="1" weight="0.32960597" />
@@ -472,7 +439,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added README" />
     <MESSAGE value="Cleanup and react hot loader upgrade" />
-    <option name="LAST_COMMIT_MESSAGE" value="Cleanup and react hot loader upgrade" />
+    <MESSAGE value="Migrated from Less to Scss" />
+    <option name="LAST_COMMIT_MESSAGE" value="Migrated from Less to Scss" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/app/client/routes/index.jsx">
@@ -565,20 +533,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/webpack.dev.config.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="748">
-          <caret line="44" column="32" selection-start-line="44" selection-start-column="32" selection-end-line="44" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/webpack.config.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="34" column="16" lean-forward="true" selection-start-line="34" selection-start-column="16" selection-end-line="35" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/client/routes/index.jsx">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="340">
@@ -607,6 +561,20 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="17">
           <caret line="1" column="12" selection-start-line="1" selection-start-column="12" selection-end-line="1" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/webpack.dev.config.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="18" column="22" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/webpack.config.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="57" column="23" selection-start-line="57" selection-start-column="23" selection-end-line="57" selection-end-column="23" />
         </state>
       </provider>
     </entry>

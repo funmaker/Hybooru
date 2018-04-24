@@ -16,6 +16,7 @@ module.exports = {
         path: '/',
         publicPath: '/'
     },
+    mode: "development",
     cache: true,
     resolve: {
         extensions: ['.jsx', '.js', 'map']

@@ -13,6 +13,7 @@ module.exports = [{
         filename: 'client.bundle.js',
         path: path.join(__dirname, 'dist')
     },
+    mode: "production",
     cache: true,
     resolve: {
         extensions: ['.js', '.jsx', 'map']
@@ -54,6 +55,7 @@ module.exports = [{
         filename: 'server.bundle.js',
         path: path.join(__dirname, 'dist')
     },
+    mode: "production",
     cache: true,
     target: "node",
     externals: [nodeExternals()],

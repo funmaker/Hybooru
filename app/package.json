@@ -13,18 +13,19 @@
   "build:prod-package": "node ./prepareDist.js"
  },
  "dependencies": {
-  "axios": "^0.17.1",
+  "axios": "^0.18.0",
   "body-parser": "latest",
   "detect-node": "latest",
   "express": "^4.15.2",
   "express-handlebars": "^3.0.0",
-  "express-promise-router": "^2.0.0",
+  "express-promise-router": "^3.0.2",
   "prop-types": "^15.5.8",
   "query-string": "^6.0.0",
   "react": "^16.2.0",
   "react-dom": "^16.2.0",
   "react-router": "^4.1.1",
   "react-router-dom": "^4.2.2",
+  "ssri": "^6.0.0",
   "webpack-node-externals": "^1.6.0"
  },
  "devDependencies": {
@@ -43,13 +44,13 @@
   "handlebars-loader": "^1.6.0",
   "node-sass": "^4.8.3",
   "nodemon": "^1.14.11",
-  "react-hot-loader": "^3.1.3",
-  "sass-loader": "^4.0.5",
-  "style-loader": "^0.19.1",
+  "react-hot-loader": "^4.1.1",
+  "sass-loader": "^7.0.1",
+  "style-loader": "^0.21.0",
   "uglifyjs-webpack-plugin": "^1.1.6",
-  "webpack": "^3.0.0",
-  "webpack-dev-middleware": "^2.0.4",
-  "webpack-dev-server": "^2.11.1",
+  "webpack": "^4.6.0",
+  "webpack-dev-middleware": "^3.1.2",
+  "webpack-dev-server": "^3.1.3",
   "webpack-hot-middleware": "^2.18.0"
  },
  "port": 3900
