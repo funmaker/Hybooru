@@ -4,7 +4,7 @@ Basic boilerplate for isomorphic React web apps. Including:
 - Node.js
 - React
 - Webpack
-- Less
+- Sass
 - Babel
 - Handlebars
 

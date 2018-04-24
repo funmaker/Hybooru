@@ -1,5 +1,6 @@
 import React from 'react'
 import {fetchInitialData, getInitialData} from "../helpers/initialData";
+import requestJSON from "../helpers/requestJSON";
 
 const busyBraile = ['⠙', '⠸', '⢰', '⣠', '⣄', '⡆', '⠇', '⠋'];
 

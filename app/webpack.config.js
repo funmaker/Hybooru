@@ -33,10 +33,10 @@ module.exports = [{
                 test: /\.json?$/,
                 loader: 'json-loader'
             }, {
-                test: /\.less$/,
+                test: /\.scss$/,
                 use: ExtractTextPlugin.extract({
                     fallback: "style-loader",
-                    use: ["css-loader", "less-loader"]
+                    use: ["css-loader", "sass-loader"]
                 })
             }
         ]
