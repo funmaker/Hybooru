@@ -7,6 +7,7 @@ Basic boilerplate for isomorphic React web apps. Including:
 - Sass
 - Babel
 - Handlebars
+- Universal Hot Reload
 
 ## Usage
 

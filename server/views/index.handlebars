@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Boilerplate</title>
+		<meta charset="utf-8">
+		{{#if production}}
+			<link rel="stylesheet" href="/style.css"/>
+		{{/if}}
+	</head>
+	<body>
+		<div id="root">{{{reactContent}}}</div>
+		<script id="initialData" type="application/json">{{{initialData}}}</script>
+
+		<script type="text/javascript" src="/client.js"></script>
+	</body>
+</html>
