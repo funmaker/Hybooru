@@ -1,11 +1,17 @@
-FROM node:carbon
-
-WORKDIR /app
-
-COPY . .
-RUN npm install
-RUN npm run build:prod
+FROM node:latest
+ENV DOCKERIZED=1
 
 EXPOSE 80
 
-CMD npm run start:prod
+WORKDIR /build
+COPY . .
+RUN npm install
+RUN npm run build:prod
+RUN mv dist /app
+RUN npm prune --production
+RUN mv node_modules /app
+
+WORKDIR /app
+RUN rm -rf /build
+
+CMD npm start
