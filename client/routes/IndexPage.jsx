@@ -3,7 +3,7 @@ import {fetchInitialData, getInitialData} from "../helpers/initialData";
 
 const busyBraile = ['⠙', '⠸', '⢰', '⣠', '⣄', '⡆', '⠇', '⠋'];
 
-export default class Index extends React.Component {
+export default class IndexPage extends React.Component {
 	constructor() {
 		super();
 		
@@ -28,7 +28,7 @@ export default class Index extends React.Component {
 	
 	render() {
 		return (
-			<div className="indexPage">
+			<div className="IndexPage">
 				{busyBraile[this.state.counter]}
 				{this.state.kek}
 				{busyBraile[this.state.counter]}

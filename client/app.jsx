@@ -2,7 +2,7 @@ import React from 'react'
 import {Route, Switch, withRouter} from "react-router";
 import {setInitialData} from "./helpers/initialData";
 import isNode from 'detect-node';
-import Index from "./routes/index";
+import IndexPage from "client/routes/IndexPage";
 import { hot } from 'react-hot-loader';
 
 class App extends React.Component {
@@ -29,7 +29,7 @@ class App extends React.Component {
 	render() {
 		return (
 			<Switch>
-				<Route path="/" exact component={Index}/>
+				<Route path="/" exact component={IndexPage}/>
 			</Switch>
 		)
 	}
