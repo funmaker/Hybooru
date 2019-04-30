@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/webapp-boilerplate.iml" filepath="$PROJECT_DIR$/.idea/webapp-boilerplate.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/webapp-boilerplate.iml" filepath="$PROJECT_DIR$/.idea/webapp-boilerplate.iml" />
     </modules>
   </component>
 </project>

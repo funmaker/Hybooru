@@ -16,6 +16,9 @@ export default {
 	resolve: {
 		extensions: ['.js', '.jsx', '.css', '.scss'],
 		modules: [root, 'node_modules'],
+		alias: {
+			"react-dom": '@hot-loader/react-dom'
+		},
 	},
 	output: {
 		publicPath: '/',

@@ -3,7 +3,7 @@ import webpack from "webpack";
 import webpackHotMiddleware from "webpack-hot-middleware";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import express from "express";
-import colors from 'colors/safe';
+import chalk from 'chalk';
 
 let cachedRouter = null; // Cache for Server Side Hot Module Replacement
 
@@ -12,7 +12,7 @@ export const mount = () => {
 	
 	const router = cachedRouter = express.Router();
 	
-	console.log(`\nWebpack Hot Middleware has been ${colors.bold.yellow("enabled")}!`);
+	console.log(`\nWebpack Hot Middleware has been ${chalk.bold.yellow("enabled")}!`);
 	const compiler = webpack(webpackClientDevConfig);
 	
 	router.use(webpackDevMiddleware(compiler, {

@@ -22,6 +22,9 @@ export default {
 	resolve: {
 		extensions: ['.js', '.jsx'],
 		modules: [root, 'node_modules'],
+		alias: {
+			"react-dom": '@hot-loader/react-dom'
+		},
 	},
 	output: {
 		path: path.join(root, 'build'),

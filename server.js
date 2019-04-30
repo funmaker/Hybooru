@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import http from 'http';
-import colors from 'colors/safe';
+import chalk from 'chalk';
 
 import app from './server/app';
 import configs from "./server/helpers/configs";
@@ -13,9 +13,9 @@ const origApp = app;
 let currentApp = app;
 server.listen(port);
 
-console.log(`\n${colors.bold("Boilerplate")} started on port ${colors.yellow.bold(port)}`);
-console.log(`Environment: ${colors.yellow.bold(process.env.NODE_ENV)}.`);
-console.log(colors.dim.white(`Press Ctrl-C to terminate.\n`));
+console.log(`\n${chalk.bold("Boilerplate")} started on port ${chalk.yellow.bold(port)}`);
+console.log(`Environment: ${chalk.yellow.bold(process.env.NODE_ENV)}.`);
+console.log(chalk.dim.white(`Press Ctrl-C to terminate.\n`));
 
 if(module.hot) {
 	module.hot.accept('./server/app', () => {
