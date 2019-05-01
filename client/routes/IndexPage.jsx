@@ -4,14 +4,10 @@ import {fetchInitialData, getInitialData} from "../helpers/initialData";
 const busyBraile = ['⠙', '⠸', '⢰', '⣠', '⣄', '⡆', '⠇', '⠋'];
 
 export default class IndexPage extends React.Component {
-	constructor() {
-		super();
-		
-		this.state = {
-			...getInitialData(),
-			counter: 0,
-		};
-	}
+	state = {
+		...getInitialData(),
+		counter: 0,
+	};
 	
 	async componentDidMount() {
 		this.setState({
