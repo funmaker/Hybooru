@@ -15,7 +15,6 @@
 		"build:prod-package": "babel-node webpack/package.babel.js"
 	},
 	"dependencies": {
-		"@hot-loader/react-dom": "^16.8.6",
 		"axios": "^0.18.0",
 		"body-parser": "^1.19.0",
 		"chalk": "latest",
@@ -29,6 +28,7 @@
 		"prop-types": "^15.7.2",
 		"query-string": "^6.5.0",
 		"react": "^16.8.6",
+		"react-dom": "^16.8.6",
 		"react-hot-loader": "^4.8.4",
 		"react-router": "^5.0.0",
 		"react-router-dom": "^5.0.0",
@@ -44,6 +44,7 @@
 		"@babel/preset-env": "^7.4.4",
 		"@babel/preset-react": "^7.0.0",
 		"@babel/register": "^7.4.4",
+		"@hot-loader/react-dom": "^16.8.6",
 		"babel-loader": "^8.0.5",
 		"css-loader": "^2.1.1",
 		"handlebars": "^4.1.2",
