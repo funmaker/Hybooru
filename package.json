@@ -11,7 +11,7 @@
 		"build:prod": "mkdir -p dist && npm-run-all build:prod-*",
 		"build:prod-server": "webpack --config webpack/server.babel.js",
 		"build:prod-client": "webpack --config webpack/client.babel.js",
-		"build:prod-static": "cp -r static dist/",
+		"build:prod-static": "cp -rL static dist/",
 		"build:prod-package": "babel-node webpack/package.babel.js",
 		"lint": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --max-warnings 0 --ignore-path .gitignore .",
 		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix"

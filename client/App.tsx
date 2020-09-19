@@ -21,7 +21,6 @@ export default hot(module)(function App({ initialData }: Props) {
     content = (
       <Switch>
         <Route path="/" exact component={IndexPage} />
-        <Route path="/room/:roomId" exact component={IndexPage} />
       </Switch>
     );
   }
