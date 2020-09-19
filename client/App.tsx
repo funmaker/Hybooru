@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Switch } from "react-router";
+import { Redirect, Route, Switch } from "react-router";
 import { hot } from 'react-hot-loader';
 import IndexPage from "./routes/index/IndexPage";
 import ErrorPage from "./routes/error/ErrorPage";
@@ -21,6 +21,7 @@ export default hot(module)(function App({ initialData }: Props) {
     content = (
       <Switch>
         <Route path="/" exact component={IndexPage} />
+        <Redirect to="/" />
       </Switch>
     );
   }
