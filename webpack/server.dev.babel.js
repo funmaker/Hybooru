@@ -2,7 +2,9 @@
 import path from 'path';
 import webpack from 'webpack';
 import nodeExternals from 'webpack-node-externals';
-import StartServerPlugin from 'start-server-webpack-plugin';
+// Broken https://github.com/ericclemmons/start-server-webpack-plugin/issues/40
+//import StartServerPlugin from 'start-server-webpack-plugin';
+import StartServerPlugin from 'start-server-nestjs-webpack-plugin';
 
 const root = process.cwd();
 const isWin = process.platform === "win32";
@@ -55,7 +57,7 @@ export default {
     __dirname: true,
   },
   optimization: {
-    noEmitOnErrors: true,
+    emitOnErrors: false,
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),

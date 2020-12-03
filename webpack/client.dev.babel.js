@@ -48,7 +48,7 @@ export default {
     devtoolModuleFilenameTemplate: "[absolute-resource-path]",
   },
   optimization: {
-    noEmitOnErrors: true,
+    emitOnErrors: false,
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
