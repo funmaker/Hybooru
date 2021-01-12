@@ -17,7 +17,7 @@
 		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix"
 	},
 	"dependencies": {
-		"axios": "^0.21.0",
+		"axios": "^0.21.1",
 		"body-parser": "^1.19.0",
 		"chalk": "latest",
 		"compression": "^1.7.4",
