@@ -1,6 +1,6 @@
 {
-	"name": "boilerplate",
-	"description": "Boilerplate: Typescript, Webpack, Isomorphic React, Sass, Handlebars, Semantic UI",
+	"name": "hybooru",
+	"description": "Hydrus-based booru-styled imageboard in React",
 	"version": "2.0.0",
 	"main": "server.ts",
 	"author": "Fun Maker",

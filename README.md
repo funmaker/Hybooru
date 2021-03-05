@@ -1,15 +1,6 @@
-# Webapp Boilerplate
+# HyBooru
 
-Basic boilerplate for isomorphic React web apps. Including:
-- Node.js
-- Typescript
-- Semantic UI (+theming)
-- React
-- Webpack
-- Sass
-- Babel
-- Handlebars
-- Universal Hot Reload
+Hydrus-based booru-styled imageboard in React
 
 ## Usage
 
