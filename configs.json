@@ -1,3 +1,11 @@
 {
-	"port": 3939
+	"port": 3939,
+	"hydrusDbPath": null,
+	"db": {
+		"user": "hybooru",
+		"host": "localhost",
+		"database": "hybooru",
+		"password": "hybooru",
+		"port": 5432
+	}
 }

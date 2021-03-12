@@ -41,7 +41,7 @@ export default {
 		'./server.ts',
   ],
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.sql'],
     modules: [root, 'node_modules'],
     alias: {
       "react-dom": '@hot-loader/react-dom',
@@ -87,6 +87,9 @@ export default {
       }, {
         test: /\.handlebars$/,
         loader: 'handlebars-loader',
+      }, {
+        test: /\.sql$/,
+        loader: 'raw-loader',
       }, {
         test: /\.css$|\.scss$|\.less$/,
         use: 'ignore-loader',

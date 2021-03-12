@@ -1,9 +1,9 @@
 import React from 'react';
-import { ErrorResponse } from "../../../server/routes/apiTypes";
+import { ErrorPageData } from "../../../server/routes/apiTypes";
 import "./ErrorPage.scss";
 
 interface Props {
-  error: ErrorResponse["error"];
+  error: ErrorPageData["error"];
 }
 
 export default function ErrorPage({ error }: Props) {

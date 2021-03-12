@@ -13,3 +13,7 @@
 declare module '*.handlebars' {
   export default function(template: any): string;
 }
+
+declare module '*.sql' {
+  export default string;
+}

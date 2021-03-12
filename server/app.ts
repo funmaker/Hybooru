@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { router } from "./routes";
 import { reactMiddleware } from "./helpers/reactHelper";
 import HTTPError from "./helpers/HTTPError";
+import "./helpers/db";
 
 const app = express();
 

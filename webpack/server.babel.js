@@ -28,7 +28,7 @@ export default {
   externals: [nodeExternals()],
   entry: './server.ts',
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.sql'],
     modules: [root, 'node_modules'],
   },
   output: {
@@ -59,6 +59,9 @@ export default {
         exclude: /(node_modules)/,
         loader: 'babel-loader',
         options: BABEL_OPTIONS,
+      }, {
+        test: /\.sql$/,
+        loader: 'raw-loader',
       }, {
         test: /\.handlebars$/,
         loader: 'handlebars-loader',
