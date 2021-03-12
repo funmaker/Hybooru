@@ -69,7 +69,7 @@ export default function usePageData<T>(): [T | null, boolean] {
   const loaded = pageData !== null;
   
   useEffect(() => {
-    if(!loaded) return;
+    if(loaded) return;
     else return fetch();
   }, [fetch, loaded]);
   
