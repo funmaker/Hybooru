@@ -1,14 +1,11 @@
 import PromiseRouter from "express-promise-router";
-import * as statsController from "../controllers/stats";
 import * as api from "./api";
-import { IndexPageData } from "./apiTypes";
+import * as files from "./files";
+import * as pages from "./pages";
 
 export const router = PromiseRouter();
 
 router.use("/api", api.router);
+router.use("/files", files.router);
+router.use("/", pages.router);
 
-router.get<any, IndexPageData>('/', async (req, res) => {
-  const stats = await statsController.getStats();
-  
-  res.react<IndexPageData>({ stats });
-});

@@ -2,11 +2,17 @@ import SQL from "sql-template-strings";
 import { Post, SearchResults } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 36;
 const TAGS_COUNT = 40;
 
 export async function search(query = "", page = 0, includeTags = false): Promise<SearchResults> {
-  const parts = query.split(" ");
+  const parts = query.split(" ")
+                     .filter(p => !!p)
+                     .map(p => p.replace(/\\/g, "\\\\")
+                                .replace(/%/g, "\\%")
+                                .replace(/_/g, "\\_")
+                                .replace(/\*/g, "%")
+                                .replace(/\?/g, "_"));
   
   const whitelist = parts.filter(p => !p.startsWith("-"));
   const blacklist = parts.filter(p => p.startsWith("-"))
@@ -30,8 +36,8 @@ export async function search(query = "", page = 0, includeTags = false): Promise
             INNER JOIN mappings w_map ON w_map.tagid = w_tags.id
             INNER JOIN posts          ON w_map.postid = posts.id
             LEFT  JOIN mappings b_map ON b_map.postid = posts.id
-            LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND b_tags.name = ANY(${blacklist}::TEXT[])
-          WHERE w_tags.name = ANY(${whitelist}::TEXT[])
+            LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND (b_tags.name ILIKE ANY(${blacklist}::TEXT[]) OR b_tags.subtag ILIKE ANY(${blacklist}::TEXT[]))
+          WHERE (w_tags.name ILIKE ANY(${whitelist}::TEXT[]) OR w_tags.subtag ILIKE ANY(${whitelist}::TEXT[]) OR ${whitelist.length === 0})
             AND b_tags.id IS NULL
         ) filtered
         LEFT  JOIN mappings ON mappings.postid = filtered.id
@@ -46,6 +52,7 @@ export async function search(query = "", page = 0, includeTags = false): Promise
     SELECT
       filtered.id,
       encode(filtered.hash, 'hex') as hash,
+      filtered.mime,
       (count(1) OVER())::INTEGER as total
     FROM (
       SELECT DISTINCT ON (posts.id)
@@ -54,8 +61,8 @@ export async function search(query = "", page = 0, includeTags = false): Promise
         INNER JOIN mappings w_map ON w_map.tagid = w_tags.id
         INNER JOIN posts          ON w_map.postid = posts.id
         LEFT  JOIN mappings b_map ON b_map.postid = posts.id
-        LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND b_tags.name = ANY(${blacklist}::TEXT[])
-      WHERE w_tags.name = ANY(${whitelist}::TEXT[])
+        LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND (b_tags.name ILIKE ANY(${blacklist}::TEXT[]) OR b_tags.subtag ILIKE ANY(${blacklist}::TEXT[]))
+      WHERE (w_tags.name ILIKE ANY(${whitelist}::TEXT[]) OR w_tags.subtag ILIKE ANY(${whitelist}::TEXT[]) OR ${whitelist.length === 0})
         AND b_tags.id IS NULL
     ) filtered
     ORDER BY filtered.posted DESC, filtered.id ASC
@@ -86,6 +93,7 @@ export async function get(id: number): Promise<Post | null> {
       posts.num_frames AS "nunFrames",
       posts.has_audio AS "hasAudio",
       posts.rating,
+      posts.mime,
       posts.posted,
       json_object_agg(tags.name, tags.used ORDER BY name ASC, tags.id ASC) AS tags
     FROM posts

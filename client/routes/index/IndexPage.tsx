@@ -1,39 +1,38 @@
-import React, { useEffect, useReducer } from 'react';
-import { Segment } from "semantic-ui-react";
+import React from 'react';
+import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
 import usePageData from "../../helpers/usePageData";
+import ReactForm from "../../components/ReactForm";
 import "./IndexPage.scss";
-
-const busyBraile = ['⠙', '⠸', '⢰', '⣠', '⣄', '⡆', '⠇', '⠋'];
 
 export default function IndexPage() {
   const [pageData] = usePageData<IndexPageData>();
-  const [counter, incCounter] = useReducer(acc => acc + 1, 0);
-  
-  useEffect(() => {
-    const id = setInterval(incCounter, 100);
-    return () => clearInterval(id);
-  }, []);
   
   return (
     <div className="IndexPage">
-      <Segment size="massive">
-        {busyBraile[counter % busyBraile.length]}
-        &ensp;
-        &ensp;
-        {busyBraile[counter % busyBraile.length]}
-      </Segment>
-      <div className="bubbles">
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
+      <div className="header">
+        <Link to="/posts">HyBooru</Link>
+      </div>
+      <div className="links">
+        <Link to="/posts">All Posts</Link>
+        <Link to="/tags">Tags</Link>
+        <Link to="/random">Random</Link>
+        <a href="https://github.com/funmaker/hybooru">GitHub</a>
+      </div>
+      <ReactForm className="search" action="/posts">
+        <input name="query" placeholder="Search: flower sky 1girl" />
+        <button>Search</button>
+      </ReactForm>
+      {pageData &&
+        <div className="stats">
+          <div>Posts: <span>{pageData.stats.posts}</span></div>
+          <div>Tags: <span>{pageData.stats.tags}</span></div>
+          <div>Mappings: <span>{pageData.stats.mappings}</span></div>
+          <div><Link to="/posts?query=fm:needs_tags">Untagged: <span>{pageData.stats.needsTags}</span></Link></div>
+        </div>
+      }
+      <div className="footer">
+        Original concept by <a href="https://danbooru.donmai.us/">Danbooru</a>
       </div>
     </div>
   );

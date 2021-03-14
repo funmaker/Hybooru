@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import path from 'path';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const root = process.cwd();
-const siteFolder = path.resolve(root, "./client/semantic");
 
 const BABEL_OPTIONS = {
   presets: [
@@ -32,9 +30,6 @@ export default {
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss'],
     modules: [root, 'node_modules'],
-    alias: {
-      "../../theme.config$": path.resolve(siteFolder, "./theme.config.less"),
-    },
   },
   output: {
     path: path.join(root, 'dist'),
@@ -69,27 +64,6 @@ export default {
           MiniCssExtractPlugin.loader,
           "css-loader",
           "sass-loader",
-        ],
-      }, {
-        test: /\.less$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          {
-            loader: "css-loader",
-            options: {
-              url: false,
-            },
-          },
-          {
-            loader: "less-loader",
-            options: {
-              lessOptions: {
-                globalVars: {
-                  siteFolder,
-                },
-              },
-            },
-          },
         ],
       }, {
         test: /\.css$/,

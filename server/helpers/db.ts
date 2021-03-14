@@ -7,6 +7,7 @@ import sqlite3 from "sqlite3";
 import * as sqlite from "sqlite";
 import configs from "./configs";
 import setupSQL from "./setup.sql";
+import { ServiceID } from "./consts";
 
 export const pool = new Pool(configs.db);
 
@@ -60,18 +61,23 @@ export async function isInitialized() {
   return hash === setupHash;
 }
 
-const LOCAL_FILE_DOMAIN = 2; // from HydrusConstants.py:336
+export function findHydrusDB() {
+  let dbPath = configs.hydrusDbPath;
+  
+  if(!dbPath) {
+    const appData = dbPath = (process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share"));
+    dbPath = `${appData}/hydrus/db`;
+  }
+  
+  return dbPath;
+}
 
 export async function initialize() {
   await query(SQL`DROP OWNED BY CURRENT_USER`);
   await query(setupSQL);
   await query(SQL`UPDATE meta SET hash = ${setupHash}`);
   
-  let dbPath = configs.hydrusDbPath;
-  if(!dbPath) {
-    const appData = dbPath = (process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + "/.local/share"));
-    dbPath = `${appData}/hydrus/db`;
-  }
+  const dbPath = findHydrusDB();
   
   const hydrus = await sqlite.open({ filename: path.resolve(dbPath, "client.db"), driver: sqlite3.Database });
   await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
@@ -89,13 +95,14 @@ export async function initialize() {
         files_info.num_frames,
         files_info.has_audio,
         local_ratings.rating,
+        files_info.mime,
         current_files.timestamp as posted
       FROM current_files
         LEFT JOIN services ON services.service_id = current_files.service_id
         LEFT JOIN files_info ON files_info.hash_id = current_files.hash_id
         LEFT JOIN hashes ON hashes.hash_id = current_files.hash_id
         LEFT JOIN local_ratings ON local_ratings.hash_id = current_files.hash_id
-      WHERE services.service_type = ${LOCAL_FILE_DOMAIN} AND services.name != 'repository updates'
+      WHERE services.service_type = ${ServiceID.LOCAL_FILE_DOMAIN} AND services.name != 'repository updates'
     `);
     
     for(const post of posts) {
@@ -103,8 +110,8 @@ export async function initialize() {
     }
     
     await query(SQL`
-      INSERT INTO posts(id, hash, size, width, height, duration, num_frames, has_audio, rating, posted)
-      SELECT id, decode(hash, 'base64') as hash, size, width, height, duration, num_frames, has_audio, rating, to_timestamp(posted) AT TIME ZONE 'UTC'
+      INSERT INTO posts(id, hash, size, width, height, duration, num_frames, has_audio, rating, mime, posted)
+      SELECT id, decode(hash, 'base64') as hash, size, width, height, duration, num_frames, has_audio, rating, mime, to_timestamp(posted) AT TIME ZONE 'UTC'
       FROM json_to_recordset(${JSON.stringify(posts)})
         AS x(
           id INTEGER,
@@ -116,6 +123,7 @@ export async function initialize() {
           num_frames INTEGER,
           has_audio BOOLEAN,
           rating FLOAT,
+          mime INTEGER,
           posted INTEGER
         )
     `);
@@ -151,19 +159,21 @@ export async function initialize() {
         CASE WHEN namespaces.namespace IS NOT NULL AND namespaces.namespace != ''
           THEN namespaces.namespace || ':' || subtags.subtag
           ELSE subtags.subtag
-        END AS name
+        END AS name,
+        subtags.subtag
       FROM tags
         INNER JOIN subtags ON subtags.subtag_id = tags.subtag_id
         INNER JOIN namespaces ON namespaces.namespace_id = tags.namespace_id
     `);
     
     await query(SQL`
-      INSERT INTO tags(id, name, used)
-      SELECT id, REPLACE(name, ' ', '_'), -1
+      INSERT INTO tags(id, name, subtag, used)
+      SELECT id, REPLACE(name, ' ', '_'), REPLACE(subtag, ' ', '_'), -1
       FROM json_to_recordset(${JSON.stringify(tags)})
         AS x(
           id INTEGER,
-          name TEXT
+          name TEXT,
+          subtag TEXT
         )
     `);
   }

@@ -1,9 +1,12 @@
 
 // COMMON //
 
+import { Mime } from "../helpers/consts";
+
 export interface PostSummary {
   id: number;
   hash: string;
+  mime: Mime | null;
 }
 
 export interface SearchResults {
@@ -22,6 +25,7 @@ export interface Post {
   nunFrames: number | null;
   hasAudio: boolean | null;
   rating: number | null;
+  mime: Mime | null;
   posted: string;
   tags: Record<string, number>;
 }
@@ -39,8 +43,13 @@ export interface IndexPageData {
   stats: Stats;
 }
 
+export interface SearchPageData {
+  results: SearchResults;
+  search?: string;
+}
+
 export interface ErrorPageData {
-  error: {
+  _error: {
     code: number;
     message: string;
     stack?: string;

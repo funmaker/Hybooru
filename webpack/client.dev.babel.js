@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import path from "path";
 import webpack from 'webpack';
 
 const root = process.cwd();
-const siteFolder = path.resolve(root, "./client/semantic");
 
 const BABEL_OPTIONS = {
   presets: [
@@ -39,7 +37,6 @@ export default {
     modules: [root, 'node_modules'],
     alias: {
       "react-dom": '@hot-loader/react-dom',
-      "../../theme.config$": path.resolve(siteFolder, "./theme.config.less"),
     },
   },
   output: {
@@ -77,27 +74,6 @@ export default {
           "style-loader",
           "css-loader",
           "sass-loader",
-        ],
-      }, {
-        test: /\.less$/,
-        use: [
-          "style-loader",
-          {
-            loader: "css-loader",
-            options: {
-              url: false,
-            },
-          },
-          {
-            loader: "less-loader",
-            options: {
-              lessOptions: {
-                globalVars: {
-                  siteFolder,
-                },
-              },
-            },
-          },
         ],
       }, {
         test: /\.css$/,

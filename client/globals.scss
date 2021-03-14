@@ -2,4 +2,34 @@
 * {
   padding: 0;
   margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: "Segoe UI", "Open Sans", sans-serif;
+  font-size: 20px;
+  //background: #031118;
+  //color: white;
+}
+
+a {
+  text-decoration: none;
+  transition: 0.1s color;
+  color: #148cff;
+
+  &:hover {
+    color: #47a2ff;
+  }
+}
+
+input {
+  font-size: 1rem;
+  height: 2em;
+}
+
+button {
+  font-size: 1rem;
+  line-height: 0rem;
+  height: 2em;
+  padding: 0 1em;
 }

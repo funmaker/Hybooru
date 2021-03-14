@@ -3,7 +3,7 @@ import { ErrorPageData } from "../../../server/routes/apiTypes";
 import "./ErrorPage.scss";
 
 interface Props {
-  error: ErrorPageData["error"];
+  error: ErrorPageData["_error"];
 }
 
 export default function ErrorPage({ error }: Props) {

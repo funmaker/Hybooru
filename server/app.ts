@@ -4,9 +4,10 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
-import { router } from "./routes";
 import { reactMiddleware } from "./helpers/reactHelper";
 import HTTPError from "./helpers/HTTPError";
+import { ErrorPageData } from "./routes/apiTypes";
+import { router } from "./routes";
 import "./helpers/db";
 
 const app = express();
@@ -36,12 +37,12 @@ app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _
   console.error(err);
   
   const code = err.HTTPcode || 500;
-  const result = {
+  const error = {
     code,
-    message: err.publicMessage || http.STATUS_CODES[code],
+    message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
-  res.status(code).react(result);
+  res.status(code).react<ErrorPageData>({ _error: error });
 });
 
 export default app;

@@ -1,6 +1,0 @@
-/*******************************
-     User Global Variables
-*******************************/
-
-@imagePath: '/static/semantic/images';
-@fontPath: '/static/semantic/fonts';

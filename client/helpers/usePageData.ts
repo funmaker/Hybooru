@@ -1,6 +1,7 @@
 import React, { ContextType, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router";
 import { Canceler } from "axios";
+import { toast } from 'react-toastify';
 import requestJSON from "./requestJSON";
 
 type UnlistenCallback = () => void;
@@ -18,6 +19,7 @@ interface FetchEmitter {
 }
 
 export function usePageDataInit(initialData: any): ContextType<typeof PageDataContext> {
+  if(initialData._error) initialData = null;
   const [pageData, setPageData] = useState(initialData || null);
   const history = useHistory();
   const fetchEmitter = useRef<FetchEmitter | null>(null);
@@ -42,7 +44,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     }).then(data => {
       setPageData(data);
     }).catch(error => {
-      setPageData({ error });
+      toast.error(error.message);
     }).finally(() => {
       fetchEmitter.current = null;
     });
@@ -69,7 +71,7 @@ export default function usePageData<T>(): [T | null, boolean] {
   const loaded = pageData !== null;
   
   useEffect(() => {
-    if(!loaded) return;
+    if(loaded) return;
     else return fetch();
   }, [fetch, loaded]);
   

@@ -26,6 +26,7 @@ CREATE TABLE posts (
   num_frames INTEGER,
   has_audio BOOLEAN,
   rating FLOAT,
+  mime INTEGER,
   posted TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -40,6 +41,7 @@ CREATE TABLE urls (
 CREATE TABLE tags (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
+  subtag TEXT NOT NULL,
   used INTEGER NOT NULL
 );
 

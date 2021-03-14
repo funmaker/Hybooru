@@ -9,7 +9,7 @@ export async function getStats(): Promise<Stats> {
       tags,
       mappings,
       needs_tags as "needsTags"
-    FROM globals
+    FROM global
   `);
   
   if(!stats) throw new Error("Globals couldn't be fetched!");
