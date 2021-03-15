@@ -72,14 +72,20 @@ export default {
         test: /\.scss$/,
         use: [
           "style-loader",
-          "css-loader",
+          {
+            loader: "css-loader",
+            options: { url: false },
+          },
           "sass-loader",
         ],
       }, {
         test: /\.css$/,
         use: [
           'style-loader',
-          'css-loader',
+          {
+            loader: "css-loader",
+            options: { url: false },
+          },
         ],
       },
     ],

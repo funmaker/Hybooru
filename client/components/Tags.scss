@@ -1,0 +1,16 @@
+
+.Tags {
+  font-size: 75%;
+
+  .namespace {
+    margin-top: 0.5em;
+    b {
+      text-transform: capitalize;
+    }
+  }
+
+  span {
+    color: gray;
+    margin-left: 0.5em;
+  }
+}

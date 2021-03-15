@@ -1,0 +1,11 @@
+
+.Thumbnail {
+  display: inline-block;
+  margin: 0.5em;
+
+  img {
+    width: 7.5em;
+    height: 7.5em;
+    object-fit: contain;
+  }
+}

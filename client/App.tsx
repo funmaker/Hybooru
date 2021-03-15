@@ -5,11 +5,14 @@ import { hot } from 'react-hot-loader';
 import { usePageDataInit, PageDataContext } from "./helpers/usePageData";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
+import PostPage from "./routes/post/PostPage";
 import "./globals.scss";
 
 interface Props {
   initialData: any;
 }
+
+const MIN_PAGE_SIZE = 612;
 
 // eslint-disable-next-line prefer-arrow-callback
 export default hot(module)(function App({ initialData }: Props) {
@@ -18,7 +21,7 @@ export default hot(module)(function App({ initialData }: Props) {
   useEffect(() => {
     const onResize = () => {
       const minSize = Math.min(window.innerWidth, window.innerHeight);
-      const fontSize = Math.min(1, minSize / 500) * 20;
+      const fontSize = Math.min(1, minSize / MIN_PAGE_SIZE) * 20;
       document.documentElement.style.fontSize = fontSize + "px";
     };
     
@@ -34,6 +37,7 @@ export default hot(module)(function App({ initialData }: Props) {
   return (
     <PageDataContext.Provider value={contextData}>
       <Switch>
+        <Route path="/posts/:id" component={PostPage} />
         <Route path="/posts" component={SearchPage} />
         <Route path="/" exact component={IndexPage} />
         <Redirect to="/" />

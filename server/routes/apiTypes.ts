@@ -43,9 +43,18 @@ export interface IndexPageData {
   stats: Stats;
 }
 
+export interface SearchPageRequest {
+  query?: string;
+  page?: number;
+}
+
 export interface SearchPageData {
   results: SearchResults;
   search?: string;
+}
+
+export interface PostPageData {
+  post: Post | null;
 }
 
 export interface ErrorPageData {
