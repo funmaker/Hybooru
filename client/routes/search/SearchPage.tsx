@@ -1,20 +1,21 @@
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import axios, { Canceler } from "axios";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import qs from "query-string";
 import { PostsSearchRequest, PostsSearchResponse, PostSummary, SearchPageData, SearchResults } from "../../../server/routes/apiTypes";
-import usePageData from "../../helpers/usePageData";
+import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
 import Thumbnail from "../../components/Thumbnail";
 import requestJSON from "../../helpers/requestJSON";
 import Pagination from "../../components/Pagination";
-import useLocalStorage from "../../helpers/useLocalStorage";
-import useSSR from "../../helpers/useSSR";
+import useLocalStorage from "../../hooks/useLocalStorage";
+import useSSR from "../../hooks/useSSR";
+import useSearch from "../../hooks/useSearch";
 import "./SearchPage.scss";
 
 function pagesReducer(state: PostSummary[][], action: { posts: PostSummary[]; reset?: boolean }) {
-  if(action.reset) return [action.posts];
+  if(action.reset && action.posts.length > 0) return [action.posts];
   else return [...state, action.posts];
 }
 
@@ -23,7 +24,7 @@ export default function SearchPage() {
   const [pagination] = useLocalStorage("pagination", false);
   const SSR = useSSR();
   const curPage = useRef(0);
-  const search = qs.parse(useLocation().search);
+  const search = useSearch();
   const query = typeof search.query === "string" ? search.query : "";
   const history = useHistory();
   const [firstPage, setFirstPage] = useState<SearchResults>(pageData?.results || { posts: [], pageSize: 1, tags: {}, total: 0 });
@@ -94,8 +95,11 @@ export default function SearchPage() {
             sidebar={firstPage.tags && <Tags tags={firstPage.tags} searchMod />}>
       {pages.flatMap(posts => posts.map(post => <Thumbnail key={post.id} post={post} />))}
       {new Array(10).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
-      {end && !usePagination &&
+      {end && !usePagination && pages.length > 0 && pages[0].length > 0 &&
         <div className="end" />
+      }
+      {pages[0]?.length === 0 &&
+        <div className="empty">No Posts Found</div>
       }
       {usePagination
         ? <Pagination count={pageCount} />

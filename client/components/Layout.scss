@@ -98,15 +98,15 @@
       top: calc(100% + 0.175em);
       left: 0;
       height: 0.1em;
-      width: 0;
-      opacity: 0;
       background-color: #148cff;
+      animation: LayoutProgressAnimation 10s ease-out;
+    }
 
-      &.active {
-        width: 100%;
-        opacity: 1;
-        transition: width 10s ease-out, opacity 0.6s ease-out 0.3s;
-      }
+    @keyframes LayoutProgressAnimation {
+      0% { width: 0; opacity: 0; }
+      5% { opacity: 0; }
+      10% { opacity: 1; }
+      100% { width: 100% }
     }
 
     .menu {

@@ -1,7 +1,7 @@
 import React from "react";
 import { Post, PostPageData } from "../../../server/routes/apiTypes";
 import { Mime, MIME_EXT, MIME_STRING } from "../../../server/helpers/consts";
-import usePageData from "../../helpers/usePageData";
+import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
 import { parseDuration, parseSize } from "../../helpers/utils";

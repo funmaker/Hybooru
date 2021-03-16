@@ -1,12 +1,13 @@
 import React, { useCallback, useReducer, useState } from "react";
 import { Link } from "react-router-dom";
-import { useLocation } from "react-router";
-import qs from "query-string";
 import ReactForm from "../components/ReactForm";
-import useMeasure from "../helpers/useMeasure";
-import useLocalStorage from "../helpers/useLocalStorage";
-import useChange from "../helpers/useChange";
-import usePageData from "../helpers/usePageData";
+import requestJSON from "../helpers/requestJSON";
+import useMeasure from "../hooks/useMeasure";
+import useLocalStorage from "../hooks/useLocalStorage";
+import useChange from "../hooks/useChange";
+import usePageData from "../hooks/usePageData";
+import useConfig from "../hooks/useConfig";
+import useSearch from "../hooks/useSearch";
 import "./Layout.scss";
 
 export interface LayoutProps {
@@ -16,12 +17,13 @@ export interface LayoutProps {
 }
 
 export default function Layout({ className, sidebar, children }: LayoutProps) {
+  const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
   const [menuOpen, toggleMenu] = useReducer(s => !s, false);
   const [sidebarOpen, toggleSidebar] = useReducer(s => !s, false);
   const [pagination, setPagination] = useLocalStorage("pagination", false);
-  const search = qs.parse(useLocation().search);
+  const search = useSearch();
   const urlQuery = typeof search.query === "string" ? search.query : "";
   const [query, setQuery] = useState(urlQuery);
   const mobile = rect?.width && rect.width < 1000;
@@ -37,6 +39,13 @@ export default function Layout({ className, sidebar, children }: LayoutProps) {
     setPagination(!pagination);
   }, [pagination, setPagination]);
   
+  const regenDB = useCallback(async () => {
+    await requestJSON({
+      pathname: "/api/regenDB",
+      method: "POST",
+    });
+  }, []);
+  
   let domClassName = "Layout";
   if(mobile) domClassName += ` mobile`;
   if(className) domClassName += ` ${className}`;
@@ -45,7 +54,7 @@ export default function Layout({ className, sidebar, children }: LayoutProps) {
     <div className={domClassName} ref={ref}>
       <div className={`sidebar${sidebarOpen ? " open" : ""}`}>
         <div className="logo">
-          <Link to="/">HyBooru</Link>
+          <Link to="/">{config.appName}</Link>
         </div>
         <div className="sidebarContent">
           {sidebar}
@@ -67,10 +76,11 @@ export default function Layout({ className, sidebar, children }: LayoutProps) {
           <img src="/static/cog.svg" alt="settings" className="settingsButton" onClick={toggleMenu} />
           <button>Search</button>
         </ReactForm>
-        <div className={`progress${fetching ? " active" : ""}`} />
+        {fetching && <div className="progress"/>}
         {menuOpen &&
           <div className="menu">
-            <a href="#" onClick={togglePagination}>Auto Paging: {pagination ? "No" : "Yes"}</a>
+            <div><a href="#" onClick={togglePagination}>Auto Paging: {pagination ? "No" : "Yes"}</a></div>
+            <div><a href="#" onClick={regenDB}>Regen Database</a></div>
           </div>
         }
       </div>

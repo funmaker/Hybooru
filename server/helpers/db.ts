@@ -208,7 +208,7 @@ export async function initialize() {
                              .map(([name, color], id) => ({
                                id,
                                name,
-                               color: "#" + (color[0] * 255 * 255 + color[1] * 255 + color[2]).toString(16).padStart(6, "0"),
+                               color: "#" + (color[0] * 256 * 256 + color[1] * 256 + color[2]).toString(16).padStart(6, "0"),
                              }));
     
     await query(SQL`

@@ -1,7 +1,7 @@
 import React, { ContextType, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router";
 import { Canceler } from "axios";
-import requestJSON from "./requestJSON";
+import requestJSON from "../helpers/requestJSON";
 
 type UnlistenCallback = () => void;
 

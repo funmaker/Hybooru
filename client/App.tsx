@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { Redirect, Route, Switch } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import { hot } from 'react-hot-loader';
-import { usePageDataInit, PageDataContext } from "./helpers/usePageData";
-import { SSRProvider } from "./helpers/useSSR";
+import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
+import { SSRProvider } from "./hooks/useSSR";
+import { ConfigContext } from "./hooks/useConfig";
 import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 const MIN_PAGE_SIZE = 612;
+export const EM_SIZE = 20;
 
 // eslint-disable-next-line prefer-arrow-callback
 export default hot(module)(function App({ initialData }: Props) {
@@ -23,7 +25,7 @@ export default hot(module)(function App({ initialData }: Props) {
   useEffect(() => {
     const onResize = () => {
       const minSize = Math.min(window.innerWidth, window.innerHeight);
-      const fontSize = Math.min(1, minSize / MIN_PAGE_SIZE) * 20;
+      const fontSize = Math.min(1, minSize / MIN_PAGE_SIZE) * EM_SIZE;
       document.documentElement.style.fontSize = fontSize + "px";
     };
     
@@ -38,16 +40,18 @@ export default hot(module)(function App({ initialData }: Props) {
   
   return (
     <SSRProvider>
-      <PageDataContext.Provider value={contextData}>
-        <Switch>
-          <Route path="/test" component={TestPage} />
-          <Route path="/posts/:id" component={PostPage} />
-          <Route path="/posts" component={SearchPage} />
-          <Route path="/" exact component={IndexPage} />
-          <Redirect to="/" />
-        </Switch>
-        <ToastContainer />
-      </PageDataContext.Provider>
+      <ConfigContext.Provider value={initialData._config}>
+        <PageDataContext.Provider value={contextData}>
+          <Switch>
+            <Route path="/test" component={TestPage} />
+            <Route path="/posts/:id" component={PostPage} />
+            <Route path="/posts" component={SearchPage} />
+            <Route path="/" exact component={IndexPage} />
+            <Redirect to="/" />
+          </Switch>
+          <ToastContainer />
+        </PageDataContext.Provider>
+      </ConfigContext.Provider>
     </SSRProvider>
   );
 });

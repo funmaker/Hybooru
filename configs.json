@@ -1,6 +1,7 @@
 {
 	"port": 3939,
 	"hydrusDbPath": null,
+	"appName": "Mikubooru",
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",

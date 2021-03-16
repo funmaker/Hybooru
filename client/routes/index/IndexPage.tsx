@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
-import usePageData from "../../helpers/usePageData";
+import usePageData from "../../hooks/usePageData";
+import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
 import "./IndexPage.scss";
 
 export default function IndexPage() {
   const [pageData] = usePageData<IndexPageData>();
+  const config = useConfig();
   
   return (
     <div className="IndexPage">
       <div className="header">
-        <Link to="/posts">HyBooru</Link>
+        <Link to="/posts">{config.appName}</Link>
       </div>
       <div className="links">
         <Link to="/posts">All Posts</Link>

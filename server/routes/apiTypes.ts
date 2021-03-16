@@ -38,6 +38,12 @@ export interface Stats {
   needsTags: number;
 }
 
+export interface Config {
+  thumbnailSize: [number, number];
+  namespaceColors: Record<string, string>;
+  appName: string;
+}
+
 // PAGES //
 
 export interface IndexPageData {

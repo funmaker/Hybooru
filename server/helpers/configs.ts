@@ -6,6 +6,7 @@ type Config = {
   port: number,
   db: pg.PoolConfig,
   hydrusDbPath: string | null,
+  appName: string,
 };
 
 let configs: Config;
@@ -23,7 +24,8 @@ try {
       password: "hybooru",
       port: 5432,
     },
-    hydrusDbPath: null
+    hydrusDbPath: null,
+    appName: "HyBooru"
   };
 }
 

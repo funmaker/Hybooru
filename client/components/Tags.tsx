@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import "./Tags.scss";
+import useConfig from "../hooks/useConfig";
 
 export interface TagsProps {
   tags: Record<string, number>;
@@ -73,13 +74,22 @@ interface TagProps {
 }
 
 function Tag({ searchMod, tag, tags }: TagProps) {
+  const config = useConfig();
+  
   let name = tag.replace(/_/g, " ");
-  if(namespaceRegex.test(name)) name = name.slice(name.indexOf(":") + 1);
+  let color: string | undefined;
+  
+  const result = name.match(namespaceRegex);
+  if(result) {
+    name = name.slice(name.indexOf(":") + 1);
+    color = config.namespaceColors[result[1]];
+    console.log(result[1], color);
+  }
   
   return (
     <div>
       {searchMod ? "+ - " : ""}
-      <Link to={`/posts?query=${encodeURIComponent(tag)}`}>{name}</Link>
+      <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
       <span>{tags[tag]}</span>
     </div>
   );
