@@ -1,7 +1,6 @@
 import React, { ContextType, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router";
 import { Canceler } from "axios";
-import { toast } from 'react-toastify';
 import requestJSON from "./requestJSON";
 
 type UnlistenCallback = () => void;
@@ -44,7 +43,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     }).then(data => {
       setPageData(data);
     }).catch(error => {
-      toast.error(error.message);
+      console.error("Unable to fetch page data: ", error);
     }).finally(() => {
       fetchEmitter.current = null;
     });
@@ -65,16 +64,15 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   return useMemo(() => ({ pageData, fetch }), [pageData, fetch]);
 }
 
-export default function usePageData<T>(): [T | null, boolean] {
+export default function usePageData<T>(auto = true): [T | null, boolean] {
   const { pageData, fetch } = useContext(PageDataContext);
   
   const loaded = pageData !== null;
   
   useEffect(() => {
-    if(loaded) return;
+    if(loaded || !auto) return;
     else return fetch();
-  }, [fetch, loaded]);
+  }, [fetch, auto, loaded]);
   
   return [pageData, !loaded];
 }
-

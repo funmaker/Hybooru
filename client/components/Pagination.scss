@@ -1,0 +1,25 @@
+
+.Pagination {
+  text-align: center;
+
+  > * {
+    display: inline-block;
+    font-size: 125%;
+    width: 1.5em;
+    height: 1.5em;
+    line-height: 1.35em;
+    border: 1px solid lightgray;
+    border-radius: 0.2em;
+    margin: 0.2em;
+    color: gray;
+    user-select: none;
+
+    &.active {
+      border-color: #148cff;
+    }
+
+    &.disabled {
+      opacity: 0.5;
+    }
+  }
+}

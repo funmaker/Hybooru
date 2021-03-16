@@ -1,21 +1,22 @@
 import isNode from 'detect-node';
 import axios, { Method, Canceler } from 'axios';
+import { toast } from "react-toastify";
 import qs from 'query-string';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const CancelToken = axios.CancelToken;
 
-interface RequestOptions {
+interface RequestOptions<Req> {
   method?: Method;
   href?: string;
   host?: string;
   pathname?: string;
-  search?: string | Record<string, any>;
-  data?: any;
+  search?: string | Req;
+  data?: Req;
   cancelCb?: (cancel: Canceler) => void;
 }
 
-export default async function requestJSON(options: RequestOptions = {}) {
+export default async function requestJSON<Res, Req extends Record<string, any>>(options: RequestOptions<Req> = {}): Promise<Res> {
   if(isNode) return new Promise(() => {});
   let { method, href, host, pathname, search, cancelCb, data } = options;
   
@@ -28,12 +29,18 @@ export default async function requestJSON(options: RequestOptions = {}) {
   href = href || `//${host}${pathname}${search}`;
   method = method || "GET";
   
-  const response = await axios({
-    method,
-    url: href,
-    data,
-    cancelToken: cancelCb ? new CancelToken(cancelCb) : undefined,
-  });
+  let response;
+  try {
+    response = await axios({
+      method,
+      url: href,
+      data,
+      cancelToken: cancelCb ? new CancelToken(cancelCb) : undefined,
+    });
+  } catch(err) {
+    toast.error(err.response?.data?.error?.message || err.message);
+    throw err;
+  }
   
   return response.data;
 }

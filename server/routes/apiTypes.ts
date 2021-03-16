@@ -12,6 +12,7 @@ export interface PostSummary {
 export interface SearchResults {
   posts: PostSummary[];
   total: number;
+  pageSize: number;
   tags?: Record<string, number>;
 }
 
@@ -50,7 +51,6 @@ export interface SearchPageRequest {
 
 export interface SearchPageData {
   results: SearchResults;
-  search?: string;
 }
 
 export interface PostPageData {

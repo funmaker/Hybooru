@@ -44,9 +44,11 @@
     top: 0;
     left: 15rem;
     right: 0;
-    height: 4rem;
+    max-height: 4rem;
+    transition: max-height 0.3s ease-in-out;
     background: white;
     box-shadow: 0 0 0.5rem 0.5rem white;
+    z-index: 2;
 
     .menuButton {
       float: left;
@@ -73,10 +75,48 @@
       padding: 0 0.5em;
       display: flex;
 
+      .settingsButton {
+        height: 1.5em;
+        width: 1.5em;
+        object-fit: contain;
+        margin: 0.25em;
+        opacity: 0.25;
+        cursor: pointer;
+
+        &:hover {
+          opacity: 0.5;
+        }
+      }
+
       input {
         flex: 1;
-        margin-right: 0.5em;
       }
+    }
+
+    .progress {
+      position: absolute;
+      top: calc(100% + 0.175em);
+      left: 0;
+      height: 0.1em;
+      width: 0;
+      opacity: 0;
+      background-color: #148cff;
+
+      &.active {
+        width: 100%;
+        opacity: 1;
+        transition: width 10s ease-out, opacity 0.6s ease-out 0.3s;
+      }
+    }
+
+    .menu {
+      position: absolute;
+      padding: 0.5em;
+      right: 0;
+      top: 100%;
+      background: white;
+      border-left: 1px solid lightgray;
+      border-bottom: 1px solid lightgray;
     }
   }
 
@@ -101,7 +141,6 @@
         }
 
         & ~ .content {
-          filter: blur(3px);
         }
       }
     }
@@ -112,7 +151,7 @@
       left: 0;
       right: 0;
       height: 100vh;
-      z-index: 1;
+      z-index: 5;
       transition: background 0.2s ease;
       pointer-events: none;
     }
@@ -123,7 +162,6 @@
 
     & > .header {
       left: 0;
-      z-index: 1;
     }
   }
 }

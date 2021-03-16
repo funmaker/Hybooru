@@ -12,14 +12,17 @@ router.get<{ id: string }>('/posts/:id', async (req, res) => {
 });
 
 router.get<any, any, any, SearchPageRequest>('/posts', async (req, res) => {
-  const results = await postsController.search(req.query.query, req.query.page, !req.query.page);
-  const search = req.query.query;
+  const results = await postsController.search(req.query.query, req.query.page, true);
   
-  res.react<SearchPageData>({ results, search });
+  res.react<SearchPageData>({ results });
 });
 
 router.get('/', async (req, res) => {
   const stats = await statsController.getStats();
   
   res.react<IndexPageData>({ stats });
+});
+
+router.get('/test', async (req, res) => {
+  res.react({});
 });

@@ -8,20 +8,20 @@ import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRespo
 
 export const router = PromiseRouter();
 
-router.get<any, RegenDBResponse>("/regendb", async (req, res) => {
+router.post<any, RegenDBResponse>("/regendb", async (req, res) => {
   await db.initialize();
   
   res.json({});
 });
 
-router.get<any, PostsSearchResponse, any, Partial<PostsSearchRequest>>("/search", async (req, res) => {
-  const result = await postsController.search(req.query.query, req.query.page, !req.query.page);
+router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {
+  const result = await postsController.get(parseInt(req.params.id));
   
   res.json(result);
 });
 
-router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {
-  const result = await postsController.get(parseInt(req.params.id));
+router.get<any, PostsSearchResponse, any, Partial<PostsSearchRequest>>("/post", async (req, res) => {
+  const result = await postsController.search(req.query.query, req.query.page, false);
   
   res.json(result);
 });

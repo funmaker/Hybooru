@@ -1,6 +1,35 @@
 
 .SearchPage {
-    .content {
-      text-align: center;
+  .content {
+    line-height: 0;
+    text-align: center;
+
+    .placeholder {
+      display: inline-block;
+      width: 7.5em;
+      margin: 0 0.5em;
     }
+
+    .end {
+      position: relative;
+      height: 1em;
+
+      &::before {
+        content: "End";
+        position: absolute;
+        top: 0.5em;
+        left: 0.75em;
+        opacity: 0.5;
+        font-size: 75%;
+      }
+    }
+
+    .Pagination {
+      margin: 2em 0 3em;
+    }
+
+    .bottomPad {
+      height: 9em;
+    }
+  }
 }

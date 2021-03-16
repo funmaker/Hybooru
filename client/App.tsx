@@ -3,6 +3,8 @@ import { Redirect, Route, Switch } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import { hot } from 'react-hot-loader';
 import { usePageDataInit, PageDataContext } from "./helpers/usePageData";
+import { SSRProvider } from "./helpers/useSSR";
+import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
@@ -35,14 +37,17 @@ export default hot(module)(function App({ initialData }: Props) {
   }, [initialData._error]);
   
   return (
-    <PageDataContext.Provider value={contextData}>
-      <Switch>
-        <Route path="/posts/:id" component={PostPage} />
-        <Route path="/posts" component={SearchPage} />
-        <Route path="/" exact component={IndexPage} />
-        <Redirect to="/" />
-      </Switch>
-      <ToastContainer />
-    </PageDataContext.Provider>
+    <SSRProvider>
+      <PageDataContext.Provider value={contextData}>
+        <Switch>
+          <Route path="/test" component={TestPage} />
+          <Route path="/posts/:id" component={PostPage} />
+          <Route path="/posts" component={SearchPage} />
+          <Route path="/" exact component={IndexPage} />
+          <Redirect to="/" />
+        </Switch>
+        <ToastContainer />
+      </PageDataContext.Provider>
+    </SSRProvider>
   );
 });

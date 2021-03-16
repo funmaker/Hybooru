@@ -77,6 +77,7 @@ export async function search(query = "", page = 0, includeTags = false): Promise
   return {
     posts,
     total,
+    pageSize: PAGE_SIZE,
     tags,
   };
 }
