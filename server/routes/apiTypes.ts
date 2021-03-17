@@ -90,6 +90,10 @@ export interface ErrorPageData {
 
 // API //
 
+export interface RegenDBRequest {
+  password: string;
+}
+
 export interface RegenDBResponse {}
 
 export interface PostsSearchRequest {

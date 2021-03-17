@@ -18,6 +18,7 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
   const inputRef = useRef<HTMLInputElement | null>(null);
   const box = inputRef.current?.getBoundingClientRect();
   const timeoutRef = useRef<NodeJS.Timeout | number | null>(null);
+  const blurRef = useRef<NodeJS.Timeout | number | null>(null);
   const requestRef = useRef<Canceler | null>(null);
   const valueRef = useRef(typeof value === "string" ? value : "");
   
@@ -52,9 +53,17 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     }, DEBOUNCE_FREQ);
   }, [stop]);
   
+  const onFocus = useCallback(() => {
+    reset();
+    if(blurRef.current) clearTimeout(blurRef.current as any);
+  }, [reset]);
+  
   const onBlur = useCallback(() => {
-    setTags(null);
-    stop();
+    blurRef.current = setTimeout(() => {
+      blurRef.current = null;
+      setTags(null);
+      stop();
+    }, 100);
   }, [stop]);
   
   const onInputChange = useCallback((ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,14 +73,14 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
   }, [onValueChange, reset]);
   
   const onRowClick = useCallback((tag: string) => {
-    console.log(tag);
-    
     const parts = valueRef.current.split(" ");
     parts[parts.length - 1] = tag;
     valueRef.current = parts.join(" ") + " ";
     
     if(onValueChange) onValueChange(valueRef.current);
     else if(inputRef.current) inputRef.current.value = valueRef.current;
+    
+    inputRef.current?.focus();
   }, [onValueChange]);
   
   const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -80,12 +89,12 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     }
   }, []);
   
-  return <>
+  return <span className="TagInput" onFocus={onFocus} onBlur={onBlur}>
     <input value={value} {...rest} ref={inputRef}
            autoComplete="off" autoCorrect="off"
-           onFocus={reset} onBlur={onBlur} onChange={onInputChange} onKeyPress={onKeyPress} />
+           onChange={onInputChange} onKeyPress={onKeyPress} />
     {tags && box &&
-      <div className="TagInput"
+      <div className="tags"
            style={{
              left: `${box.x}px`,
              top: `${box.y + box.height - 1}px`,
@@ -94,7 +103,7 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
         {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} />)}
       </div>
     }
-  </>; // eslint-disable-line react/jsx-closing-tag-location
+  </span>; // eslint-disable-line react/jsx-closing-tag-location
 }
 
 interface RowProps {
@@ -120,8 +129,12 @@ function Row({ tag, posts, onClick }: RowProps) {
     onClick(tag);
   }, [onClick, tag]);
   
+  const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLAnchorElement>) => {
+    if(ev.key === "Enter") onClick(tag);
+  }, [onClick, tag]);
+  
   return (
-    <a href="#" className="row" onMouseDown={onRowClick}>
+    <a href="#" className="row" onMouseDown={onRowClick} onKeyPress={onKeyPress}>
       <span className="name" style={{ color }}>{name}</span>
       <span className="posts">{posts}</span>
     </a>

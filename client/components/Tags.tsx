@@ -88,8 +88,8 @@ function Tag({ searchMod, tag, tags }: TagProps) {
     color = config.namespaceColors[result[1]];
   }
   
-  let addLink: string = "#";
-  let delLink: string = "#";
+  let addLink = "#";
+  let delLink = "#";
   let addCh = "+";
   let delCh = "-";
   
@@ -106,7 +106,7 @@ function Tag({ searchMod, tag, tags }: TagProps) {
     if(!parts.includes(`-${tag}`)) delLink = `/posts?query=${encodeURIComponent([...partsClean, `-${tag}`].join(" "))}`;
     else {
       addLink = `/posts?query=${encodeURIComponent(partsClean.join(" "))}`;
-      addCh = "•";
+      delCh = "•";
     }
   }
   

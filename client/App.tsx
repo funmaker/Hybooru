@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 import { Redirect, Route, Switch } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import { hot } from 'react-hot-loader';
+import { RegenDBRequest } from "../server/routes/apiTypes";
 import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContext } from "./hooks/useConfig";
+import requestJSON from "./helpers/requestJSON";
 import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
@@ -57,3 +59,18 @@ export default hot(module)(function App({ initialData }: Props) {
     </SSRProvider>
   );
 });
+
+
+if(typeof window !== "undefined") {
+  (window as any).regenDB = async () => {
+    const password = prompt("Password");
+    
+    if(password !== null) {
+      await requestJSON<null, RegenDBRequest>({
+        pathname: "/api/regenDB",
+        method: "POST",
+        data: { password },
+      });
+    }
+  };
+}

@@ -1,7 +1,6 @@
 import React, { useCallback, useReducer, useState } from "react";
 import { Link } from "react-router-dom";
 import ReactForm from "../components/ReactForm";
-import requestJSON from "../helpers/requestJSON";
 import useMeasure from "../hooks/useMeasure";
 import useLocalStorage from "../hooks/useLocalStorage";
 import useChange from "../hooks/useChange";
@@ -41,13 +40,6 @@ export default function Layout({ className, sidebar, children, searchAction = "/
     ev.preventDefault();
     setPagination(!pagination);
   }, [pagination, setPagination]);
-  
-  const regenDB = useCallback(async () => {
-    await requestJSON({
-      pathname: "/api/regenDB",
-      method: "POST",
-    });
-  }, []);
   
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
     setQuery(query => {
@@ -106,7 +98,6 @@ export default function Layout({ className, sidebar, children, searchAction = "/
               </select>
             </div>
             <div><a href="#" onClick={togglePagination}>Auto Paging: {pagination ? "No" : "Yes"}</a></div>
-            <div><a href="#" onClick={regenDB}>Regen Database</a></div>
           </div>
         }
       </div>

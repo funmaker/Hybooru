@@ -109,7 +109,7 @@
         }
       }
 
-      input {
+      .TagInput {
         flex: 1;
         margin-right: 0.25em;
       }
@@ -121,7 +121,7 @@
       left: 0;
       height: 0.1em;
       background-color: #148cff;
-      animation: LayoutProgressAnimation 10s ease-out;
+      animation: LayoutProgressAnimation 10s ease-out forwards;
     }
 
     @keyframes LayoutProgressAnimation {

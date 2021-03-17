@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import path from "path";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const root = process.cwd();

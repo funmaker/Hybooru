@@ -1,5 +1,5 @@
-import PromiseRouter from "express-promise-router";
 import path from "path";
+import PromiseRouter from "express-promise-router";
 import * as db from "../helpers/db";
 
 export const router = PromiseRouter();

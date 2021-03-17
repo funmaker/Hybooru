@@ -82,6 +82,7 @@
         }
       }
     ],
+    "@typescript-eslint/no-redeclare": "warn",
     "@typescript-eslint/consistent-type-assertions": [
       "warn",
       {
@@ -231,7 +232,7 @@
     ],
     "no-negated-in-lhs": "warn",
     "no-octal": "warn",
-    "no-redeclare": "warn",
+    "no-redeclare": "off",
     "no-regex-spaces": "off",
     "no-sparse-arrays": "warn",
     "no-trailing-spaces": [

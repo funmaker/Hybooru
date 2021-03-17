@@ -7,6 +7,7 @@ type Config = {
   db: pg.PoolConfig,
   hydrusDbPath: string | null,
   appName: string,
+  adminPassword: string | null,
   tags: {
     motd: string | null,
     ignore: string[],
@@ -31,6 +32,7 @@ try {
     },
     hydrusDbPath: null,
     appName: "HyBooru",
+    adminPassword: null,
     tags: {
       motd: null,
       ignore: [],

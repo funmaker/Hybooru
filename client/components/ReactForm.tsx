@@ -1,8 +1,6 @@
 import React, { useCallback } from "react";
 import { useHistory } from "react-router";
 
-
-
 export default function ReactForm({ action, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
   const history = useHistory();
   
