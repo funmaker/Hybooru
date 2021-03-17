@@ -48,6 +48,7 @@ export interface Config {
   thumbnailSize: [number, number];
   namespaceColors: Record<string, string>;
   appName: string;
+  version: string;
 }
 
 // PAGES //

@@ -1,5 +1,6 @@
 import SQL from "sql-template-strings";
-import { Config } from "../routes/apiTypes";
+import packageJSON from "../../package.json";
+import { Config, Stats } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import configs from "../helpers/configs";
 
@@ -18,5 +19,21 @@ export async function getConfig(): Promise<Config> {
   return {
     ...config,
     appName: configs.appName,
+    version: packageJSON.version,
   };
+}
+
+export async function getStats(): Promise<Stats> {
+  const stats = await db.queryFirst(SQL`
+    SELECT
+      posts,
+      tags,
+      mappings,
+      needs_tags as "needsTags"
+    FROM global
+  `);
+  
+  if(!stats) throw new Error("Globals couldn't be fetched!");
+  
+  return stats;
 }

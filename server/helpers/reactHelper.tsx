@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from "react-router";
 import express from "express";
 import App from "../../client/App";
-import * as configController from "../controllers/config";
+import * as globalController from "../controllers/global";
 import index from '../views/index.handlebars';
 import HTTPError from "./HTTPError";
 
@@ -39,7 +39,7 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
         (async () => {
           const initialDataEx = {
             ...initialData,
-            _config: await configController.getConfig(),
+            _config: await globalController.getConfig(),
           };
           
           const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);

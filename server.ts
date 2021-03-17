@@ -13,7 +13,7 @@ const origApp = app;
 let currentApp = app;
 server.listen(port);
 
-console.log(`\n${chalk.bold("Boilerplate")} started on port ${chalk.yellow.bold("" + port)}`);
+console.log(`\n${chalk.bold("HyBooru")} started on port ${chalk.yellow.bold("" + port)}`);
 console.log(`Environment: ${chalk.yellow.bold("" + process.env.NODE_ENV)}.`);
 console.log(chalk.dim.white(`Press Ctrl-C to terminate.\n`));
 

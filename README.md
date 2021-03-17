@@ -4,6 +4,8 @@ Hydrus-based booru-styled imageboard in React, inspired by [hyve](https://github
 
 Demo: https://booru.funmaker.moe/
 
+[CHANGELOG.md](CHANGELOG.md)
+
 HyBooru uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite
 database. Files are not cloned and served directly from Hydrus's database. You need to
 regenerate the HyBooru's database every time you want to update it. Make sure to

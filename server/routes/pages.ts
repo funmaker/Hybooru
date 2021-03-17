@@ -1,7 +1,7 @@
 import PromiseRouter from "express-promise-router";
 import configs from "../helpers/configs";
 import * as postsController from "../controllers/posts";
-import * as statsController from "../controllers/stats";
+import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
 import { IndexPageData, PostPageData, PostsSearchPageData, PostsSearchPageRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
@@ -32,7 +32,7 @@ router.get('/random', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  const stats = await statsController.getStats();
+  const stats = await globalController.getStats();
   const motd = configs.tags.motd && await postsController.random(configs.tags.motd) || null;
   
   res.react<IndexPageData>({ stats, motd });

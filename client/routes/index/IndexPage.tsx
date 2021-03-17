@@ -44,7 +44,8 @@ export default function IndexPage() {
         </div>
       }
       <div className="footer">
-        Original concept by <a href="https://danbooru.donmai.us/">Danbooru</a>
+        Running <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">HyBooru</a> v{config.version}<br />
+        Original concept by <a href="https://danbooru.donmai.us/" target="_blank" rel="noreferrer">Danbooru</a>
       </div>
     </div>
   );
