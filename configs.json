@@ -1,6 +1,6 @@
 {
 	"port": 3939,
-	"hydrusDbPath": null,
+	"hydrusDbPath": "/home/funmaker/sync/Miku/backup/",
 	"appName": "Hybooru",
 	"adminPassword": null,
 	"db": {

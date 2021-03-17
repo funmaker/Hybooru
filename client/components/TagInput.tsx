@@ -130,11 +130,14 @@ function Row({ tag, posts, onClick }: RowProps) {
   }, [onClick, tag]);
   
   const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLAnchorElement>) => {
-    if(ev.key === "Enter") onClick(tag);
+    if(ev.key === "Enter") {
+      ev.preventDefault();
+      onClick(tag);
+    }
   }, [onClick, tag]);
   
   return (
-    <a href="#" className="row" onMouseDown={onRowClick} onKeyPress={onKeyPress}>
+    <a href="#" className="row" onClick={onRowClick} onKeyPress={onKeyPress}>
       <span className="name" style={{ color }}>{name}</span>
       <span className="posts">{posts}</span>
     </a>

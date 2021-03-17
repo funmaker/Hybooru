@@ -77,11 +77,10 @@ export async function initialize() {
     console.log("Initializing Database!");
     await query(SQL`DROP OWNED BY CURRENT_USER`, true);
     await query(setupSQL, true);
-    await query(SQL`UPDATE meta SET hash = ${setupHash}`, true);
     
     const dbPath = findHydrusDB();
     
-    const hydrus = await sqlite.open({ filename: path.resolve(dbPath, "client.db"), driver: sqlite3.Database });
+    const hydrus = await sqlite.open({ filename: path.resolve(dbPath, "client.db"), driver: sqlite3.Database, mode: sqlite3.OPEN_READONLY });
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
     
@@ -266,6 +265,8 @@ export async function initialize() {
           ) AS needs_tags
       `, true);
     }
+    
+    await query(SQL`UPDATE meta SET hash = ${setupHash}`, true);
   })();
   
   await initializationLock;

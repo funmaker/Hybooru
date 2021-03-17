@@ -18,7 +18,7 @@ export default function IndexPage() {
   return (
     <div className="IndexPage">
       {pageData?.motd &&
-        <a href={motdLink} className="motd">
+        <a href={`/posts/${pageData.motd.id}`} className="motd">
           <img src={motdLink} alt={String(pageData.motd.id)} />
         </a>
       }
