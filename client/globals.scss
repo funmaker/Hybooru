@@ -33,3 +33,7 @@ button {
   height: 2em;
   padding: 0 1em;
 }
+
+img:-moz-loading {
+  color: transparent;
+}

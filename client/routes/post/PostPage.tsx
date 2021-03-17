@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Post, PostPageData } from "../../../server/routes/apiTypes";
 import { Mime, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
@@ -12,10 +13,18 @@ const STARS_COUNT = 5;
 export default function PostPage() {
   const [pageData] = usePageData<PostPageData>();
   
-  if(!pageData?.post) {
+  if(!pageData) {
+    return (
+      <Layout className="PostPage" />
+    );
+  }
+  
+  if(!pageData.post) {
     return (
       <Layout className="PostPage">
         <h1>Post Not Found</h1>
+        
+        <Link to="/posts">See All Posts</Link>
       </Layout>
     );
   }
@@ -97,7 +106,8 @@ function File({ link, post }: FileProps) {
     case Mime.GENERAL_VIDEO:
     case Mime.GENERAL_ANIMATION: {
       return (
-        <video className="File video" width={post.width || undefined} height={post.height || undefined} controls>
+        <video className="File video" controls
+               width={post.width || undefined} height={post.height || undefined}>
           <source src={link} />
           Your browser does not support this video.
         </video>

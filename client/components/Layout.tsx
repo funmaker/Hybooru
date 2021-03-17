@@ -9,11 +9,12 @@ import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
 import TagInput from "./TagInput";
 import "./Layout.scss";
+import SSRCurtain from "./SSRCurtain";
 
 export interface LayoutProps {
   className?: string;
   sidebar?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   searchAction?: string;
   options?: boolean;
 }
@@ -22,7 +23,7 @@ export default function Layout({ className, sidebar, children, searchAction = "/
   const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
-  const [menuOpen, toggleMenu] = useReducer(s => !s, false);
+  const [optionsOpen, toggleOptions] = useReducer(s => !s, false);
   const [sidebarOpen, toggleSidebar] = useReducer(s => !s, false);
   const [pagination, setPagination] = useLocalStorage("pagination", false);
   const search = useSearch();
@@ -52,6 +53,16 @@ export default function Layout({ className, sidebar, children, searchAction = "/
     });
   }, []);
   
+  const onSidebarButtonClick = useCallback((ev: React.MouseEvent) => {
+    ev.preventDefault();
+    toggleSidebar();
+  }, []);
+  
+  const onOptionsButtonClick = useCallback((ev: React.MouseEvent) => {
+    ev.preventDefault();
+    toggleOptions();
+  }, []);
+  
   let domClassName = "Layout";
   if(mobile) domClassName += ` mobile`;
   if(className) domClassName += ` ${className}`;
@@ -68,7 +79,7 @@ export default function Layout({ className, sidebar, children, searchAction = "/
       </div>
       <div className="header">
         {mobile &&
-          <a href="#" className="menuButton" onClick={toggleSidebar}><img src="/static/menu_icon.svg" alt="menu" /></a>
+          <a href="#" className="menuButton" onClick={onSidebarButtonClick}><img src="/static/menu_icon.svg" alt="menu" /></a>
         }
         <div className="links">
           <Link to="/">Main Page</Link>
@@ -79,11 +90,11 @@ export default function Layout({ className, sidebar, children, searchAction = "/
         </div>
         <ReactForm className="search" action={searchAction}>
           <TagInput name="query" placeholder="Search: flower sky 1girl" value={query} onChange={onQueryChange} onValueChange={setQuery} />
-          {options && <a className="settingsButton" href="#" onClick={toggleMenu}><img src="/static/cog.svg" alt="settings" /></a>}
+          <SSRCurtain>{options && <a className="settingsButton" href="#" onClick={onOptionsButtonClick}><img src="/static/cog.svg" alt="settings" /></a>}</SSRCurtain>
           <button>Search</button>
         </ReactForm>
         {fetching && <div className="progress" />}
-        {menuOpen &&
+        {optionsOpen &&
           <div className="menu">
             <div>
               <select value="label" onChange={onSort}>

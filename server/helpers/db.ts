@@ -75,7 +75,6 @@ export async function initialize() {
   
   initializationLock = (async () => {
     console.log("Initializing Database!");
-    await query(SQL`DROP OWNED BY CURRENT_USER`, true);
     await query(setupSQL, true);
     
     const dbPath = findHydrusDB();

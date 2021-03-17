@@ -64,7 +64,7 @@ export default function SearchPage() {
       const bottomPosition = window.pageYOffset + window.innerHeight;
       const bodyHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
       
-      if(bodyHeight - bottomPosition < bodyHeight * 0.1) {
+      if(bodyHeight - bottomPosition < window.innerHeight * 0.25) {
         curPage.current++;
         
         try {
@@ -88,7 +88,7 @@ export default function SearchPage() {
     checkScroll();
     document.addEventListener("scroll", checkScroll);
     return () => document.removeEventListener("scroll", checkScroll);
-  }, [end, query, usePagination, firstPage]);
+  }, [end, query, usePagination, pages]);
   
   return (
     <Layout className="SearchPage" options
