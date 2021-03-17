@@ -2,9 +2,9 @@ import React from "react";
 import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from "react-router";
 import express from "express";
+import index from '../views/index.handlebars';
 import App from "../../client/App";
 import * as globalController from "../controllers/global";
-import index from '../views/index.handlebars';
 import HTTPError from "./HTTPError";
 
 const removeTags = /[&<>]/g;
@@ -30,11 +30,7 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
     res.header('Pragma', 'no-cache');
     
     // noinspection JSUnreachableSwitchBranches
-    switch(req.accepts(['json', 'html'])) {
-      case "json":
-        res.json(initialData);
-        break;
-      
+    switch(req.accepts(['html', 'json'])) {
       case "html": {
         (async () => {
           const initialDataEx = {
@@ -57,6 +53,10 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
         })().catch(next);
         break;
       }
+      
+      case "json":
+        res.json(initialData);
+        break;
       
       default:
         throw new HTTPError(406);
