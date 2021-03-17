@@ -6,7 +6,9 @@ import { Mime } from "../helpers/consts";
 export interface PostSummary {
   id: number;
   hash: string;
+  extension: string;
   mime: Mime | null;
+  posted: string;
 }
 
 export interface PostSearchResults {
@@ -25,6 +27,7 @@ export interface TagsSearchResults {
 export interface Post {
   id: number;
   hash: string;
+  extension: string;
   size: number | null;
   width: number | null;
   height: number | null;

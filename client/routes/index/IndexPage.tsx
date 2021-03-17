@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from "react-router-dom";
-import { MIME_EXT } from "../../../server/helpers/consts";
 import { IndexPageData } from "../../../server/routes/apiTypes";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
@@ -11,9 +10,7 @@ import "./IndexPage.scss";
 export default function IndexPage() {
   const [pageData] = usePageData<IndexPageData>();
   const config = useConfig();
-  
-  const extension = pageData?.motd?.mime && MIME_EXT[pageData?.motd?.mime] || "";
-  const motdLink = `/files/f${pageData?.motd?.hash}${extension}`;
+  const motdLink = `/files/f${pageData?.motd?.hash}${pageData?.motd?.extension}`;
   
   return (
     <div className="IndexPage">

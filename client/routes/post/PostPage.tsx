@@ -1,6 +1,6 @@
 import React from "react";
 import { Post, PostPageData } from "../../../server/routes/apiTypes";
-import { Mime, MIME_EXT, MIME_STRING } from "../../../server/helpers/consts";
+import { Mime, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
@@ -20,8 +20,7 @@ export default function PostPage() {
     );
   }
   
-  const extension = pageData.post.mime && MIME_EXT[pageData.post.mime] || "";
-  const link = `/files/f${pageData.post.hash}${extension}`;
+  const link = `/files/f${pageData.post.hash}${pageData.post.extension}`;
   let rating;
   if(pageData.post.rating !== null) {
     const stars = Math.round(pageData.post.rating * STARS_COUNT);

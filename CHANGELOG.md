@@ -1,7 +1,6 @@
 
 ### TODO:
 
-- Add posted date in PostSummary and Post
 - Accepts defaults to json
 - Anchors with # reloads page
 - Gallery
@@ -17,6 +16,11 @@
 - 3rd party license file
 - Improve README.md
 - Handling txt/unknown files
+
+# Unreleeased
+
+- Added `posted` in PostSummary
+- Added `extension` in PostSummary and Post
 
 # v1.0.0
 

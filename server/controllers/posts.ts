@@ -2,6 +2,7 @@ import SQL, { SQLStatement } from "sql-template-strings";
 import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
+import { MIME_EXT } from "../helpers/consts";
 
 const PAGE_SIZE = 36;
 const TAGS_COUNT = 40;
@@ -83,7 +84,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     `;
   }
   
-  return await db.queryFirst(SQL`
+  const result = await db.queryFirst(SQL`
     WITH
       whitelisted AS (
         SELECT DISTINCT array_agg(id) AS ids
@@ -113,7 +114,8 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
       COALESCE(json_agg(json_build_object(
         'id', id,
         'hash', encode(hash, 'hex'),
-        'mime', mime
+        'mime', mime,
+        'posted', posted
       )), '[]') as posts,
       (SELECT count(1) FROM filtered)::INTEGER as total,
       ${pageSize}::INTEGER as "pageSize"
@@ -126,10 +128,16 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
       OFFSET ${page * pageSize}
     ) x
   `));
+  
+  for(const post of result.posts) {
+    if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+  }
+  
+  return result;
 }
 
 export async function random(tag = ""): Promise<PostSummary | null> {
-  return await db.queryFirst(SQL`
+  const post = await db.queryFirst(SQL`
     WITH filtered AS (
           SELECT DISTINCT ON (posts.id)
             posts.*
@@ -142,15 +150,20 @@ export async function random(tag = ""): Promise<PostSummary | null> {
     SELECT
       id,
       encode(hash, 'hex') as hash,
-      mime
+      mime,
+      posted
     FROM filtered
     ORDER BY id
     OFFSET floor(random() * (SELECT count(1) FROM filtered))
   `);
+  
+  if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+  
+  return post;
 }
 
 export async function get(id: number): Promise<Post | null> {
-  return await db.queryFirst(SQL`
+  const post = await db.queryFirst(SQL`
     SELECT
       posts.id,
       encode(posts.hash, 'hex') AS hash,
@@ -170,4 +183,8 @@ export async function get(id: number): Promise<Post | null> {
     WHERE posts.id = ${id}
     GROUP BY posts.id
   `);
+  
+  if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+  
+  return post;
 }
