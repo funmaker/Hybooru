@@ -16,7 +16,7 @@ interface RequestOptions<Req> {
   cancelCb?: (cancel: Canceler) => void;
 }
 
-export default async function requestJSON<Res, Req extends Record<string, any>>(options: RequestOptions<Req> = {}): Promise<Res> {
+export default async function requestJSON<Res, Req extends Record<string, any> = Record<string, any>>(options: RequestOptions<Req> = {}): Promise<Res> {
   if(isNode) return new Promise(() => {});
   let { method, href, host, pathname, search, cancelCb, data } = options;
   

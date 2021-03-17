@@ -2,8 +2,20 @@
 .IndexPage {
   text-align: center;
 
+  .motd {
+    display: block;
+    margin: 0.5em auto -5.5em;
+    width: min-content;
+
+    img {
+      width: 20em;
+      height: 15em;
+      object-fit: contain;
+    }
+  }
+
   .header {
-    margin-top: 1em;
+    margin-top: 4rem;
     font-size: 4em;
     font-weight: bolder;
   }

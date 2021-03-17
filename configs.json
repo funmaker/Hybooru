@@ -1,12 +1,17 @@
 {
 	"port": 3939,
 	"hydrusDbPath": null,
-	"appName": "Mikubooru",
+	"appName": "Hybooru",
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",
 		"database": "hybooru",
 		"password": "hybooru",
 		"port": 5432
+	},
+	"tags": {
+		"motd": null,
+		"ignore": [],
+		"blacklist": []
 	}
 }

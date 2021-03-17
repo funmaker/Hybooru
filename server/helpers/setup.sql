@@ -32,7 +32,7 @@ CREATE TABLE posts (
 
 CREATE TABLE urls (
   id INTEGER,
-  postid INTEGER NOT NULL REFERENCES posts(id),
+  postid INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   url TEXT NOT NULL,
 
   PRIMARY KEY(id, postid)
@@ -52,8 +52,8 @@ CREATE TABLE namespaces (
 );
 
 CREATE TABLE mappings (
-  postid INTEGER NOT NULL REFERENCES posts(id),
-  tagid INTEGER NOT NULL REFERENCES tags(id),
+  postid INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  tagid INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
 
   PRIMARY KEY(postid, tagid)
 );

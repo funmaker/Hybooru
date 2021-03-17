@@ -4,7 +4,8 @@ import PromiseRouter from "express-promise-router";
 import HTTPError from "../helpers/HTTPError";
 import * as db from "../helpers/db";
 import * as postsController from "../controllers/posts";
-import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBResponse } from "./apiTypes";
+import * as tagsController from "../controllers/tags";
+import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBResponse, TagsSearchRequest, TagsSearchResults } from "./apiTypes";
 
 export const router = PromiseRouter();
 
@@ -21,7 +22,13 @@ router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, 
 });
 
 router.get<any, PostsSearchResponse, any, Partial<PostsSearchRequest>>("/post", async (req, res) => {
-  const result = await postsController.search(req.query.query, req.query.page, false);
+  const result = await postsController.search({ ...req.query, includeTags: false });
+  
+  res.json(result);
+});
+
+router.get<any, TagsSearchResults, any, Partial<TagsSearchRequest>>("/tags", async (req, res) => {
+  const result = await tagsController.search(req.query);
   
   res.json(result);
 });

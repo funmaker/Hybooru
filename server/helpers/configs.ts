@@ -7,6 +7,11 @@ type Config = {
   db: pg.PoolConfig,
   hydrusDbPath: string | null,
   appName: string,
+  tags: {
+    motd: string | null,
+    ignore: string[],
+    blacklist: string[],
+  }
 };
 
 let configs: Config;
@@ -25,7 +30,12 @@ try {
       port: 5432,
     },
     hydrusDbPath: null,
-    appName: "HyBooru"
+    appName: "HyBooru",
+    tags: {
+      motd: null,
+      ignore: [],
+      blacklist: [],
+    }
   };
 }
 

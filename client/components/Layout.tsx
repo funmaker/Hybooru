@@ -8,15 +8,18 @@ import useChange from "../hooks/useChange";
 import usePageData from "../hooks/usePageData";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
+import TagInput from "./TagInput";
 import "./Layout.scss";
 
 export interface LayoutProps {
   className?: string;
   sidebar?: React.ReactNode;
   children: React.ReactNode;
+  searchAction?: string;
+  options?: boolean;
 }
 
-export default function Layout({ className, sidebar, children }: LayoutProps) {
+export default function Layout({ className, sidebar, children, searchAction = "/posts", options }: LayoutProps) {
   const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
@@ -46,13 +49,24 @@ export default function Layout({ className, sidebar, children }: LayoutProps) {
     });
   }, []);
   
+  const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
+    setQuery(query => {
+      const newQuery = query.trimRight()
+                            .split(" ")
+                            .filter(s => !s.startsWith("order:"))
+                            .join(" ");
+      
+      return newQuery + ` order:${ev.target.value}`;
+    });
+  }, []);
+  
   let domClassName = "Layout";
   if(mobile) domClassName += ` mobile`;
   if(className) domClassName += ` ${className}`;
   
   return (
     <div className={domClassName} ref={ref}>
-      <div className={`sidebar${sidebarOpen ? " open" : ""}`}>
+      <div className={`sidebar${sidebarOpen ? " open" : ""}${sidebar ? "" : " simple"}`}>
         <div className="logo">
           <Link to="/">{config.appName}</Link>
         </div>
@@ -62,23 +76,35 @@ export default function Layout({ className, sidebar, children }: LayoutProps) {
       </div>
       <div className="header">
         {mobile &&
-          <img src="/static/menu_icon.svg" alt="menu" className="menuButton" onClick={toggleSidebar} />
+          <a href="#" className="menuButton" onClick={toggleSidebar}><img src="/static/menu_icon.svg" alt="menu" /></a>
         }
         <div className="links">
           <Link to="/">Main Page</Link>
           <Link to="/posts">All Posts</Link>
           <Link to="/tags">Tags</Link>
-          <Link to="/random">Random</Link>
-          <a href="https://github.com/funmaker/hybooru">GitHub</a>
+          <a href="/random">Random</a>
+          <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
         </div>
-        <ReactForm className="search" action="/posts">
-          <input name="query" placeholder="Search: flower sky 1girl" value={query} onChange={onQueryChange} />
-          <img src="/static/cog.svg" alt="settings" className="settingsButton" onClick={toggleMenu} />
+        <ReactForm className="search" action={searchAction}>
+          <TagInput name="query" placeholder="Search: flower sky 1girl" value={query} onChange={onQueryChange} onValueChange={setQuery} />
+          {options && <a className="settingsButton" href="#" onClick={toggleMenu}><img src="/static/cog.svg" alt="settings" /></a>}
           <button>Search</button>
         </ReactForm>
-        {fetching && <div className="progress"/>}
+        {fetching && <div className="progress" />}
         {menuOpen &&
           <div className="menu">
+            <div>
+              <select value="label" onChange={onSort}>
+                <option value="label" disabled>Sorting</option>
+                <option value="date">Date Imported (Newest First)</option>
+                <option value="date_asc">Date Imported (Oldest First)</option>
+                <option value="score">Score (Descending)</option>
+                <option value="score_asc">Score (Ascending)</option>
+                <option value="size">File Size (Descending)</option>
+                <option value="size_asc">File Size (Ascending)</option>
+                <option value="id">Id</option>
+              </select>
+            </div>
             <div><a href="#" onClick={togglePagination}>Auto Paging: {pagination ? "No" : "Yes"}</a></div>
             <div><a href="#" onClick={regenDB}>Regen Database</a></div>
           </div>

@@ -13,4 +13,17 @@
     color: gray;
     margin-left: 0.5em;
   }
+
+  .btn {
+    display: inline-block;
+    user-select: none;
+    margin-right: 0.1em;
+    font-weight: bold;
+    width: 1.3ch;
+    text-align: center;
+
+    &.hide {
+      opacity: 0;
+    }
+  }
 }

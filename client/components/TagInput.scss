@@ -1,0 +1,31 @@
+
+.TagInput {
+  position: fixed;
+  border: 1px solid lightgray;
+
+  .row {
+    display: block;
+    background: white;
+    cursor: pointer;
+    padding: 0.25em;
+    font-size: 0.8em;
+    outline: none !important;
+
+    .posts {
+      float: right;
+      color: lightgray;
+    }
+
+    &:hover, &:focus {
+      background: #f3fbff;
+    }
+
+    &:nth-child(2n) {
+      background: #f9fbff;
+
+      &:hover, &:focus {
+        background: #eff5ff;
+      }
+    }
+  }
+}

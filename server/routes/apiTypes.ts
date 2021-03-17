@@ -9,11 +9,17 @@ export interface PostSummary {
   mime: Mime | null;
 }
 
-export interface SearchResults {
+export interface PostSearchResults {
   posts: PostSummary[];
   total: number;
   pageSize: number;
   tags?: Record<string, number>;
+}
+
+export interface TagsSearchResults {
+  tags: Record<string, number>;
+  total: number;
+  pageSize: number;
 }
 
 export interface Post {
@@ -48,19 +54,30 @@ export interface Config {
 
 export interface IndexPageData {
   stats: Stats;
+  motd: PostSummary | null;
 }
 
-export interface SearchPageRequest {
+export interface PostsSearchPageRequest {
   query?: string;
   page?: number;
 }
 
-export interface SearchPageData {
-  results: SearchResults;
+export interface PostsSearchPageData {
+  results: PostSearchResults;
 }
 
 export interface PostPageData {
   post: Post | null;
+}
+
+export interface TagsSearchPageRequest {
+  query?: string;
+  sorting?: string;
+  page?: number;
+}
+
+export interface TagsSearchPageData {
+  results: TagsSearchResults;
 }
 
 export interface ErrorPageData {
@@ -78,7 +95,16 @@ export interface RegenDBResponse {}
 export interface PostsSearchRequest {
   query?: string;
   page?: number;
+  pageSize?: number;
 }
-export type PostsSearchResponse = SearchResults;
+export type PostsSearchResponse = PostSearchResults;
 
 export type PostsGetResponse = Post | null;
+
+export interface TagsSearchRequest {
+  query?: string;
+  sorting?: string;
+  page?: number;
+  pageSize?: number;
+}
+export type TagsSearchResponse = TagsSearchResults;

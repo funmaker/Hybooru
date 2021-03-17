@@ -1,85 +1,152 @@
-import SQL from "sql-template-strings";
-import { Post, SearchResults } from "../routes/apiTypes";
+import SQL, { SQLStatement } from "sql-template-strings";
+import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
+import HTTPError from "../helpers/HTTPError";
 
 const PAGE_SIZE = 36;
 const TAGS_COUNT = 40;
+const MAX_PARTS = 40;
 
-export async function search(query = "", page = 0, includeTags = false): Promise<SearchResults> {
+const SORTS = {
+  date: "posted",
+  id: "id",
+  score: "rating",
+  size: "size",
+};
+
+export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE }): Promise<PostSearchResults> {
+  if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
+  
   const parts = query.split(" ")
                      .filter(p => !!p)
-                     .map(p => p.replace(/\\/g, "\\\\")
+                     .map(p => p.toLowerCase()
+                                .replace(/\\/g, "\\\\")
                                 .replace(/%/g, "\\%")
                                 .replace(/_/g, "\\_")
                                 .replace(/\*/g, "%")
                                 .replace(/\?/g, "_"));
   
-  const whitelist = parts.filter(p => !p.startsWith("-"));
-  const blacklist = parts.filter(p => p.startsWith("-"))
-                         .map(p => p.substr(1));
+  if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
   
-  let tags;
-  if(includeTags) {
-    ({ tags } = await db.queryFirst(SQL`
-      SELECT
-        json_object_agg(name, used ORDER BY count DESC, id ASC) AS tags
-      FROM (
-        SELECT DISTINCT ON (tags.id)
-          tags.id,
-          tags.name,
-          tags.used,
-          count(1) as count
-        FROM (
-          SELECT DISTINCT ON (posts.id)
-            posts.*
-          FROM tags w_tags
-            INNER JOIN mappings w_map ON w_map.tagid = w_tags.id
-            INNER JOIN posts          ON w_map.postid = posts.id
-            LEFT  JOIN mappings b_map ON b_map.postid = posts.id
-            LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND (b_tags.name ILIKE ANY(${blacklist}::TEXT[]) OR b_tags.subtag ILIKE ANY(${blacklist}::TEXT[]))
-          WHERE (w_tags.name ILIKE ANY(${whitelist}::TEXT[]) OR w_tags.subtag ILIKE ANY(${whitelist}::TEXT[]) OR ${whitelist.length === 0})
-            AND b_tags.id IS NULL
-        ) filtered
-        LEFT  JOIN mappings ON mappings.postid = filtered.id
-        LEFT  JOIN tags     ON mappings.tagid = tags.id
-        GROUP BY tags.id
-        LIMIT ${TAGS_COUNT}
-      ) x
-    `));
+  const whitelist = [];
+  const blacklist = [];
+  let sort = SORTS.date;
+  let order = "desc";
+  
+  for(let part of parts) {
+    if(part.startsWith("-")) {
+      blacklist.push(part.slice(1));
+    } else if(part.startsWith("order:")) {
+      part = part.slice(6);
+      
+      if(part.endsWith("\\_asc")) {
+        order = "asc";
+        part = part.slice(0, -5);
+      }
+      if(part.endsWith("\\_desc")) {
+        order = "desc";
+        part = part.slice(0, -6);
+      }
+      
+      if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
+      sort = SORTS[part as keyof typeof SORTS];
+    } else {
+      whitelist.push(part);
+    }
   }
   
-  const posts = await db.queryAll(SQL`
+  if(whitelist.length === 0) whitelist.push("%");
+  
+  let tagsQuery: SQLStatement | string = "";
+  if(includeTags) {
+    tagsQuery = SQL`
+      , (
+        SELECT
+          COALESCE(json_object_agg(name, used), '{}')
+        FROM (
+          SELECT *
+          FROM(
+            SELECT DISTINCT ON (tags.id)
+              tags.id,
+              tags.name,
+              tags.used,
+              count(1) as count
+            FROM filtered
+            LEFT  JOIN mappings ON mappings.postid = filtered.id
+            LEFT  JOIN tags     ON mappings.tagid = tags.id
+            GROUP BY tags.id
+          ) x
+          ORDER BY count DESC, id ASC
+          LIMIT ${TAGS_COUNT}
+        ) x
+      ) AS tags
+    `;
+  }
+  
+  return await db.queryFirst(SQL`
+    WITH
+      whitelisted AS (
+        SELECT DISTINCT array_agg(id) AS ids
+        FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
+        LEFT JOIN tags ON name ILIKE pat OR subtag ILIKE pat
+        GROUP BY patid
+      ),
+      blacklisted AS (
+        SELECT array_agg(DISTINCT id) AS ids
+        FROM unnest(${blacklist}::TEXT[]) pat
+        LEFT JOIN tags ON name ILIKE pat OR subtag ILIKE pat
+      ),
+      whitelist_size AS (SELECT count(*) AS size FROM whitelisted),
+      filtered AS (
+        SELECT DISTINCT ON (posts.id)
+          posts.*
+        FROM posts
+          CROSS JOIN whitelisted
+          CROSS JOIN blacklisted
+          CROSS JOIN whitelist_size
+        WHERE     EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(whitelisted.ids))
+          AND NOT EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(blacklisted.ids))
+        GROUP BY posts.id, whitelist_size.size
+        HAVING count(1) = whitelist_size.size
+      )
     SELECT
-      filtered.id,
-      encode(filtered.hash, 'hex') as hash,
-      filtered.mime,
-      (count(1) OVER())::INTEGER as total
+      COALESCE(json_agg(json_build_object(
+        'id', id,
+        'hash', encode(hash, 'hex'),
+        'mime', mime
+      )), '[]') as posts,
+      (SELECT count(1) FROM filtered)::INTEGER as total,
+      ${pageSize}::INTEGER as "pageSize"
+      `.append(tagsQuery).append(SQL`
     FROM (
-      SELECT DISTINCT ON (posts.id)
-        posts.*
-      FROM tags w_tags
-        INNER JOIN mappings w_map ON w_map.tagid = w_tags.id
-        INNER JOIN posts          ON w_map.postid = posts.id
-        LEFT  JOIN mappings b_map ON b_map.postid = posts.id
-        LEFT  JOIN tags b_tags    ON b_map.tagid = b_tags.id AND (b_tags.name ILIKE ANY(${blacklist}::TEXT[]) OR b_tags.subtag ILIKE ANY(${blacklist}::TEXT[]))
-      WHERE (w_tags.name ILIKE ANY(${whitelist}::TEXT[]) OR w_tags.subtag ILIKE ANY(${whitelist}::TEXT[]) OR ${whitelist.length === 0})
-        AND b_tags.id IS NULL
-    ) filtered
-    ORDER BY filtered.posted DESC, filtered.id ASC
-    LIMIT ${PAGE_SIZE}
-    OFFSET ${page * PAGE_SIZE}
+      SELECT *
+      FROM filtered
+      ORDER BY `).append(`filtered."${sort}" ${order} NULLS LAST, filtered.id ${order}`).append(SQL`
+      LIMIT ${pageSize}
+      OFFSET ${page * pageSize}
+    ) x
+  `));
+}
+
+export async function random(tag = ""): Promise<PostSummary | null> {
+  return await db.queryFirst(SQL`
+    WITH filtered AS (
+          SELECT DISTINCT ON (posts.id)
+            posts.*
+          FROM posts
+          LEFT JOIN mappings ON mappings.postid = posts.id
+          LEFT JOIN tags     ON mappings.tagid = tags.id
+          WHERE tags.name ILIKE ${tag} OR tags.subtag ILIKE ${tag} OR ${tag} = ''
+          GROUP BY posts.id
+        )
+    SELECT
+      id,
+      encode(hash, 'hex') as hash,
+      mime
+    FROM filtered
+    ORDER BY id
+    OFFSET floor(random() * (SELECT count(1) FROM filtered))
   `);
-  
-  // Not the cleanest, but will do
-  const total = posts[0]?.total || 0;
-  for(const post of posts) delete post.total;
-  
-  return {
-    posts,
-    total,
-    pageSize: PAGE_SIZE,
-    tags,
-  };
 }
 
 export async function get(id: number): Promise<Post | null> {

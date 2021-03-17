@@ -223,6 +223,20 @@ export async function initialize() {
     `);
     
     await query(SQL`
+      DELETE FROM posts
+      USING unnest(${configs.tags.blacklist}::TEXT[]) pat
+      INNER JOIN tags ON tags.name ILIKE pat OR tags.subtag ILIKE pat
+      INNER JOIN mappings ON mappings.tagid = tags.id
+      WHERE mappings.postid = posts.id
+    `);
+    
+    await query(SQL`
+      DELETE FROM tags
+      USING unnest(${configs.tags.ignore}::TEXT[]) pat
+      WHERE tags.name ILIKE pat OR tags.subtag ILIKE pat
+    `);
+    
+    await query(SQL`
       UPDATE tags
       SET used = stats.count
       FROM (

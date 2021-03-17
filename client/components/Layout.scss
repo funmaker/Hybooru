@@ -19,6 +19,15 @@
     z-index: 1;
     background: white;
 
+    &.simple {
+      position: fixed;
+      height: auto;
+
+      & > .sidebarContent {
+        display: none;
+      }
+    }
+
     & > .logo {
       font-size: 2.5em;
       font-weight: bold;
@@ -52,15 +61,21 @@
 
     .menuButton {
       float: left;
-      height: 3rem;
-      width: 2rem;
       margin: 0.6rem 0 0 0.5rem;
-      cursor: pointer;
-      transition: opacity 0.1s;
-      opacity: 0.5;
+      outline: none !important;
 
-      &:hover {
-        opacity: 0.8;
+      img {
+        height: 3rem;
+        width: 2rem;
+        opacity: 0.5;
+        object-fit: contain;
+        transition: opacity 0.1s;
+      }
+
+      &:hover, &:focus {
+        img {
+          opacity: 0.8;
+        }
       }
     }
 
@@ -76,20 +91,27 @@
       display: flex;
 
       .settingsButton {
-        height: 1.5em;
-        width: 1.5em;
-        object-fit: contain;
-        margin: 0.25em;
-        opacity: 0.25;
-        cursor: pointer;
+        margin: 0.25em 0.25em 0.25em 0;
 
-        &:hover {
-          opacity: 0.5;
+        img {
+          height: 1.5em;
+          width: 1.5em;
+          object-fit: contain;
+          opacity: 0.25;
+        }
+
+        &:focus, &:hover {
+          outline: none !important;
+
+          img {
+            opacity: 0.5;
+          }
         }
       }
 
       input {
         flex: 1;
+        margin-right: 0.25em;
       }
     }
 

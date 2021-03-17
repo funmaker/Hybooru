@@ -2,7 +2,7 @@ import React, { useEffect, useReducer, useRef, useState } from "react";
 import axios, { Canceler } from "axios";
 import { useHistory } from "react-router";
 import qs from "query-string";
-import { PostsSearchRequest, PostsSearchResponse, PostSummary, SearchPageData, SearchResults } from "../../../server/routes/apiTypes";
+import { PostsSearchRequest, PostsSearchResponse, PostSummary, PostsSearchPageData, PostSearchResults } from "../../../server/routes/apiTypes";
 import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
@@ -15,19 +15,19 @@ import useSearch from "../../hooks/useSearch";
 import "./SearchPage.scss";
 
 function pagesReducer(state: PostSummary[][], action: { posts: PostSummary[]; reset?: boolean }) {
-  if(action.reset && action.posts.length > 0) return [action.posts];
+  if(action.reset) return [action.posts];
   else return [...state, action.posts];
 }
 
 export default function SearchPage() {
-  const [pageData] = usePageData<SearchPageData>();
+  const [pageData] = usePageData<PostsSearchPageData>();
   const [pagination] = useLocalStorage("pagination", false);
   const SSR = useSSR();
   const curPage = useRef(0);
   const search = useSearch();
   const query = typeof search.query === "string" ? search.query : "";
   const history = useHistory();
-  const [firstPage, setFirstPage] = useState<SearchResults>(pageData?.results || { posts: [], pageSize: 1, tags: {}, total: 0 });
+  const [firstPage, setFirstPage] = useState<PostSearchResults>(pageData?.results || { posts: [], pageSize: 1, tags: {}, total: 0 });
   const [pages, pagesDispatch] = useReducer(pagesReducer, pageData?.results.posts ? [pageData?.results.posts] : []);
   const pageFetchCancel = useRef<null | Canceler>(null);
   
@@ -88,10 +88,10 @@ export default function SearchPage() {
     checkScroll();
     document.addEventListener("scroll", checkScroll);
     return () => document.removeEventListener("scroll", checkScroll);
-  }, [end, query, usePagination]);
+  }, [end, query, usePagination, firstPage]);
   
   return (
-    <Layout className="SearchPage"
+    <Layout className="SearchPage" options
             sidebar={firstPage.tags && <Tags tags={firstPage.tags} searchMod />}>
       {pages.flatMap(posts => posts.map(post => <Thumbnail key={post.id} post={post} />))}
       {new Array(10).fill(null).map((v, id) => <div key={id} className="placeholder" />)}

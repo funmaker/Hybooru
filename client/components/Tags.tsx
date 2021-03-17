@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import "./Tags.scss";
 import useConfig from "../hooks/useConfig";
+import useSearch from "../hooks/useSearch";
+import "./Tags.scss";
 
 export interface TagsProps {
   tags: Record<string, number>;
@@ -9,7 +10,7 @@ export interface TagsProps {
   searchMod?: boolean;
 }
 
-const namespaceRegex = /(.+):(.+)/;
+export const namespaceRegex = /(.+):(.+)/;
 
 export default function Tags({ tags, grouped, searchMod }: TagsProps) {
   if(grouped) {
@@ -75,20 +76,46 @@ interface TagProps {
 
 function Tag({ searchMod, tag, tags }: TagProps) {
   const config = useConfig();
+  const search = useSearch();
+  const query = typeof search.query === "string" ? search.query : "";
   
   let name = tag.replace(/_/g, " ");
   let color: string | undefined;
   
   const result = name.match(namespaceRegex);
   if(result) {
-    name = name.slice(name.indexOf(":") + 1);
+    name = result[2];
     color = config.namespaceColors[result[1]];
-    console.log(result[1], color);
+  }
+  
+  let addLink: string = "#";
+  let delLink: string = "#";
+  let addCh = "+";
+  let delCh = "-";
+  
+  if(searchMod) {
+    const parts = query.split(" ");
+    const partsClean = parts.filter(p => p !== tag && p !== `-${tag}`);
+    
+    if(!parts.includes(tag)) addLink = `/posts?query=${encodeURIComponent([...partsClean, tag].join(" "))}`;
+    else {
+      addLink = `/posts?query=${encodeURIComponent(partsClean.join(" "))}`;
+      addCh = "•";
+    }
+    
+    if(!parts.includes(`-${tag}`)) delLink = `/posts?query=${encodeURIComponent([...partsClean, `-${tag}`].join(" "))}`;
+    else {
+      addLink = `/posts?query=${encodeURIComponent(partsClean.join(" "))}`;
+      addCh = "•";
+    }
   }
   
   return (
     <div>
-      {searchMod ? "+ - " : ""}
+      {searchMod && <>
+        <Link className="btn" to={addLink}>{addCh}</Link>
+        <Link className="btn" to={delLink}>{delCh}</Link>
+      </> /* eslint-disable-line react/jsx-closing-tag-location */ }
       <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
       <span>{tags[tag]}</span>
     </div>

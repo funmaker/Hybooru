@@ -1,0 +1,26 @@
+
+.TagsPage {
+  .tags {
+    margin: 2em auto 3em;
+    width: calc(100% - 2em);
+    max-width: 40em;
+    text-align: center;
+    border-collapse: collapse;
+
+    td, th {
+      border: 1px solid lightgray;
+    }
+
+    tr:nth-child(2n + 1) {
+      background-color: #f9fbff;
+    }
+
+    tr:first-child {
+      background-color: #dfe2ff;
+    }
+
+    td:nth-child(3) {
+      text-transform: capitalize;
+    }
+  }
+}

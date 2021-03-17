@@ -9,6 +9,7 @@ import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
+import TagsPage from "./routes/tags/TagsPage";
 import "./globals.scss";
 
 interface Props {
@@ -44,6 +45,7 @@ export default hot(module)(function App({ initialData }: Props) {
         <PageDataContext.Provider value={contextData}>
           <Switch>
             <Route path="/test" component={TestPage} />
+            <Route path="/tags" component={TagsPage} />
             <Route path="/posts/:id" component={PostPage} />
             <Route path="/posts" component={SearchPage} />
             <Route path="/" exact component={IndexPage} />

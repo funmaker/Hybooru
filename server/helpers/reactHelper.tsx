@@ -52,6 +52,7 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
             ),
             initialData: initialDataJSON,
             production: process.env.NODE_ENV === 'production',
+            appName: initialDataEx._config.appName,
           }));
         })().catch(next);
         break;

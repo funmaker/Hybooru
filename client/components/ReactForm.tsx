@@ -11,8 +11,8 @@ export default function ReactForm({ action, ...props }: React.FormHTMLAttributes
     const formData = new FormData(ev.currentTarget);
     const search = new URLSearchParams(formData as any).toString();
     
-    history.push(`/posts${search ? `?${search}` : ""}`);
-  }, [history]);
+    history.push(`${action}${search ? `?${search}` : ""}`);
+  }, [action, history]);
   
   return <form action={action} {...props} onSubmit={onSubmit} />;
 }
