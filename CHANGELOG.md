@@ -1,7 +1,6 @@
 
 ### TODO:
 
-- Accepts defaults to json
 - Anchors with # reloads page
 - Gallery
 - OpenGraph
@@ -21,6 +20,7 @@
 
 - Added `posted` in PostSummary
 - Added `extension` in PostSummary and Post
+- Fixed page endpoints defaulting to application/json when Accepts HTTP header is ambiguous.
 
 # v1.0.0
 
