@@ -28,11 +28,7 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
     
-    switch(req.accepts(['json', 'html'])) {
-      case "json":
-        res.json(initialData);
-        break;
-      
+    switch(req.accepts(['html', 'json'])) {
       case "html": {
         const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
         
@@ -47,6 +43,10 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
         }));
         break;
       }
+      
+      case "json":
+        res.json(initialData);
+        break;
       
       default:
         throw new HTTPError(406);
