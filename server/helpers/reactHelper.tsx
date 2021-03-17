@@ -28,19 +28,22 @@ export function reactMiddleware(req: express.Request, res: express.Response, nex
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
     
+    // noinspection JSUnreachableSwitchBranches
     switch(req.accepts(['html', 'json'])) {
       case "html": {
-        const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
-        
-        res.send(index({
-          reactContent: ReactDOMServer.renderToString(
-            <StaticRouter location={req.originalUrl} context={{}}>
-              <App initialData={initialData} />
-            </StaticRouter>,
-          ),
-          initialData: initialDataJSON,
-          production: process.env.NODE_ENV === 'production',
-        }));
+        (async () => {
+          const initialDataJSON = JSON.stringify(initialData).replace(removeTags, tag => tagsToReplace[tag] || tag);
+          
+          res.send(index({
+            reactContent: ReactDOMServer.renderToString(
+              <StaticRouter location={req.originalUrl} context={{}}>
+                <App initialData={initialData} />
+              </StaticRouter>,
+            ),
+            initialData: initialDataJSON,
+            production: process.env.NODE_ENV === 'production',
+          }));
+        })().catch(next);
         break;
       }
       
