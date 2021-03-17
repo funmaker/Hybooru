@@ -1,7 +1,7 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"main": "server.ts",
 	"author": "Fun Maker",
 	"repository": "https://github.com/funmaker/webapp-boilerplate",

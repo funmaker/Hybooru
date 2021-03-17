@@ -15,7 +15,7 @@
 - Handling txt/unknown files
 
 
-# Unreleeased
+# v1.1.0
 
 - Added `posted` in PostSummary
 - Added `extension` in PostSummary and Post
