@@ -1,6 +1,7 @@
 
 ### TODO:
 
+- DB Generation Streaming and Progress Bar
 - Gallery
 - OpenGraph
 - API docs
@@ -13,6 +14,10 @@
 - 3rd party license file
 - Improve README.md
 - Handling txt/unknown files
+
+# Unreleased
+
+- Fixed 500 HTTP Error when post has no tags
 
 
 # v1.1.0

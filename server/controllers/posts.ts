@@ -176,7 +176,10 @@ export async function get(id: number): Promise<Post | null> {
       posts.rating,
       posts.mime,
       posts.posted,
-      json_object_agg(tags.name, tags.used ORDER BY name ASC, tags.id ASC) AS tags
+      COALESCE(json_object_agg(
+        tags.name, tags.used
+        ORDER BY name ASC, tags.id ASC
+      ) FILTER (WHERE tags.id IS NOT NULL), '{}') AS tags
     FROM posts
     LEFT  JOIN mappings ON mappings.postid = posts.id
     LEFT  JOIN tags     ON mappings.tagid = tags.id
