@@ -18,7 +18,7 @@
 - error pages
 
 
-# Unreleased
+# v1.2.0
 
 - Added source URLs in Post page.
 - Added `sources` in Post
