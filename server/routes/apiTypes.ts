@@ -38,6 +38,7 @@ export interface Post {
   mime: Mime | null;
   posted: string;
   tags: Record<string, number>;
+  sources: string[];
 }
 
 export interface Stats {

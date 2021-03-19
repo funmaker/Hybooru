@@ -111,7 +111,7 @@ export async function initialize() {
       
       await query(SQL`
         INSERT INTO posts(id, hash, size, width, height, duration, num_frames, has_audio, rating, mime, posted)
-        SELECT id, decode(hash, 'base64') as hash, size, width, height, duration, num_frames, has_audio, rating, mime, to_timestamp(posted) AT TIME ZONE 'UTC'
+        SELECT id, decode(hash, 'base64') as hash, size, width, height, duration, num_frames, has_audio, rating, mime, to_timestamp(posted)
         FROM json_to_recordset(${JSON.stringify(posts)})
           AS x(
             id INTEGER,

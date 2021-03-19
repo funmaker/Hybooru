@@ -14,9 +14,15 @@
 - 3rd party license file
 - Improve README.md
 - Handling txt/unknown files
+- 404 on missing files
+- error pages
+
 
 # Unreleased
 
+- Added source URLs in Post page.
+- Added `sources` in Post
+- API will now always return dates at UTC timezone
 - Fixed 500 HTTP Error when post has no tags
 
 

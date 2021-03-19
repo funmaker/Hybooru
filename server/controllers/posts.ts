@@ -115,7 +115,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         'id', id,
         'hash', encode(hash, 'hex'),
         'mime', mime,
-        'posted', posted
+        'posted', format_date(posted)
       )), '[]') as posts,
       (SELECT count(1) FROM filtered)::INTEGER as total,
       ${pageSize}::INTEGER as "pageSize"
@@ -151,7 +151,7 @@ export async function random(tag = ""): Promise<PostSummary | null> {
       id,
       encode(hash, 'hex') as hash,
       mime,
-      posted
+      format_date(posted) AS posted
     FROM filtered
     ORDER BY id
     OFFSET floor(random() * (SELECT count(1) FROM filtered))
@@ -175,14 +175,16 @@ export async function get(id: number): Promise<Post | null> {
       posts.has_audio AS "hasAudio",
       posts.rating,
       posts.mime,
-      posts.posted,
+      format_date(posted) AS posted,
       COALESCE(json_object_agg(
         tags.name, tags.used
         ORDER BY name ASC, tags.id ASC
-      ) FILTER (WHERE tags.id IS NOT NULL), '{}') AS tags
+      ) FILTER (WHERE tags.id IS NOT NULL), '{}') AS tags,
+      COALESCE(array_agg(DISTINCT urls.url) FILTER (WHERE urls.id IS NOT NULL), '{}') AS sources
     FROM posts
     LEFT  JOIN mappings ON mappings.postid = posts.id
     LEFT  JOIN tags     ON mappings.tagid = tags.id
+    LEFT  JOIN urls     ON urls.postid = posts.id
     WHERE posts.id = ${id}
     GROUP BY posts.id
   `);
