@@ -15,11 +15,15 @@
 - Handling txt/unknown files
 - 404 on missing files
 - error pages
+- meta tags, description, keywords, etc
+- search tag (html header)
+
 
 # Unreleased
 
 - Added dynamic HTML titles
 - Added Open Graph protocol
+- Added favicon (by Ostrich)
 
 
 # v1.2.0
