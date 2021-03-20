@@ -1,5 +1,6 @@
 // https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py
 
+import { Post, PostSummary } from "../routes/apiTypes";
 
 export enum ServiceID {
   TAG_REPOSITORY = 0,
@@ -73,6 +74,39 @@ export enum Mime {
   APPLICATION_CLIP = 45,
   APPLICATION_OCTET_STREAM = 100,
   APPLICATION_UNKNOWN = 101,
+}
+
+export const namespaceRegex = /(.+):(.+)/;
+export const underscoreRegex = /_/g;
+
+export const fileUrl = (post: Post | PostSummary) => `/files/f${post.hash}${post.extension}`;
+export const thumbnailUrl = (post: Post | PostSummary) =>  `/files/t${post.hash}.thumbnail`;
+
+export function prettifyTag(tag: string) {
+  const match = tag.match(namespaceRegex);
+  
+  if(match) return match[2].replace(underscoreRegex, " ");
+  else return tag.replace(underscoreRegex, " ");
+}
+
+const toTitleCase = (str: string) => str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+export function postTitle(post: Post) {
+  const tags = Object.keys(post.tags);
+  
+  const title = tags.filter(tag => tag.startsWith("title:")).map(prettifyTag).join(" - ");
+  const creator = tags.filter(tag => tag.startsWith("creator:")).map(prettifyTag).join(" & ");
+  const character = tags.filter(tag => tag.startsWith("character:")).map(prettifyTag).join(", ");
+  
+  let ret = "";
+  
+  if(title) ret += toTitleCase(title);
+  else if(character) ret += toTitleCase(character);
+  else ret += `Post ${post.id}`;
+  
+  if(creator) ret += ` by ${toTitleCase(creator)}`;
+  
+  return ret;
 }
 
 export const MIME_EXT: Partial<Record<Mime, string>> = {
@@ -160,7 +194,7 @@ export const MIME_STRING: Partial<Record<Mime, string>> = {
   [Mime.VIDEO_MKV]: 'video/x-matroska',
   [Mime.VIDEO_REALMEDIA]: 'video/vnd.rn-realvideo',
   [Mime.VIDEO_WEBM]: 'video/webm',
-  [Mime.UNDETERMINED_WM]: 'audio/x-ms-wma or video/x-ms-wmv',
+  [Mime.UNDETERMINED_WM]: 'video/x-ms-wmv',
   [Mime.APPLICATION_UNKNOWN]: 'unknown filetype',
   [Mime.GENERAL_APPLICATION]: 'application',
   [Mime.GENERAL_AUDIO]: 'audio',

@@ -1,14 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { PostPageData } from "../../../server/routes/apiTypes";
-import { MIME_STRING } from "../../../server/helpers/consts";
+import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
 import { parseDuration, parseSize } from "../../helpers/utils";
 import File from "./File";
-import "./PostPage.scss";
 import SourceLink from "./SourceLink";
+import "./PostPage.scss";
 
 const STARS_COUNT = 5;
 
@@ -31,7 +31,8 @@ export default function PostPage() {
     );
   }
   
-  const link = `/files/f${pageData.post.hash}${pageData.post.extension}`;
+  const link = fileUrl(pageData.post);
+  
   let rating;
   if(pageData.post.rating !== null) {
     const stars = Math.round(pageData.post.rating * STARS_COUNT);

@@ -34,6 +34,12 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     });
   }, [history]);
   
+  useEffect(() => {
+    if(typeof pageData?._title === "string") {
+      document.title = pageData._title;
+    }
+  }, [pageData]);
+  
   const fetch = useCallback(() => {
     if(fetchEmitter.current) {
       fetchEmitter.current.listeners++;

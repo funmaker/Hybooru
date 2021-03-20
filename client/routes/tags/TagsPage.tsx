@@ -1,12 +1,12 @@
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import { TagsSearchPageData } from "../../../server/routes/apiTypes";
-import { namespaceRegex } from "../../components/Tags";
 import Layout from "../../components/Layout";
 import Pagination from "../../components/Pagination";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import "./TagsPage.scss";
+import { namespaceRegex } from "../../../server/helpers/consts";
 
 export default function TagsPage() {
   let [pageData] = usePageData<TagsSearchPageData>();

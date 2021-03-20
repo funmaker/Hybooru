@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
+import { fileUrl } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
@@ -10,13 +11,12 @@ import "./IndexPage.scss";
 export default function IndexPage() {
   const [pageData] = usePageData<IndexPageData>();
   const config = useConfig();
-  const motdLink = `/files/f${pageData?.motd?.hash}${pageData?.motd?.extension}`;
   
   return (
     <div className="IndexPage">
       {pageData?.motd &&
         <a href={`/posts/${pageData.motd.id}`} className="motd">
-          <img src={motdLink} alt={String(pageData.motd.id)} />
+          <img src={fileUrl(pageData.motd)} alt={String(pageData.motd.id)} />
         </a>
       }
       <div className="header">

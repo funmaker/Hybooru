@@ -5,6 +5,7 @@ import { EM_SIZE } from "../App";
 import useSSR from "../hooks/useSSR";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
+import { thumbnailUrl } from "../../server/helpers/consts";
 import "./Thumbnail.scss";
 
 export interface ThumbnailProps {
@@ -20,7 +21,7 @@ export default function Thumbnail({ post }: ThumbnailProps) {
   
   return (
     <Link className={`Thumbnail${dynamic ? " dynamic" : ""}`} to={`/posts/${post.id}${query}`}>
-      <img src={`/files/t${post.hash}.thumbnail`} alt={String(post.id)}
+      <img src={thumbnailUrl(post)} alt={String(post.id)}
            style={{
              width: config.thumbnailSize[0] / EM_SIZE + "em",
              height: config.thumbnailSize[1] / EM_SIZE + "em",

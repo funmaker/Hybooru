@@ -3,7 +3,6 @@
 
 - DB Generation Streaming and Progress Bar
 - Gallery
-- OpenGraph
 - API docs
 - Search by rating
 - NeedsTags tag configuration
@@ -16,6 +15,11 @@
 - Handling txt/unknown files
 - 404 on missing files
 - error pages
+
+# Unreleased
+
+- Added dynamic HTML titles
+- Added Open Graph protocol
 
 
 # v1.2.0

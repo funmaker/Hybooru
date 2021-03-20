@@ -3,8 +3,8 @@ import { Canceler } from "axios";
 import { TagsSearchRequest, TagsSearchResponse } from "../../server/routes/apiTypes";
 import useConfig from "../hooks/useConfig";
 import requestJSON from "../helpers/requestJSON";
-import { namespaceRegex } from "./Tags";
 import "./TagInput.scss";
+import { namespaceRegex } from "../../server/helpers/consts";
 
 const DEBOUNCE_FREQ = 1000;
 const TAGS_COUNT = 10;

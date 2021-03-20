@@ -3,14 +3,13 @@ import { Link } from "react-router-dom";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
 import "./Tags.scss";
+import { namespaceRegex } from "../../server/helpers/consts";
 
 export interface TagsProps {
   tags: Record<string, number>;
   grouped?: boolean;
   searchMod?: boolean;
 }
-
-export const namespaceRegex = /(.+):(.+)/;
 
 export default function Tags({ tags, grouped, searchMod }: TagsProps) {
   if(grouped) {

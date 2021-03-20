@@ -3,26 +3,44 @@ import configs from "../helpers/configs";
 import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
-import { IndexPageData, PostPageData, PostsSearchPageData, PostsSearchPageRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import { Options } from "../middlewares/reactMiddleware";
+import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
+import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
+
 
 router.get<{ id: string }>('/posts/:id', async (req, res) => {
   const post = await postsController.get(parseInt(req.params.id));
   
-  res.react<PostPageData>({ post });
+  const options: Options = {
+    ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,
+  };
+  
+  if(post) {
+    options.ogTitle = options.title = postTitle(post);
+    
+    const tags = Object.keys(post.tags);
+    const namespaced = tags.filter(tag => tag.match(namespaceRegex)).sort();
+    const unnamespaced = tags.filter(tag => !tag.match(namespaceRegex)).sort();
+    options.ogDescription = [...namespaced, ...unnamespaced].slice(0, 128).map(prettifyTag).join(", ");
+    
+    addOGMedia(options, post);
+  }
+  
+  res.react<PostPageData>({ post }, options);
 });
 
 router.get<any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {
   const results = await postsController.search({ ...req.query, includeTags: true });
   
-  res.react<PostsSearchPageData>({ results });
+  res.react<PostsSearchPageData>({ results }, { ogTitle: "Post Search", ogDescription: req.query.query });
 });
 
 router.get<any, any, any, TagsSearchPageRequest>('/tags', async (req, res) => {
   const results = await tagsController.search(req.query);
   
-  res.react<TagsSearchPageData>({ results });
+  res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });
 });
 
 router.get('/random', async (req, res) => {
@@ -34,10 +52,38 @@ router.get('/random', async (req, res) => {
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
   const motd = configs.tags.motd && await postsController.random(configs.tags.motd) || null;
+  const options: Options = { ogTitle: "Main Page" };
   
-  res.react<IndexPageData>({ stats, motd });
+  if(motd) addOGMedia(options, motd);
+  
+  res.react<IndexPageData>({ stats, motd }, options);
 });
 
 router.get('/test', async (req, res) => {
   res.react({});
 });
+
+
+function addOGMedia(options: Options, post: Post | PostSummary) {
+  const type = post.mime !== null && MIME_STRING[post.mime] || null;
+  const url = fileUrl(post);
+  if(type?.startsWith("image/")) {
+    options.ogImage = {
+      url,
+      type,
+      width: 'width' in post && post.width || 0,
+      height: 'height' in post && post.height || 0,
+      alt: post.id.toString(),
+    };
+  } else if(type?.startsWith("video/")) {
+    options.ogVideo = {
+      url,
+      type,
+      width: 'width' in post && post.width || 0,
+      height: 'height' in post && post.height || 0,
+      duration: 'duration' in post && post.duration || 0,
+    };
+  } else if(type?.startsWith("audio/")) {
+    options.ogAudio = { url, type };
+  }
+}

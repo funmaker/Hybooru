@@ -74,5 +74,6 @@ const DOMAINS = {
   "yande.re": "yande.re",
   "yiff.party": "Yiff.Party",
   "booru.funmaker.moe": "Mikubooru",
+  "discordapp.com": "Discord",
 };
 
