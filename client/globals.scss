@@ -3,28 +3,47 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  scrollbar-color: light;
 }
 
 :root {
+  --page-background: white;
+  --text-color: black;
+
+  &.dark {
+    --page-background: #060b11;
+    --text-color: white;
+
+    &, * {
+      scrollbar-color: dark;
+    }
+  }
+
   font-family: "Segoe UI", "Open Sans", sans-serif;
   font-size: 20px;
-  //background: #031118;
-  //color: white;
+  background: var(--page-background);
+  color: var(--text-color);
+  transition: 0.1s background-color, 0.1s color;
 }
 
 a {
   text-decoration: none;
   transition: 0.1s color;
-  color: #148cff;
+  color: #47a2ff;
 
   &:hover {
-    color: #47a2ff;
+    color: #148cff;
   }
 }
 
 input {
   font-size: 1rem;
   height: 2em;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(127, 127, 127, 0.5);
+  padding: 0.3em;
+  transition: 0.1s color;
+  color: var(--text-color);
 }
 
 button {
@@ -32,8 +51,45 @@ button {
   line-height: 0rem;
   height: 2em;
   padding: 0 1em;
+  transition: 0.1s background-color;
+  background-color: rgba(127, 127, 127, 0.2);
+  border: 1px solid rgba(127, 127, 127, 0.5);
+  border-radius: 5px;
+  color: inherit;
+
+  &:hover, &:focus {
+    background-color: rgba(127, 127, 127, 0.3);
+  }
+
+  &:active {
+    background-color: rgba(127, 127, 127, 0.5);
+  }
+}
+
+select {
+  font-size: 0.75rem;
+  line-height: 0rem;
+  height: 2em;
+  padding: 0;
+  transition: 0.1s background-color;
+  background-color: rgba(127, 127, 127, 0.2);
+  border: 1px solid rgba(127, 127, 127, 0.5);
+  border-radius: 5px;
+  color: inherit;
+  appearance: none;
+  position: relative;
+  outline: none;
+
+  &:hover, &:focus {
+    background-color: rgba(127, 127, 127, 0.3);
+  }
+
+  &:active {
+    background-color: rgba(127, 127, 127, 0.5);
+  }
 }
 
 img:-moz-loading {
   color: transparent;
 }
+

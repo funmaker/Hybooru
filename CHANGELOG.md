@@ -9,7 +9,6 @@
 - RegenDB panel
 - optimize page size
 - optimize SQL
-- Dark mode
 - 3rd party license file
 - Improve README.md
 - Handling txt/unknown files
@@ -21,6 +20,7 @@
 
 # Unreleased
 
+- Added Dark Theme
 - Added dynamic HTML titles
 - Added Open Graph protocol
 - Added favicon (by Ostrich)

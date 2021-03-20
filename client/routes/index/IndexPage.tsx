@@ -6,6 +6,7 @@ import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
 import TagInput from "../../components/TagInput";
+import ThemeSwitch from "../../components/ThemeSwitch";
 import "./IndexPage.scss";
 
 export default function IndexPage() {
@@ -27,6 +28,7 @@ export default function IndexPage() {
         <Link to="/tags">Tags</Link>
         <a href="/random">Random</a>
         <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
+        <ThemeSwitch />
       </div>
       <ReactForm className="search" action="/posts">
         <TagInput name="query" placeholder="Search: flower sky 1girl" />

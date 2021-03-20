@@ -49,6 +49,12 @@ router.get('/random', async (req, res) => {
   res.redirect(post ? `/posts/${post.id}` : "/");
 });
 
+router.post<{ theme: string }, any, any, { redirectUrl: string }>('/setTheme/:theme', async (req, res) => {
+  res.cookie("theme", req.params.theme, { maxAge: 356 * 24 * 60 * 60 * 1000 });
+  
+  res.redirect(req.query.redirectUrl || "/");
+});
+
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
   const motd = configs.tags.motd && await postsController.random(configs.tags.motd) || null;

@@ -8,15 +8,15 @@
     border-collapse: collapse;
 
     td, th {
-      border: 1px solid lightgray;
+      border: 1px solid rgba(127, 127, 127, 0.2);
     }
 
     tr:nth-child(2n + 1) {
-      background-color: #f9fbff;
+      background-color: rgba(127, 200, 255, 0.05);
     }
 
     tr:first-child {
-      background-color: #dfe2ff;
+      background-color: rgba(50, 120, 255, 0.5);
     }
 
     td:nth-child(3) {

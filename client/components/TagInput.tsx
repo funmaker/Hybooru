@@ -96,9 +96,9 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     {tags && box &&
       <div className="tags"
            style={{
-             left: `${box.x}px`,
+             left: `${box.x - 1}px`,
              top: `${box.y + box.height - 1}px`,
-             width: `${box.width}px`,
+             width: `${box.width + 2}px`,
            }}>
         {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} />)}
       </div>

@@ -2,8 +2,9 @@ import React from "react";
 import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from "react-router";
 import express from "express";
-import index from '../views/index.handlebars';
+import { Theme } from "../../client/hooks/useTheme";
 import App from "../../client/App";
+import index from '../views/index.handlebars';
 import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
 
@@ -62,6 +63,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
     
+    const theme = req.cookies.theme || Theme.LIGHT;
     const title = options?.title ? `${options?.title} | ${req.config.appName}` : req.config.appName;
     
     // noinspection JSUnreachableSwitchBranches
@@ -70,6 +72,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
         const initialDataEx = {
           ...initialData,
           _config: req.config,
+          _theme: theme,
         };
         
         const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);
@@ -82,6 +85,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
           ),
           initialData: initialDataJSON,
           production: process.env.NODE_ENV === 'production',
+          theme,
           title,
           ogTitle: options?.ogTitle || configs.appName,
           ogDescription: options?.ogDescription || configs.appDescription,
@@ -97,8 +101,8 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
       
       case "json":
         res.json({
-          _title: title,
           ...initialData,
+          _title: title,
         });
         break;
       

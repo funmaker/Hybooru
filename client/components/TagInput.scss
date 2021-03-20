@@ -6,11 +6,12 @@
 
   .tags {
     position: fixed;
-    border: 1px solid lightgray;
+    border: 1px solid rgba(127, 127, 127, 0.8);
+    border-top: none;
+    background: var(--page-background);
 
     .row {
       display: block;
-      background: white;
       cursor: pointer;
       padding: 0.25em;
       font-size: 0.8em;
@@ -18,18 +19,18 @@
 
       .posts {
         float: right;
-        color: lightgray;
+        color: rgba(127, 127, 127, 0.5);
       }
 
       &:hover, &:focus {
-        background: #f3fbff;
+        background: rgba(127, 200, 255, 0.1);
       }
 
-      &:nth-child(2n) {
-        background: #f9fbff;
+      &:nth-child(2n + 1) {
+        background: rgba(127, 200, 255, 0.05);
 
         &:hover, &:focus {
-          background: #eff5ff;
+          background: rgba(127, 200, 255, 0.1);
         }
       }
     }

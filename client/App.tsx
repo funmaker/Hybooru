@@ -6,6 +6,7 @@ import { RegenDBRequest } from "../server/routes/apiTypes";
 import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContext } from "./hooks/useConfig";
+import { ThemeProvider } from "./hooks/useTheme";
 import requestJSON from "./helpers/requestJSON";
 import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
@@ -43,19 +44,21 @@ export default hot(module)(function App({ initialData }: Props) {
   
   return (
     <SSRProvider>
-      <ConfigContext.Provider value={initialData._config}>
-        <PageDataContext.Provider value={contextData}>
-          <Switch>
-            <Route path="/test" component={TestPage} />
-            <Route path="/tags" component={TagsPage} />
-            <Route path="/posts/:id" component={PostPage} />
-            <Route path="/posts" component={SearchPage} />
-            <Route path="/" exact component={IndexPage} />
-            <Redirect to="/" />
-          </Switch>
-          <ToastContainer />
-        </PageDataContext.Provider>
-      </ConfigContext.Provider>
+      <ThemeProvider init={initialData._theme}>
+        <ConfigContext.Provider value={initialData._config}>
+          <PageDataContext.Provider value={contextData}>
+            <Switch>
+              <Route path="/test" component={TestPage} />
+              <Route path="/tags" component={TagsPage} />
+              <Route path="/posts/:id" component={PostPage} />
+              <Route path="/posts" component={SearchPage} />
+              <Route path="/" exact component={IndexPage} />
+              <Redirect to="/" />
+            </Switch>
+            <ToastContainer />
+          </PageDataContext.Provider>
+        </ConfigContext.Provider>
+      </ThemeProvider>
     </SSRProvider>
   );
 });

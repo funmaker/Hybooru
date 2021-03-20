@@ -8,8 +8,9 @@ import usePageData from "../hooks/usePageData";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
 import TagInput from "./TagInput";
-import "./Layout.scss";
 import SSRCurtain from "./SSRCurtain";
+import ThemeSwitch from "./ThemeSwitch";
+import "./Layout.scss";
 
 export interface LayoutProps {
   className?: string;
@@ -87,6 +88,7 @@ export default function Layout({ className, sidebar, children, searchAction = "/
           <Link to="/tags">Tags</Link>
           <a href="/random">Random</a>
           <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
+          <ThemeSwitch />
         </div>
         <ReactForm className="search" action={searchAction}>
           <TagInput name="query" placeholder="Search: flower sky 1girl" value={query} onChange={onQueryChange} onValueChange={setQuery} />

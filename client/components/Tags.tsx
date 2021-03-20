@@ -2,8 +2,8 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
-import "./Tags.scss";
 import { namespaceRegex } from "../../server/helpers/consts";
+import "./Tags.scss";
 
 export interface TagsProps {
   tags: Record<string, number>;
@@ -116,6 +116,7 @@ function Tag({ searchMod, tag, tags }: TagProps) {
         <Link className="btn" to={delLink}>{delCh}</Link>
       </> /* eslint-disable-line react/jsx-closing-tag-location */ }
       <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
+      {" "}
       <span>{tags[tag]}</span>
     </div>
   );

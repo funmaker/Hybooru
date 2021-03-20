@@ -10,14 +10,15 @@
   & > .sidebar {
     width: 15em;
     height: 100vh;
-    border-right: 1px solid lightgray;
+    border-right: 1px solid rgba(127, 127, 127, 0.2);
     position: sticky;
     top: 0;
     align-self: flex-start;
     display: flex;
     flex-direction: column;
     z-index: 1;
-    background: white;
+    transition: 0.1s background-color;
+    background: var(--page-background);
 
     &.simple {
       position: fixed;
@@ -54,9 +55,9 @@
     left: 15rem;
     right: 0;
     max-height: 4rem;
-    transition: max-height 0.3s ease-in-out;
-    background: white;
-    box-shadow: 0 0 0.5rem 0.5rem white;
+    transition: max-height 0.1s ease-in-out, background-color 0.1s, box-shadow 0.1s;
+    background: var(--page-background);
+    box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
     z-index: 2;
 
     .menuButton {
@@ -98,6 +99,11 @@
           width: 1.5em;
           object-fit: contain;
           opacity: 0.25;
+
+          :root.dark & {
+            -webkit-filter: invert(100%);
+            filter: invert(100%);
+          }
         }
 
         &:focus, &:hover {
@@ -136,9 +142,9 @@
       padding: 0.5em;
       right: 0;
       top: 100%;
-      background: white;
-      border-left: 1px solid lightgray;
-      border-bottom: 1px solid lightgray;
+      background: var(--page-background);
+      border-left: 1px solid rgba(127, 127, 127, 0.5);
+      border-bottom: 1px solid rgba(127, 127, 127, 0.5);
     }
   }
 

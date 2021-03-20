@@ -9,9 +9,13 @@
     }
   }
 
+  a:not(.btn) {
+    margin-right: 0.2em;
+  }
+
   span {
-    color: gray;
-    margin-left: 0.5em;
+    color: inherit;
+    opacity: 0.5;
   }
 
   .btn {

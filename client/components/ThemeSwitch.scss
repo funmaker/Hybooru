@@ -1,0 +1,27 @@
+
+.ThemeSwitch {
+  color: gray !important;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: 0.1s opacity;
+  display: inline-block;
+  vertical-align: middle;
+  height: 1.5em;
+  width: 1.5em;
+  text-align: center;
+
+  &:hover, &:focus-within {
+    opacity: 1;
+  }
+
+  input {
+    display: inline-block;
+    margin: -0.25em;
+    height: 1.5em;
+    width: 1.5em;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: none;
+  }
+}
