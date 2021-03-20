@@ -1,5 +1,7 @@
 # Hybooru
 
+<p align="center"><img src="static/logo.svg" width="256"></p>
+
 Hydrus-based booru-styled imageboard in React, inspired by [hyve](https://github.com/imtbl/hyve).
 
 Demo: https://booru.funmaker.moe/
