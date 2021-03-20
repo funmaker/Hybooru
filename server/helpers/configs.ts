@@ -1,6 +1,7 @@
 /* eslint-disable */
 import * as fs from 'fs';
 import pg from "pg";
+import { Theme } from "../../client/hooks/useTheme";
 
 type Configs = {
   port: number,
@@ -10,7 +11,7 @@ type Configs = {
   appDescription: string,
   adminPassword: string | null,
   tags: {
-    motd: string | null,
+    motd: string | Partial<Record<Theme, string>> | null,
     ignore: string[],
     blacklist: string[],
   }

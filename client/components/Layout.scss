@@ -19,6 +19,7 @@
     z-index: 1;
     transition: 0.1s background-color;
     background: var(--page-background);
+    overflow: hidden;
 
     &.simple {
       position: fixed;
@@ -34,6 +35,10 @@
       font-weight: bold;
       text-align: center;
       height: 4rem;
+      transition: background-color 0.1s, box-shadow 0.1s;
+      background: var(--page-background);
+      box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
+      z-index: 3;
 
       & > * {
         display: block;
@@ -164,8 +169,12 @@
         left: 0;
 
         & ~ .contentDimmer {
-          background: rgba(20, 20, 50, 0.25);
+          background: rgba(20, 20, 20, 0.25);
           pointer-events: all;
+
+          :root.dark & {
+            background: rgba(0, 0, 0, 0.75);
+          }
         }
 
         & ~ .content {

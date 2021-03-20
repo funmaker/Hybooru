@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
 import { fileUrl } from "../../../server/helpers/consts";
@@ -7,18 +7,35 @@ import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
 import TagInput from "../../components/TagInput";
 import ThemeSwitch from "../../components/ThemeSwitch";
+import useTheme from "../../hooks/useTheme";
+import useChange from "../../hooks/useChange";
 import "./IndexPage.scss";
 
 export default function IndexPage() {
-  const [pageData] = usePageData<IndexPageData>();
+  const [pageData,, refresh] = usePageData<IndexPageData>();
   const config = useConfig();
+  const [theme] = useTheme();
+  const [showMotd, setShowMotd] = useState(true);
+  
+  useChange(theme, () => {
+    setShowMotd(false);
+    refresh();
+  });
+  
+  useChange(pageData, () => {
+    setShowMotd(true);
+  });
   
   return (
     <div className="IndexPage">
-      {pageData?.motd &&
-        <a href={`/posts/${pageData.motd.id}`} className="motd">
-          <img src={fileUrl(pageData.motd)} alt={String(pageData.motd.id)} />
-        </a>
+      {config.expectMotd &&
+        <div className="motdWrap">
+          {showMotd && pageData?.motd &&
+            <a href={`/posts/${pageData.motd.id}`} className="motd">
+              <img src={fileUrl(pageData.motd)} alt={String(pageData.motd.id)} />
+            </a>
+          }
+        </div>
       }
       <div className="header">
         <Link to="/posts">{config.appName}</Link>

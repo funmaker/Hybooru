@@ -1,11 +1,12 @@
 import PromiseRouter from "express-promise-router";
-import configs from "../helpers/configs";
+import { Theme } from "../../client/hooks/useTheme";
 import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
 import { Options } from "../middlewares/reactMiddleware";
 import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
 import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import configs from "../helpers/configs";
 
 export const router = PromiseRouter();
 
@@ -57,7 +58,15 @@ router.post<{ theme: string }, any, any, { redirectUrl: string }>('/setTheme/:th
 
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
-  const motd = configs.tags.motd && await postsController.random(configs.tags.motd) || null;
+  const theme = req.cookies.theme as Theme || Theme.LIGHT;
+  
+  console.log(theme);
+  
+  let motdTag: string | undefined;
+  if(configs.tags.motd && typeof configs.tags.motd === "object") motdTag = configs.tags.motd[theme];
+  else if(configs.tags.motd) motdTag = configs.tags.motd;
+  
+  const motd = typeof motdTag === "string" && await postsController.random(motdTag) || null;
   const options: Options = { ogTitle: "Main Page" };
   
   if(motd) addOGMedia(options, motd);

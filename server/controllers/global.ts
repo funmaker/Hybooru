@@ -20,6 +20,7 @@ export async function getConfig(): Promise<Config> {
     ...config,
     appName: configs.appName,
     version: packageJSON.version,
+    expectMotd: !!configs.tags.motd,
   };
 }
 

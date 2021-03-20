@@ -53,6 +53,7 @@ export interface Config {
   namespaceColors: Record<string, string>;
   appName: string;
   version: string;
+  expectMotd: string;
 }
 
 // PAGES //

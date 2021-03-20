@@ -73,7 +73,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   return useMemo(() => ({ pageData, locationKey: pageDataKey, fetch }), [pageData, pageDataKey, fetch]);
 }
 
-export default function usePageData<T>(auto = true): [T | null, boolean] {
+export default function usePageData<T>(auto = true): [T | null, boolean, () => void] {
   const currentKey = useLocation().key;
   const { pageData, fetch, locationKey } = useContext(PageDataContext);
   
@@ -85,8 +85,8 @@ export default function usePageData<T>(auto = true): [T | null, boolean] {
   }, [fetch, auto, loaded]);
   
   if(currentKey !== locationKey) {
-    return [null, true];
+    return [null, true, fetch];
   } else {
-    return [pageData, !loaded];
+    return [pageData, !loaded, fetch];
   }
 }

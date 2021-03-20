@@ -2,16 +2,20 @@
 .IndexPage {
   text-align: center;
 
-  .motd {
-    display: block;
-    margin: 0.5em auto -5.5em;
+  .motdWrap {
+    height: 15em;
+    margin: 0.5em auto -5em;
     width: min-content;
 
-    img {
-      width: 20em;
-      height: 15em;
-      object-fit: contain;
+    .motd {
       display: inline-block;
+
+      img {
+        width: 20em;
+        height: 15em;
+        object-fit: contain;
+        display: inline-block;
+      }
     }
   }
 

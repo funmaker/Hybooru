@@ -9,7 +9,6 @@ const domainRegex = /^(?:https?:\/\/)?([^/]+)/;
 export default function SourceLink({ url }: SourceProps) {
   const match = url.match(domainRegex);
   const domain = match && Object.keys(DOMAINS).find(domain => match[1].endsWith(domain));
-  console.log(url.match(domainRegex));
   
   let text;
   if(domain) text = DOMAINS[domain as keyof typeof DOMAINS];
