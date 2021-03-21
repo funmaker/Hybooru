@@ -1,18 +1,20 @@
+import readline from "readline";
 import sqlite from "sqlite";
 import chalk from "chalk";
+import configs from "../configs";
 
 const BATCH_SIZE = 1024;
 const BAR_LENGTH = 20;
 
 let lastProgressName: string | null = null;
+let lastProgressBars = 0;
 
 export function printProgress(done: boolean, name: string): void;
 export function printProgress(progress: [number, number], name: string): void;
 export function printProgress(progress: boolean | [number, number], name: string) {
   if(lastProgressName !== null && lastProgressName !== name) printProgress(true, lastProgressName);
   
-  process.stdout.clearLine(0);
-  process.stdout.cursorTo(0);
+  const fancy = typeof configs.isTTY === "boolean" ? configs.isTTY : process.stdout.isTTY;
   
   let bar, done;
   if(typeof progress === "boolean") {
@@ -23,17 +25,39 @@ export function printProgress(progress: boolean | [number, number], name: string
     done = progress[0] === progress[1];
   }
   
-  let out = `${chalk.white("[") + chalk.cyan("#".repeat(bar)) + chalk.gray("#".repeat(BAR_LENGTH - bar)) + chalk.white("]")} ${name} `;
-  if(Array.isArray(progress)) out += `${progress[0]}/${progress[1]} `;
-  
-  if(done) {
-    out += chalk.green.bold("Done\n");
-    lastProgressName = null;
+  if(fancy) {
+    readline.clearLine(process.stdout, 0);
+    readline.cursorTo(process.stdout, 0);
+    
+    let out = name;
+    if(Array.isArray(progress)) out += ` (${progress[0]}/${progress[1]})`;
+    out = out.padEnd(32, " ");
+    out += `${chalk.white("[") + chalk.cyan("#".repeat(bar)) + chalk.gray("-".repeat(BAR_LENGTH - bar)) + chalk.white("]")} `;
+    if(done) out += chalk.green.bold("Done\n");
+    
+    process.stdout.write(out);
   } else {
-    lastProgressName = name;
+    let out = "";
+    
+    if(lastProgressName === null) {
+      out += name;
+      if(Array.isArray(progress)) out += ` (${progress[1]})`;
+      out = out.padEnd(32, " ");
+      out += "[";
+    }
+    out += "#".repeat(bar - lastProgressBars);
+    if(done) out += "] Done\n";
+    
+    process.stdout.write(out);
   }
   
-  process.stdout.write(out);
+  if(done) {
+    lastProgressName = null;
+    lastProgressBars = 0;
+  } else {
+    lastProgressBars = bar;
+    lastProgressName = name;
+  }
 }
 
 export abstract class Import {

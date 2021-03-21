@@ -5,11 +5,12 @@ import { Theme } from "../../client/hooks/useTheme";
 
 type Configs = {
   port: number,
-  db: pg.PoolConfig,
   hydrusDbPath: string | null,
   appName: string,
   appDescription: string,
   adminPassword: string | null,
+  isTTY: boolean | null,
+  db: pg.PoolConfig,
   tags: {
     motd: string | Partial<Record<Theme, string>> | null,
     ignore: string[],
@@ -19,6 +20,11 @@ type Configs = {
 
 let configs: Configs = {
   port: 3939,
+  hydrusDbPath: null,
+  appName: "HyBooru",
+  appDescription: "Hydrus-based booru-styled imageboard in React",
+  adminPassword: null,
+  isTTY: null,
   db: {
     user: "hybooru",
     host: "localhost",
@@ -26,10 +32,6 @@ let configs: Configs = {
     password: "hybooru",
     port: 5432,
   },
-  hydrusDbPath: null,
-  appName: "HyBooru",
-  appDescription: "Hydrus-based booru-styled imageboard in React",
-  adminPassword: null,
   tags: {
     motd: null,
     ignore: [],

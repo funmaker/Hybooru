@@ -15,6 +15,7 @@
 - error pages
 - meta tags, description, keywords, etc
 - search tag (html header)
+- robots.txt
 
 
 # Unreleased
@@ -25,6 +26,7 @@
 - Added Open Graph protocol
 - Added favicon (by Ostrich)
 - Added CSRF mitigation
+- Added isTTY option
 
 
 # v1.2.0
