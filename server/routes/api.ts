@@ -50,5 +50,5 @@ router.use((err: Partial<HTTPError>, req: express.Request, res: express.Response
     message: err.publicMessage || http.STATUS_CODES[code],
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
-  res.status(code).json({ error });
+  res.status(code).json({ _error: error });
 });

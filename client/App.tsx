@@ -6,6 +6,7 @@ import { RegenDBRequest } from "../server/routes/apiTypes";
 import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContext } from "./hooks/useConfig";
+import { CSRFContext } from "./hooks/useCSRF";
 import { ThemeProvider } from "./hooks/useTheme";
 import requestJSON from "./helpers/requestJSON";
 import TestPage from "./routes/TestPage";
@@ -42,38 +43,41 @@ export default hot(module)(function App({ initialData }: Props) {
     return () => window.removeEventListener("resize", onResize);
   }, [initialData._error]);
   
+  useEffect(() => {
+    if(typeof window !== "undefined") {
+      (window as any).regenDB = async () => {
+        const password = prompt("Password");
+        
+        if(password !== null) {
+          await requestJSON<null, RegenDBRequest>({
+            pathname: "/api/regenDB",
+            method: "POST",
+            data: { password, _csrf: initialData._csrf },
+          });
+        }
+      };
+    }
+  }, []);
+  
   return (
     <SSRProvider>
       <ThemeProvider init={initialData._theme}>
-        <ConfigContext.Provider value={initialData._config}>
-          <PageDataContext.Provider value={contextData}>
-            <Switch>
-              <Route path="/test" component={TestPage} />
-              <Route path="/tags" component={TagsPage} />
-              <Route path="/posts/:id" component={PostPage} />
-              <Route path="/posts" component={SearchPage} />
-              <Route path="/" exact component={IndexPage} />
-              <Redirect to="/" />
-            </Switch>
-            <ToastContainer />
-          </PageDataContext.Provider>
-        </ConfigContext.Provider>
+        <CSRFContext.Provider value={initialData._csrf}>
+          <ConfigContext.Provider value={initialData._config}>
+            <PageDataContext.Provider value={contextData}>
+              <Switch>
+                <Route path="/test" component={TestPage} />
+                <Route path="/tags" component={TagsPage} />
+                <Route path="/posts/:id" component={PostPage} />
+                <Route path="/posts" component={SearchPage} />
+                <Route path="/" exact component={IndexPage} />
+                <Redirect to="/" />
+              </Switch>
+              <ToastContainer />
+            </PageDataContext.Provider>
+          </ConfigContext.Provider>
+        </CSRFContext.Provider>
       </ThemeProvider>
     </SSRProvider>
   );
 });
-
-
-if(typeof window !== "undefined") {
-  (window as any).regenDB = async () => {
-    const password = prompt("Password");
-    
-    if(password !== null) {
-      await requestJSON<null, RegenDBRequest>({
-        pathname: "/api/regenDB",
-        method: "POST",
-        data: { password },
-      });
-    }
-  };
-}

@@ -4,9 +4,9 @@ import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
 import { Options } from "../middlewares/reactMiddleware";
-import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
-import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 import configs from "../helpers/configs";
+import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
+import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
 
@@ -50,17 +50,15 @@ router.get('/random', async (req, res) => {
   res.redirect(post ? `/posts/${post.id}` : "/");
 });
 
-router.post<{ theme: string }, any, any, { redirectUrl: string }>('/setTheme/:theme', async (req, res) => {
-  res.cookie("theme", req.params.theme, { maxAge: 356 * 24 * 60 * 60 * 1000 });
+router.post<any, any, SetThemeRequest>('/setTheme', async (req, res) => {
+  res.cookie("theme", req.body.theme, { maxAge: 356 * 24 * 60 * 60 * 1000 });
   
-  res.redirect(req.query.redirectUrl || "/");
+  res.redirect(req.body.redirectUrl || "/");
 });
 
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
   const theme = req.cookies.theme as Theme || Theme.LIGHT;
-  
-  console.log(theme);
   
   let motdTag: string | undefined;
   if(configs.tags.motd && typeof configs.tags.motd === "object") motdTag = configs.tags.motd[theme];

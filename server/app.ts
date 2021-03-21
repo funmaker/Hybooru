@@ -1,5 +1,6 @@
 import * as http from 'http';
 import express from 'express';
+import csrf from 'csurf';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -28,6 +29,7 @@ if(process.env.NODE_ENV === 'development') {
 
 app.use(configMiddleware);
 app.use(reactMiddleware);
+app.use(csrf({ cookie: true }));
 
 app.use('/', router);
 
@@ -36,7 +38,7 @@ app.use((req, res, next) => {
 });
 
 app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
+  if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(403, "Bad CSRF Token");
   
   const code = err.HTTPcode || 500;
   const error = {

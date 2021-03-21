@@ -72,6 +72,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
         const initialDataEx = {
           ...initialData,
           _config: req.config,
+          _csrf: req.csrfToken(),
           _theme: theme,
         };
         

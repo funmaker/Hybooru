@@ -98,6 +98,7 @@ export interface ErrorPageData {
 
 export interface RegenDBRequest {
   password: string;
+  _csrf: string;
 }
 
 export interface RegenDBResponse {}
@@ -118,3 +119,9 @@ export interface TagsSearchRequest {
   pageSize?: number;
 }
 export type TagsSearchResponse = TagsSearchResults;
+
+export interface SetThemeRequest {
+  theme: string;
+  redirectUrl: string;
+  _csrf: string;
+}
