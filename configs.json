@@ -3,7 +3,7 @@
 	"hydrusDbPath": "/home/funmaker/sync/Miku/backup/",
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
-	"adminPassword": "kek",
+	"adminPassword": "",
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",
@@ -12,10 +12,7 @@
 		"port": 5432
 	},
 	"tags": {
-		"motd": {
-			"light": "fm:motd",
-			"dark": "fm:motd_dark"
-		},
+		"motd": null,
 		"ignore": [],
 		"blacklist": []
 	}
