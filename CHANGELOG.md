@@ -1,7 +1,6 @@
 
 ### TODO:
 
-- DB Generation Streaming and Progress Bar
 - Gallery
 - API docs
 - Search by rating
@@ -20,10 +19,12 @@
 
 # Unreleased
 
+- Improved DB import
 - Added Dark Theme
 - Added dynamic HTML titles
 - Added Open Graph protocol
 - Added favicon (by Ostrich)
+- Added CSRF mitigation
 
 
 # v1.2.0
