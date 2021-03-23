@@ -101,6 +101,8 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
           production: process.env.NODE_ENV === 'production',
           theme,
           title,
+          appName: configs.appName,
+          description: configs.appDescription,
           ogTitle: options?.ogTitle || configs.appName,
           ogDescription: options?.ogDescription || configs.appDescription,
           ogType: options?.ogTitle || "website",

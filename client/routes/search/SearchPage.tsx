@@ -92,9 +92,12 @@ export default function SearchPage() {
   
   return (
     <Layout className="SearchPage" options
+            extraLink={pageData?.results.total && <div className="total">Results: {pageData.results.total}</div>}
             sidebar={firstPage.tags && <Tags tags={firstPage.tags} searchMod />}>
-      {pages.flatMap(posts => posts.map(post => <Thumbnail key={post.id} post={post} />))}
-      {new Array(10).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
+      <div className="posts">
+        {pages.flatMap(posts => posts.map(post => <Thumbnail key={post.id} post={post} />))}
+        {new Array(20).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
+      </div>
       {end && !usePagination && pages.length > 0 && pages[0].length > 0 &&
         <div className="end" />
       }

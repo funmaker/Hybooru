@@ -1,18 +1,27 @@
 
 .SearchPage {
-  .content {
-    line-height: 0;
+  & > .header .links .total {
+    float: right;
+    opacity: 0.5;
+    font-size: 75%;
+    padding: 0.5em 0.75em;
+  }
+
+  & > .content {
     text-align: center;
 
-    .placeholder {
-      display: inline-block;
-      width: 7.5em;
-      margin: 0 0.5em;
+    .posts {
+      line-height: 0;
+
+      .placeholder {
+        display: inline-block;
+        width: 7.5em;
+        margin: 0 0.5em;
+      }
     }
 
     .end {
       position: relative;
-      height: 1em;
 
       &::before {
         content: "End";

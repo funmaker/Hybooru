@@ -2,8 +2,11 @@
 <html lang="en" class="{{{theme}}}">
 	<head>
 		<title>{{{title}}}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="utf-8">
+        <meta name="description" content="{{{description}}}">
+        <meta name="keywords" content="gallery, imageboard, hybooru, hydrus, arts, anime, memes">
+        <meta name="author" content="Fun Maker">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         {{#if ogTitle}}<meta property="og:title" content="{{{ogTitle}}}" />{{/if}}
         {{#if ogDescription}}<meta property="og:description" content="{{{ogDescription}}}" />{{/if}}
@@ -38,6 +41,7 @@
         <meta name="msapplication-config" content="/static/favicon/browserconfig.xml">
         <meta name="theme-color" content="#148cff">
 
+        <link rel="search" type="application/opensearchdescription+xml" title="{{{appName}}}" href="/opensearch.xml">
         {{#if production}}
 			<link rel="stylesheet" href="/style.css"/>
 		{{/if}}

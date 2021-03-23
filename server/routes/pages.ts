@@ -4,10 +4,10 @@ import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
 import { Options } from "../middlewares/reactMiddleware";
+import opensearch from "../views/opensearch.handlebars";
 import configs from "../helpers/configs";
 import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
 import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
-import HTTPError from "../helpers/HTTPError";
 
 export const router = PromiseRouter();
 
@@ -71,6 +71,15 @@ router.get('/', async (req, res) => {
   if(motd) addOGMedia(options, motd);
   
   res.react<IndexPageData>({ stats, motd }, options);
+});
+
+router.get("/opensearch.xml", async (req, res) => {
+  res.setHeader('Content-Type', 'application/opensearchdescription+xml');
+  res.end(opensearch({
+    appName: configs.appName,
+    appDescription: configs.appDescription,
+    origin: `${req.protocol}://${req.get('host')}`,
+  }));
 });
 
 router.get('/test', async (req, res) => {

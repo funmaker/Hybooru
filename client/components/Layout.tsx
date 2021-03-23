@@ -16,11 +16,12 @@ export interface LayoutProps {
   className?: string;
   sidebar?: React.ReactNode;
   children?: React.ReactNode;
+  extraLink?: React.ReactNode;
   searchAction?: string;
   options?: boolean;
 }
 
-export default function Layout({ className, sidebar, children, searchAction = "/posts", options }: LayoutProps) {
+export default function Layout({ className, sidebar, children, extraLink, searchAction = "/posts", options }: LayoutProps) {
   const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
@@ -89,6 +90,7 @@ export default function Layout({ className, sidebar, children, searchAction = "/
           <a href="/random">Random</a>
           <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
           <ThemeSwitch />
+          {extraLink}
         </div>
         <ReactForm className="search" action={searchAction}>
           <TagInput name="query" placeholder="Search: flower sky 1girl" value={query} onChange={onQueryChange} onValueChange={setQuery} />

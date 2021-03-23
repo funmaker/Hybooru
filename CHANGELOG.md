@@ -9,12 +9,6 @@
 - optimize SQL
 - Improve README.md
 - Handling txt/unknown files
-- 404 on missing files
-- error pages
-- meta tags, description, keywords, etc
-- search tag (html header)
-- robots.txt
-- Total count and search parts usage
 
 
 # Unreleased
@@ -27,6 +21,9 @@
 - Added CSRF mitigation
 - Added isTTY option
 - Added "Untagged" stat query configuration
+- Added more HTML meta tags and robots.txt
+- Added OpenSearch protocol support
+- Added result count in search page
 - Improved error handling
 - Fixed `client.js.LICENSE.txt` not being served in production build 
 - Fixed untagged images not showing

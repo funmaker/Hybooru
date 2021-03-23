@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(compression());
 app.use('/static', express.static('static'));
+app.use('/robots.txt', express.static('static/robots.txt'));
 if(process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
   app.use(require('./helpers/webpackHelper').mount());
