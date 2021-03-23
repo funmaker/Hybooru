@@ -2,6 +2,7 @@
 // COMMON //
 
 import { Mime } from "../helpers/consts";
+import { Theme } from "../../client/hooks/useTheme";
 
 export interface PostSummary {
   id: number;
@@ -58,6 +59,14 @@ export interface Config {
 }
 
 // PAGES //
+
+export interface AnySSRPageData {
+  _config: Config;
+  _csrf: string;
+  _theme: Theme;
+  _ssrError: boolean;
+  [k: string]: any;
+}
 
 export interface IndexPageData {
   stats: Stats;

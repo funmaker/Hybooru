@@ -1,10 +1,10 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { PostPageData } from "../../../server/routes/apiTypes";
 import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
+import NotFoundPage from "../error/NotFoundPage";
 import { parseDuration, parseSize } from "../../helpers/utils";
 import File from "./File";
 import SourceLink from "./SourceLink";
@@ -22,13 +22,7 @@ export default function PostPage() {
   }
   
   if(!pageData.post) {
-    return (
-      <Layout className="PostPage">
-        <h1>Post Not Found</h1>
-        
-        <Link to="/posts">See All Posts</Link>
-      </Layout>
-    );
+    return <NotFoundPage />;
   }
   
   const link = fileUrl(pageData.post);

@@ -1,0 +1,15 @@
+
+.NotFoundPage {
+  & > .content {
+    text-align: center;
+
+    h1 {
+      margin: 1em 0;
+    }
+
+    pre {
+      text-align: left;
+      padding: 1em;
+    }
+  }
+}

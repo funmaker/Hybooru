@@ -7,6 +7,7 @@ import { Options } from "../middlewares/reactMiddleware";
 import configs from "../helpers/configs";
 import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
 import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import HTTPError from "../helpers/HTTPError";
 
 export const router = PromiseRouter();
 

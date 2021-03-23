@@ -1,4 +1,5 @@
 import React from "react";
+import chalk from "chalk";
 import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from "react-router";
 import express from "express";
@@ -7,6 +8,7 @@ import App from "../../client/App";
 import index from '../views/index.handlebars';
 import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
+import { AnySSRPageData } from "../routes/apiTypes";
 
 const removeTags = /[&<>]/g;
 const tagsToReplace: Record<string, string> = {
@@ -69,21 +71,32 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
     // noinspection JSUnreachableSwitchBranches
     switch(req.accepts(['html', 'json'])) {
       case "html": {
-        const initialDataEx = {
+        const initialDataEx: AnySSRPageData = {
           ...initialData,
           _config: req.config,
           _csrf: req.csrfToken(),
           _theme: theme,
+          _ssrError: false,
         };
+        
+        let reactContent: string;
+        try {
+          reactContent = ReactDOMServer.renderToString(
+            <StaticRouter location={req.originalUrl} context={{}}>
+              <App initialData={initialDataEx} />
+            </StaticRouter>,
+          );
+        } catch(e) {
+          console.error(chalk.red.bold("Error during SSR!"));
+          console.error(e);
+          reactContent = "There was an error during Server Side Rendering.";
+          initialDataEx._ssrError = true;
+        }
         
         const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);
         
         res.send(index({
-          reactContent: ReactDOMServer.renderToString(
-            <StaticRouter location={req.originalUrl} context={{}}>
-              <App initialData={initialDataEx} />
-            </StaticRouter>,
-          ),
+          reactContent,
           initialData: initialDataJSON,
           production: process.env.NODE_ENV === 'production',
           theme,

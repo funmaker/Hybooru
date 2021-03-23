@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useReducer, useState } from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
 import { fileUrl } from "../../../server/helpers/consts";
@@ -16,6 +16,7 @@ export default function IndexPage() {
   const config = useConfig();
   const [theme] = useTheme();
   const [showMotd, setShowMotd] = useState(true);
+  const [, up] = useReducer(s => s + 1, 0);
   
   useChange(theme, () => {
     setShowMotd(false);

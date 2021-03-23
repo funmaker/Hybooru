@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Redirect, Route, Switch } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import { hot } from 'react-hot-loader';
-import { RegenDBRequest } from "../server/routes/apiTypes";
+import { AnySSRPageData, RegenDBRequest } from "../server/routes/apiTypes";
 import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContext } from "./hooks/useConfig";
@@ -15,9 +15,10 @@ import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
 import TagsPage from "./routes/tags/TagsPage";
 import "./globals.scss";
+import NotFoundPage from "./routes/error/NotFoundPage";
 
 interface Props {
-  initialData: any;
+  initialData: AnySSRPageData;
 }
 
 const MIN_PAGE_SIZE = 612;
@@ -38,10 +39,14 @@ export default hot(module)(function App({ initialData }: Props) {
       toast.error(initialData._error.message);
     }
     
+    if(initialData._ssrError) {
+      toast.error("There was an error during Server Side Rendering.");
+    }
+    
     onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [initialData._error]);
+  }, [initialData]);
   
   useEffect(() => {
     if(typeof window !== "undefined") {
@@ -57,7 +62,7 @@ export default hot(module)(function App({ initialData }: Props) {
         }
       };
     }
-  }, []);
+  }, [initialData._csrf]);
   
   return (
     <SSRProvider>
@@ -71,7 +76,7 @@ export default hot(module)(function App({ initialData }: Props) {
                 <Route path="/posts/:id" component={PostPage} />
                 <Route path="/posts" component={SearchPage} />
                 <Route path="/" exact component={IndexPage} />
-                <Redirect to="/" />
+                <NotFoundPage />
               </Switch>
               <ToastContainer />
             </PageDataContext.Provider>

@@ -4,11 +4,9 @@
 - Gallery
 - API docs
 - Search by rating
-- NeedsTags tag configuration
 - RegenDB panel
 - optimize page size
 - optimize SQL
-- 3rd party license file
 - Improve README.md
 - Handling txt/unknown files
 - 404 on missing files
@@ -29,6 +27,8 @@
 - Added CSRF mitigation
 - Added isTTY option
 - Added "Untagged" stat query configuration
+- Improved error handling
+- Fixed `client.js.LICENSE.txt` not being served in production build 
 - Fixed untagged images not showing
 
 

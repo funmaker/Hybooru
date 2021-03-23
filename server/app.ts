@@ -24,6 +24,7 @@ if(process.env.NODE_ENV === 'development') {
   app.use(require('./helpers/webpackHelper').mount());
 } else {
   app.use('/client.js', express.static('client.js'));
+  app.use('/client.js.LICENSE.txt', express.static('client.js.LICENSE.txt'));
   app.use('/style.css', express.static('style.css'));
 }
 
