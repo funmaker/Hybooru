@@ -21,6 +21,7 @@ export async function getConfig(): Promise<Config> {
     appName: configs.appName,
     version: packageJSON.version,
     expectMotd: !!configs.tags.motd,
+    untaggedQuery: configs.tags.untagged,
   };
 }
 

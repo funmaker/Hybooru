@@ -13,6 +13,7 @@ type Configs = {
   db: pg.PoolConfig,
   tags: {
     motd: string | Partial<Record<Theme, string>> | null,
+    untagged: string,
     ignore: string[],
     blacklist: string[],
   }
@@ -34,6 +35,7 @@ let configs: Configs = {
   },
   tags: {
     motd: null,
+    untagged: "-*",
     ignore: [],
     blacklist: [],
   }

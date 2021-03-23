@@ -16,6 +16,7 @@
 - meta tags, description, keywords, etc
 - search tag (html header)
 - robots.txt
+- Total count and search parts usage
 
 
 # Unreleased
@@ -27,6 +28,8 @@
 - Added favicon (by Ostrich)
 - Added CSRF mitigation
 - Added isTTY option
+- Added "Untagged" stat query configuration
+- Fixed untagged images not showing
 
 
 # v1.2.0

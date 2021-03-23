@@ -8,6 +8,16 @@ const BAR_LENGTH = 20;
 
 let lastProgressName: string | null = null;
 let lastProgressBars = 0;
+let currentProgressStart = Date.now();
+
+export function elapsed(since: number) {
+  const duration = (Date.now() - since) / 1000;
+  
+  if(duration < 1) return `${Math.floor(duration * 1000)}ms`;
+  else if(duration < 60) return `${duration.toFixed(2)}s`;
+  else if(duration < 60 * 60) return `${Math.floor(duration / 60)}:${Math.floor(duration % 60)}`;
+  else return `${Math.floor(duration / 60 / 60)}:${Math.floor(duration / 60 % 60)}:${Math.floor(duration % 60)}`;
+}
 
 export function printProgress(done: boolean, name: string): void;
 export function printProgress(progress: [number, number], name: string): void;
@@ -33,7 +43,7 @@ export function printProgress(progress: boolean | [number, number], name: string
     if(Array.isArray(progress)) out += ` (${progress[0]}/${progress[1]})`;
     out = out.padEnd(32, " ");
     out += `${chalk.white("[") + chalk.cyan("#".repeat(bar)) + chalk.gray("-".repeat(BAR_LENGTH - bar)) + chalk.white("]")} `;
-    if(done) out += chalk.green.bold("Done\n");
+    if(done) out += `${chalk.green.bold("Done")} in ${elapsed(currentProgressStart)}\n`;
     
     process.stdout.write(out);
   } else {
@@ -46,7 +56,7 @@ export function printProgress(progress: boolean | [number, number], name: string
       out += "[";
     }
     out += "#".repeat(bar - lastProgressBars);
-    if(done) out += "] Done\n";
+    if(done) out += `] Done in ${elapsed(currentProgressStart)}\n`;
     
     process.stdout.write(out);
   }
@@ -55,6 +65,7 @@ export function printProgress(progress: boolean | [number, number], name: string
     lastProgressName = null;
     lastProgressBars = 0;
   } else {
+    if(lastProgressName === null) currentProgressStart = Date.now();
     lastProgressBars = bar;
     lastProgressName = name;
   }

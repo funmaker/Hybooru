@@ -56,7 +56,7 @@ export default function IndexPage() {
           <div>Posts: <span>{pageData.stats.posts}</span></div>
           <div>Tags: <span>{pageData.stats.tags}</span></div>
           <div>Mappings: <span>{pageData.stats.mappings}</span></div>
-          <div><Link to="/posts?query=fm:needs_tags">Untagged: <span>{pageData.stats.needsTags}</span></Link></div>
+          <div><Link to={`/posts?query=${encodeURIComponent(config.untaggedQuery)}`}>Untagged: <span>{pageData.stats.needsTags}</span></Link></div>
         </div>
       }
       <div className="footer">

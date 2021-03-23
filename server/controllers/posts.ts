@@ -15,7 +15,7 @@ const SORTS = {
   size: "size",
 };
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE }): Promise<PostSearchResults> {
+export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE, noLock = false }): Promise<PostSearchResults> {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
   const parts = query.split(" ")
@@ -56,8 +56,6 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     }
   }
   
-  if(whitelist.length === 0) whitelist.push("%");
-  
   let tagsQuery: SQLStatement | string = "";
   if(includeTags) {
     tagsQuery = SQL`
@@ -77,6 +75,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
             LEFT  JOIN tags     ON mappings.tagid = tags.id
             GROUP BY tags.id
           ) x
+          WHERE id IS NOT NULL
           ORDER BY count DESC, id ASC
           LIMIT ${TAGS_COUNT}
         ) x
@@ -102,13 +101,13 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         SELECT DISTINCT ON (posts.id)
           posts.*
         FROM posts
-          CROSS JOIN whitelisted
+          LEFT JOIN whitelisted ON TRUE
           CROSS JOIN blacklisted
           CROSS JOIN whitelist_size
-        WHERE     EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(whitelisted.ids))
+        WHERE    (EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(whitelisted.ids)) OR whitelisted.ids IS NULL)
           AND NOT EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(blacklisted.ids))
         GROUP BY posts.id, whitelist_size.size
-        HAVING count(1) = whitelist_size.size
+        HAVING count(1) = whitelist_size.size OR whitelist_size.size = 0
       )
     SELECT
       COALESCE(json_agg(json_build_object(
@@ -123,11 +122,11 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     FROM (
       SELECT *
       FROM filtered
-      ORDER BY `).append(`filtered."${sort}" ${order} NULLS LAST, filtered.id ${order}`).append(SQL`
+      `).append(`ORDER BY filtered."${sort}" ${order} NULLS LAST, filtered.id ${order}`).append(SQL`
       LIMIT ${pageSize}
       OFFSET ${page * pageSize}
     ) x
-  `));
+  `), noLock);
   
   for(const post of result.posts) {
     if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";

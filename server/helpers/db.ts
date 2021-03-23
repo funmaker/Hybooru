@@ -5,6 +5,7 @@ import SQL, { SQLStatement } from "sql-template-strings";
 import chalk from "chalk";
 import sqlite3 from "sqlite3";
 import * as sqlite from "sqlite";
+import * as postsController from "../controllers/posts";
 import configs from "./configs";
 import setupSQL from "./setup.sql";
 import * as dbImport from "./dbImport";
@@ -75,6 +76,8 @@ export async function initialize() {
   
   initializationLock = (async () => {
     console.log(chalk.cyan.bold("\n\nInitializing Database!\n"));
+    const startTime = Date.now();
+    
     await query(setupSQL, true);
     
     const dbPath = findHydrusDB();
@@ -151,6 +154,8 @@ export async function initialize() {
     
     dbImport.printProgress(false, "Calculating statistics...");
     
+    const untagged = await postsController.search({ query: configs.tags.untagged, noLock: true });
+    
     await query(SQL`
       INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags)
       SELECT
@@ -159,11 +164,7 @@ export async function initialize() {
         (SELECT COUNT(1) FROM posts) AS posts,
         (SELECT COUNT(1) FROM tags) AS tags,
         (SELECT COUNT(1) FROM mappings) AS mappings,
-        (
-          SELECT COUNT(1)
-          FROM mappings
-          INNER JOIN tags ON tags.id = mappings.tagid AND tags.name = 'fm:needs_tags'
-        ) AS needs_tags
+        ${untagged.total} AS needs_tags
     `, true);
     
     dbImport.printProgress(false, "Finalizing...");
@@ -171,7 +172,8 @@ export async function initialize() {
     await query(SQL`UPDATE meta SET hash = ${setupHash}`, true);
     
     dbImport.printProgress(true, "Finalizing...");
-    console.log(chalk.bold.green("\nDatabase rebuild completed.\n"));
+    
+    console.log(`${chalk.bold.green("\nDatabase rebuild completed")} in ${dbImport.elapsed(startTime)}\n`);
   })();
   
   await initializationLock;

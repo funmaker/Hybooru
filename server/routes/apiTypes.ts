@@ -54,6 +54,7 @@ export interface Config {
   appName: string;
   version: string;
   expectMotd: string;
+  untaggedQuery: string;
 }
 
 // PAGES //
