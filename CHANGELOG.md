@@ -5,7 +5,6 @@
 - API docs
 - Search by rating
 - RegenDB panel
-- optimize page size
 - optimize SQL
 - Improve README.md
 - Handling txt/unknown files

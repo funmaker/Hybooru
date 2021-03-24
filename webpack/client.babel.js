@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import path from "path";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 const root = process.cwd();
 
@@ -41,6 +43,13 @@ export default {
       filename: "style.css",
     }),
   ],
+  optimization: {
+    minimize: true,
+    minimizer: [
+      `...`,
+      new CssMinimizerPlugin(),
+    ],
+  },
   module: {
     rules: [
       {
