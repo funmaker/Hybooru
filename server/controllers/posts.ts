@@ -1,12 +1,17 @@
 import SQL, { SQLStatement } from "sql-template-strings";
+import { PoolClient } from "pg";
 import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { MIME_EXT } from "../helpers/consts";
+import { preparePattern } from "../helpers/utils";
 
 const PAGE_SIZE = 36;
 const TAGS_COUNT = 40;
 const MAX_PARTS = 40;
+const TAGS_SAMPLE_MAX = 256;
+
+const blankPattern = /^[_%]*%[_%]*$/;
 
 const SORTS = {
   date: "posted",
@@ -15,24 +20,31 @@ const SORTS = {
   size: "size",
 };
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE, noLock = false }): Promise<PostSearchResults> {
+interface SearchArgs {
+  query?: string;
+  page?: number;
+  includeTags?: boolean;
+  pageSize?: number;
+  client?: PoolClient;
+}
+
+export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE, client }: SearchArgs): Promise<PostSearchResults> {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
   const parts = query.split(" ")
                      .filter(p => !!p)
-                     .map(p => p.toLowerCase()
-                                .replace(/\\/g, "\\\\")
-                                .replace(/%/g, "\\%")
-                                .replace(/_/g, "\\_")
-                                .replace(/\*/g, "%")
-                                .replace(/\?/g, "_"));
+                     .map(preparePattern);
   
   if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
   
-  const whitelist = [];
-  const blacklist = [];
+  let whitelist = [];
+  let blacklist = [];
   let sort = SORTS.date;
   let order = "desc";
+  let from = SQL`
+    FROM filtered
+    INNER JOIN posts ON posts.id = filtered.id
+  `;
   
   for(let part of parts) {
     if(part.startsWith("-")) {
@@ -56,7 +68,13 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     }
   }
   
-  let tagsQuery: SQLStatement | string = "";
+  const onlyTagged = whitelist.length > 0 && whitelist.every(pat => blankPattern.test(pat));
+  const onlyUntagged = blacklist.some(pat => blankPattern.test(pat));
+  
+  whitelist = whitelist.filter(pat => !blankPattern.test(pat));
+  blacklist = blacklist.filter(pat => !blankPattern.test(pat));
+  
+  let tagsQuery: SQLStatement = SQL``;
   if(includeTags) {
     tagsQuery = SQL`
       , (
@@ -65,12 +83,12 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         FROM (
           SELECT *
           FROM(
-            SELECT DISTINCT ON (tags.id)
+            SELECT
               tags.id,
               tags.name,
               tags.used,
               count(1) as count
-            FROM filtered
+            FROM (SELECT id FROM filtered LIMIT ${TAGS_SAMPLE_MAX}) filtered
             LEFT  JOIN mappings ON mappings.postid = filtered.id
             LEFT  JOIN tags     ON mappings.tagid = tags.id
             GROUP BY tags.id
@@ -83,32 +101,72 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     `;
   }
   
+  let filteredWhere;
+  if(onlyTagged && onlyUntagged) {
+    filteredWhere = `WHERE FALSE`;
+  } else if(onlyTagged) {
+    filteredWhere = `WHERE EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
+  } else if(onlyUntagged) {
+    filteredWhere = `WHERE NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
+  } else {
+    filteredWhere = ``;
+  }
+  
+  let filtered: SQLStatement;
+  if(onlyTagged && onlyUntagged) {
+    filtered = SQL`(SELECT 0 AS id WHERE FALSE)`;
+  } else if(whitelist.length > 0 && blacklist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM whitelist
+      CROSS JOIN blacklist
+      CROSS JOIN LATERAL unnest(whitelist.ids - blacklist.ids) id
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(whitelist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM whitelist
+      CROSS JOIN LATERAL unnest(whitelist.ids) id
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(blacklist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM posts
+      CROSS JOIN blacklist
+      WHERE posts.id != ALL(blacklist.ids)
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(filteredWhere) {
+    filtered = SQL`(
+      SELECT id
+      FROM posts
+      `.append(filteredWhere).append(`
+    )`);
+  } else {
+    filtered = SQL`(SELECT id FROM posts)`;
+    from = SQL`FROM posts`;
+  }
+  
   const result = await db.queryFirst(SQL`
     WITH
-      whitelisted AS (
-        SELECT DISTINCT array_agg(id) AS ids
-        FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
-        LEFT JOIN tags ON name ILIKE pat OR subtag ILIKE pat
-        GROUP BY patid
+      whitelist AS (
+        SELECT intersection_agg(ids) as ids FROM (
+          SELECT union_agg(tags_postids.postids) AS ids
+          FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
+          LEFT JOIN tags ON tags.name ILIKE pat OR tags.subtag ILIKE pat
+          INNER JOIN tags_postids ON tags_postids.tagid = tags.id
+          GROUP BY patid
+        ) ids
       ),
-      blacklisted AS (
-        SELECT array_agg(DISTINCT id) AS ids
+      blacklist AS (
+        SELECT union_agg(tags_postids.postids) AS ids
         FROM unnest(${blacklist}::TEXT[]) pat
-        LEFT JOIN tags ON name ILIKE pat OR subtag ILIKE pat
+        LEFT JOIN tags ON tags.name ILIKE pat OR tags.subtag ILIKE pat
+        INNER JOIN tags_postids ON tags_postids.tagid = tags.id
       ),
-      whitelist_size AS (SELECT count(*) AS size FROM whitelisted),
-      filtered AS (
-        SELECT DISTINCT ON (posts.id)
-          posts.*
-        FROM posts
-          LEFT JOIN whitelisted ON TRUE
-          CROSS JOIN blacklisted
-          CROSS JOIN whitelist_size
-        WHERE    (EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(whitelisted.ids)) OR whitelisted.ids IS NULL)
-          AND NOT EXISTS (SELECT 1 FROM mappings WHERE mappings.postid = posts.id AND mappings.tagid = ANY(blacklisted.ids))
-        GROUP BY posts.id, whitelist_size.size
-        HAVING count(1) = whitelist_size.size OR whitelist_size.size = 0
-      )
+      filtered AS `.append(filtered).append(SQL`
     SELECT
       COALESCE(json_agg(json_build_object(
         'id', id,
@@ -116,17 +174,20 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         'mime', mime,
         'posted', format_date(posted)
       )), '[]') as posts,
-      (SELECT count(1) FROM filtered)::INTEGER as total,
+      (SELECT count(1) FROM filtered) as total,
       ${pageSize}::INTEGER as "pageSize"
-      `.append(tagsQuery).append(SQL`
+      `).append(tagsQuery).append(SQL`
     FROM (
-      SELECT *
-      FROM filtered
-      `).append(`ORDER BY filtered."${sort}" ${order} NULLS LAST, filtered.id ${order}`).append(SQL`
+      SELECT posts.*
+      `).append(from)
+        .append(`
+        WHERE posts."${sort}" IS NOT NULL
+        ORDER BY posts."${sort}" ${order}, posts.id ${order}
+      `).append(SQL`
       LIMIT ${pageSize}
       OFFSET ${page * pageSize}
     ) x
-  `), noLock);
+  `), client);
   
   for(const post of result.posts) {
     if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
@@ -135,26 +196,39 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   return result;
 }
 
-export async function random(tag = ""): Promise<PostSummary | null> {
+export async function random(tag: string | null = null): Promise<PostSummary | null> {
+  
+  let sample: SQLStatement;
+  if(!tag) {
+    sample = SQL`(
+      SELECT id
+      FROM posts
+      OFFSET floor(random() * (SELECT posts FROM global))
+      LIMIT 1
+    )`;
+  } else {
+    const pattern = preparePattern(tag);
+    sample = SQL`(
+      SELECT filtered.ids[floor(random() * icount(filtered.ids)) + 1] as id
+      FROM (
+        SELECT union_agg(tags_postids.postids) AS ids
+        FROM tags
+        INNER JOIN tags_postids ON tags_postids.tagid = tags.id
+        WHERE tags.name ILIKE ${pattern} OR tags.subtag ILIKE ${pattern}
+      ) filtered
+    )`;
+  }
+  
   const post = await db.queryFirst(SQL`
-    WITH filtered AS (
-          SELECT DISTINCT ON (posts.id)
-            posts.*
-          FROM posts
-          LEFT JOIN mappings ON mappings.postid = posts.id
-          LEFT JOIN tags     ON mappings.tagid = tags.id
-          WHERE tags.name ILIKE ${tag} OR tags.subtag ILIKE ${tag} OR ${tag} = ''
-          GROUP BY posts.id
-        )
+    WITH sample AS `.append(sample).append(SQL`
     SELECT
-      id,
+      posts.id,
       encode(hash, 'hex') as hash,
       mime,
       format_date(posted) AS posted
-    FROM filtered
-    ORDER BY id
-    OFFSET floor(random() * (SELECT count(1) FROM filtered))
-  `);
+    FROM sample
+    INNER JOIN posts ON posts.id = sample.id
+  `));
   
   if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
   

@@ -3,15 +3,16 @@ import axios, { Canceler } from "axios";
 import { useHistory } from "react-router";
 import qs from "query-string";
 import { PostsSearchRequest, PostsSearchResponse, PostSummary, PostsSearchPageData, PostSearchResults } from "../../../server/routes/apiTypes";
-import usePageData from "../../hooks/usePageData";
-import Layout from "../../components/Layout";
-import Tags from "../../components/Tags";
-import Thumbnail from "../../components/Thumbnail";
 import requestJSON from "../../helpers/requestJSON";
-import Pagination from "../../components/Pagination";
+import usePageData from "../../hooks/usePageData";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useSSR from "../../hooks/useSSR";
 import useSearch from "../../hooks/useSearch";
+import Layout from "../../components/Layout";
+import Tags from "../../components/Tags";
+import Thumbnail from "../../components/Thumbnail";
+import Pagination from "../../components/Pagination";
+import Spinner from "../../components/Spinner";
 import "./SearchPage.scss";
 
 function pagesReducer(state: PostSummary[][], action: { posts: PostSummary[]; reset?: boolean }) {
@@ -29,7 +30,7 @@ export default function SearchPage() {
   const history = useHistory();
   const [firstPage, setFirstPage] = useState<PostSearchResults>(pageData?.results || { posts: [], pageSize: 1, tags: {}, total: 0 });
   const [pages, pagesDispatch] = useReducer(pagesReducer, pageData?.results.posts ? [pageData?.results.posts] : []);
-  const pageFetchCancel = useRef<null | Canceler>(null);
+  const [fetchCancel, setFetchCancel] = useState<null | Canceler>(null);
   
   const usePagination = pagination || SSR;
   const pageCount = Math.ceil(firstPage.total / firstPage.pageSize);
@@ -40,10 +41,10 @@ export default function SearchPage() {
       setTimeout(() => window.scrollTo({ behavior: "auto", top: 0 }), 100);
       pagesDispatch({ reset: true, posts: pageData.results.posts });
       setFirstPage(pageData.results);
-      if(pageFetchCancel.current) pageFetchCancel.current();
+      if(fetchCancel) fetchCancel();
       curPage.current = typeof search.page === "string" && parseInt(search.page) || 0;
     }
-  }, [firstPage, pageData, search.page]);
+  }, [firstPage, pageData, search.page, fetchCancel]);
   
   useEffect(() => {
     if(pagination && pages.length > 1) pagesDispatch({ reset: true, posts: pages[0] });
@@ -56,9 +57,9 @@ export default function SearchPage() {
   useEffect(() => {
     if(usePagination) return;
     if(end) return;
+    if(fetchCancel) return;
     
     const checkScroll = async () => {
-      if(pageFetchCancel.current) return;
       const body = document.body;
       const html = document.documentElement;
       const bottomPosition = window.pageYOffset + window.innerHeight;
@@ -74,11 +75,11 @@ export default function SearchPage() {
               query,
               page: curPage.current,
             },
-            cancelCb: cancel => pageFetchCancel.current = cancel,
+            cancelCb: cancel => setFetchCancel(() => cancel),
           });
           
           pagesDispatch({ posts: result.posts });
-          pageFetchCancel.current = null;
+          setFetchCancel(null);
         } catch(e) {
           if(!(e instanceof axios.Cancel)) throw e;
         }
@@ -88,7 +89,7 @@ export default function SearchPage() {
     checkScroll();
     document.addEventListener("scroll", checkScroll);
     return () => document.removeEventListener("scroll", checkScroll);
-  }, [end, query, usePagination, pages]);
+  }, [end, query, usePagination, pages, fetchCancel]);
   
   return (
     <Layout className="SearchPage" options
@@ -101,6 +102,7 @@ export default function SearchPage() {
       {end && !usePagination && pages.length > 0 && pages[0].length > 0 &&
         <div className="end" />
       }
+      {fetchCancel && <Spinner />}
       {pages[0]?.length === 0 &&
         <div className="empty">No Posts Found</div>
       }

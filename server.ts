@@ -1,13 +1,12 @@
 import 'source-map-support/register';
 import http from 'http';
-import chalk, { Level } from 'chalk';
+import chalk from 'chalk';
 
 import app from './server/app';
 import configs from "./server/helpers/configs";
 
 if(typeof configs.isTTY === "boolean") {
-  chalk.enabled = configs.isTTY;
-  chalk.level = configs.isTTY ? (chalk.level || Level.Basic) : Level.None;
+  chalk.level = configs.isTTY ? (chalk.level || 1) : 0;
 }
 
 let port = configs.port || 3000;

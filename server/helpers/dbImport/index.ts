@@ -1,90 +1,59 @@
-import readline from "readline";
-import sqlite from "sqlite";
-import chalk from "chalk";
+import { Writable } from "stream";
+import { Database, Statement } from "better-sqlite3";
+import { PoolClient } from "pg";
+import copy from "pg-copy-streams";
 import configs from "../configs";
+import { printProgress, elapsed } from "./pretty";
 
-const BATCH_SIZE = 1024;
-const BAR_LENGTH = 20;
-
-let lastProgressName: string | null = null;
-let lastProgressBars = 0;
-let currentProgressStart = Date.now();
-
-export function elapsed(since: number) {
-  const duration = (Date.now() - since) / 1000;
-  
-  if(duration < 1) return `${Math.floor(duration * 1000)}ms`;
-  else if(duration < 60) return `${duration.toFixed(2)}s`;
-  else if(duration < 60 * 60) return `${Math.floor(duration / 60)}:${Math.floor(duration % 60)}`;
-  else return `${Math.floor(duration / 60 / 60)}:${Math.floor(duration / 60 % 60)}:${Math.floor(duration % 60)}`;
-}
-
-export function printProgress(done: boolean, name: string): void;
-export function printProgress(progress: [number, number], name: string): void;
-export function printProgress(progress: boolean | [number, number], name: string) {
-  if(lastProgressName !== null && lastProgressName !== name) printProgress(true, lastProgressName);
-  
-  const fancy = typeof configs.isTTY === "boolean" ? configs.isTTY : process.stdout.isTTY;
-  
-  let bar, done;
-  if(typeof progress === "boolean") {
-    bar = progress ? BAR_LENGTH : 0;
-    done = progress;
-  } else {
-    bar = Math.round(progress[0] / progress[1] * BAR_LENGTH);
-    done = progress[0] === progress[1];
-  }
-  
-  if(fancy) {
-    readline.clearLine(process.stdout, 0);
-    readline.cursorTo(process.stdout, 0);
-    
-    let out = name;
-    if(Array.isArray(progress)) out += ` (${progress[0]}/${progress[1]})`;
-    out = out.padEnd(32, " ");
-    out += `${chalk.white("[") + chalk.cyan("#".repeat(bar)) + chalk.gray("-".repeat(BAR_LENGTH - bar)) + chalk.white("]")} `;
-    if(done) out += `${chalk.green.bold("Done")} in ${elapsed(currentProgressStart)}\n`;
-    
-    process.stdout.write(out);
-  } else {
-    let out = "";
-    
-    if(lastProgressName === null) {
-      out += name;
-      if(Array.isArray(progress)) out += ` (${progress[1]})`;
-      out = out.padEnd(32, " ");
-      out += "[";
-    }
-    out += "#".repeat(bar - lastProgressBars);
-    if(done) out += `] Done in ${elapsed(currentProgressStart)}\n`;
-    
-    process.stdout.write(out);
-  }
-  
-  if(done) {
-    lastProgressName = null;
-    lastProgressBars = 0;
-  } else {
-    if(lastProgressName === null) currentProgressStart = Date.now();
-    lastProgressBars = bar;
-    lastProgressName = name;
-  }
-}
-
-export abstract class Import {
-  constructor(protected hydrus: sqlite.Database) {}
+export abstract class Import<Key> {
+  constructor(protected hydrus: Database, protected postgres: PoolClient) {}
   
   abstract display: string;
-  abstract total(): Promise<number>;
-  abstract importBatch(offset: number, limit: number): Promise<void>;
+  batchSizeMul = 1;
+  
+  abstract totalQuery: string;
+  abstract inputQuery: string;
+  abstract outputQuery: string;
+  
+  total() {
+    return this.hydrus.prepare(this.totalQuery).raw().get()[0];
+  }
+  
+  async importBatch(lastKey: Key | null, limit: number, input: Statement, output: Writable): Promise<Key | null> {
+    const rows = input.all(lastKey === null ? -1 : lastKey, limit);
+    
+    let buf = "";
+    for(const row of rows) {
+      buf += row[1];
+    }
+    output.write(buf);
+    
+    if(rows.length > 0) return rows[rows.length - 1][0];
+    else return null;
+  }
   
   async start() {
+    const batchSize = Math.ceil(configs.importBatchSize * this.batchSizeMul);
     const total = await this.total();
     
-    for(let offset = 0; offset < total; offset += BATCH_SIZE) {
-      printProgress([offset, total], this.display);
-      await this.importBatch(offset, BATCH_SIZE);
+    const input = this.hydrus.prepare(this.inputQuery).raw(true);
+    const output: Writable = await this.postgres.query(copy.from(this.outputQuery));
+    
+    let lastKey: Key | null = null;
+    
+    for(let count = 0; count < total; count += batchSize) {
+      lastKey = await this.importBatch(lastKey, batchSize, input, output);
+      if(lastKey === null) break;
+      
+      if(output.writableLength > output.writableHighWaterMark) {
+        printProgress([count, total], this.display);
+        await new Promise(res => output.once("drain", res));
+      } else {
+        await new Promise(res => setImmediate(res));
+      }
     }
+    
+    await new Promise(res => output.end(res));
     
     printProgress([total, total], this.display);
   }
@@ -94,3 +63,4 @@ export { default as Posts } from "./posts";
 export { default as Tags } from "./tags";
 export { default as Mappings } from "./mappings";
 export { default as Urls } from "./urls";
+export { printProgress, elapsed };

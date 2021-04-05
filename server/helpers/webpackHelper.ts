@@ -15,11 +15,11 @@ export const mount = () => {
   console.log(`\nWebpack Hot Middleware has been ${chalk.bold.yellow("enabled")}!`);
   const compiler = webpack(webpackClientDevConfig);
   
-  router.use(webpackDevMiddleware(compiler, {
+  router.use(webpackDevMiddleware(compiler as any, {
     publicPath: webpackClientDevConfig.output?.publicPath as string,
   }));
   
-  router.use(webpackHotMiddleware(compiler, {
+  router.use(webpackHotMiddleware(compiler as any, {
     log: console.log,
     path: '/__webpack_hmr',
     heartbeat: 10 * 1000,

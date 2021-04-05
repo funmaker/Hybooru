@@ -13,6 +13,11 @@
     .posts {
       line-height: 0;
 
+      img {
+        display: inline-block;
+        line-height: 100%;
+      }
+
       .placeholder {
         display: inline-block;
         width: 7.5em;

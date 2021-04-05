@@ -2,6 +2,7 @@ import SQL from "sql-template-strings";
 import { TagsSearchResponse } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
+import { preparePattern } from "../helpers/utils";
 
 const PAGE_SIZE = 50;
 
@@ -13,12 +14,7 @@ const SORTS = {
 export async function search({ query = "", sorting = "", page = 0, pageSize = PAGE_SIZE }): Promise<TagsSearchResponse> {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
-  let pattern = query.toLowerCase()
-                     .replace(/\\/g, "\\\\")
-                     .replace(/%/g, "\\%")
-                     .replace(/_/g, "\\_")
-                     .replace(/\*/g, "%")
-                     .replace(/\?/g, "_");
+  let pattern = preparePattern(query);
   
   let sort = SORTS.posts;
   let order = "desc";

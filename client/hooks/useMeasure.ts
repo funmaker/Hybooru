@@ -8,7 +8,7 @@ export default function useMeasure() {
   useEffect(() => {
     if(!node) return;
     
-    const observer = new ResizeObserver(([entry]) => setRect(entry.contentRect as DOMRectReadOnly));
+    const observer = new ResizeObserver(([entry]: ResizeObserverEntry[]) => setRect(entry.contentRect as DOMRectReadOnly));
     observer.observe(node);
     setRect(node.getBoundingClientRect());
     

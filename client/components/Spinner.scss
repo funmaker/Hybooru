@@ -1,0 +1,52 @@
+
+
+.Spinner {
+  display: inline-block;
+  position: relative;
+  width: 5.666em;
+  height: 3em;
+  opacity: 0.5;
+
+  div {
+    position: absolute;
+    top: 1em;
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    background: #47a2ff;
+    animation-timing-function: cubic-bezier(0, 1, 1, 0);
+
+    &:nth-child(1) {
+      left: 0.666em;
+      animation: spinner-grow 0.6s infinite;
+    }
+
+    &:nth-child(2) {
+      left: 0.666em;
+      animation: spinner-move 0.6s infinite;
+    }
+
+    &:nth-child(3) {
+      left: 2.333em;
+      animation: spinner-move 0.6s infinite;
+    }
+
+    &:nth-child(4) {
+      left: 4em;
+      animation: spinner-shrink 0.6s infinite;
+    }
+  }
+}
+
+@keyframes spinner-grow {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+@keyframes spinner-shrink {
+  0% { transform: scale(1); }
+  100% { transform: scale(0); }
+}
+@keyframes spinner-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(1.666em, 0); }
+}

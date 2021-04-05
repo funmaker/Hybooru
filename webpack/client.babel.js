@@ -2,7 +2,6 @@
 import path from "path";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
-import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 const root = process.cwd();
 

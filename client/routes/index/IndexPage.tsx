@@ -16,7 +16,6 @@ export default function IndexPage() {
   const config = useConfig();
   const [theme] = useTheme();
   const [showMotd, setShowMotd] = useState(true);
-  const [, up] = useReducer(s => s + 1, 0);
   
   useChange(theme, () => {
     setShowMotd(false);

@@ -10,6 +10,7 @@ type Configs = {
   appDescription: string,
   adminPassword: string | null,
   isTTY: boolean | null,
+  importBatchSize: number,
   db: pg.PoolConfig,
   tags: {
     motd: string | Partial<Record<Theme, string>> | null,
@@ -26,6 +27,7 @@ let configs: Configs = {
   appDescription: "Hydrus-based booru-styled imageboard in React",
   adminPassword: null,
   isTTY: null,
+  importBatchSize: 10000,
   db: {
     user: "hybooru",
     host: "localhost",

@@ -8,11 +8,14 @@
 - optimize SQL
 - Improve README.md
 - Handling txt/unknown files
+- Cache
+- Nginx configuration
 
 
 # Unreleased
 
-- Improved DB import
+- Complete DB import rewrite
+- Indexing and SQL optimizations
 - Added Dark Theme
 - Added dynamic HTML titles
 - Added Open Graph protocol
