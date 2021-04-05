@@ -14,6 +14,8 @@
 
 # Unreleased
 
+# v1.3.0
+
 - Complete DB import rewrite
 - Indexing and SQL optimizations
 - Added Dark Theme
