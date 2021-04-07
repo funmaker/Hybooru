@@ -10,6 +10,7 @@ export const PageDataContext = React.createContext({
   pageData: null as any,
   locationKey: undefined as string | undefined,
   fetch: (): UnlistenCallback => { throw new Error("Not Initialized"); },
+  fetching: false,
 });
 
 interface FetchEmitter {
@@ -23,6 +24,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   const locationRef = useRef(useLocation().key);
   locationRef.current = useLocation().key;
   const [{ locationKey, pageData }, setPageData] = useState({ locationKey: locationRef.current, pageData: initialData || null });
+  const [fetching, setFetching] = useState(false);
   const history = useHistory();
   const fetchEmitter = useRef<FetchEmitter | null>(null);
   
@@ -46,6 +48,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
       return fetchEmitter.current.unlisten;
     }
     
+    setFetching(true);
     let cancelFetch = () => {};
     requestJSON({
       cancelCb: cancel => cancelFetch = cancel,
@@ -55,6 +58,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
       console.error("Unable to fetch page data: ", error);
     }).finally(() => {
       fetchEmitter.current = null;
+      setFetching(false);
     });
     
     fetchEmitter.current = {
@@ -70,12 +74,12 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     return fetchEmitter.current.unlisten;
   }, []);
   
-  return useMemo(() => ({ pageData, locationKey, fetch }), [pageData, locationKey, fetch]);
+  return useMemo(() => ({ pageData, locationKey, fetch, fetching }), [pageData, locationKey, fetch, fetching]);
 }
 
-export default function usePageData<T>(auto = true): [T | null, boolean, () => void] {
+export default function usePageData<T>(auto = true): [T | null, boolean, () => UnlistenCallback] {
   const currentKey = useLocation().key;
-  const { pageData, fetch, locationKey } = useContext(PageDataContext);
+  const { pageData, fetch, locationKey, fetching } = useContext(PageDataContext);
   
   const loaded = pageData !== null;
   
@@ -85,8 +89,8 @@ export default function usePageData<T>(auto = true): [T | null, boolean, () => v
   }, [fetch, auto, loaded, currentKey, locationKey]);
   
   if(currentKey !== locationKey) {
-    return [null, true, fetch];
+    return [null, fetching, fetch];
   } else {
-    return [pageData, !loaded, fetch];
+    return [pageData, fetching, fetch];
   }
 }

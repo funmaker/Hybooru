@@ -3,16 +3,23 @@
 
 - Gallery
 - API docs
-- Search by rating
 - RegenDB panel
-- optimize SQL
 - Improve README.md
 - Handling txt/unknown files
-- Cache
+- Server Side Cache
 - Nginx configuration
+- replace ILIKE with LIKE
+- use darkmode based on browser theme
+- Custom thumbnail location
+- configurable autoplay
+- configurable hide namespaces
+- arrow keys in autocomplete
+- make sure hydrus db is closed gracefully
 
 
 # Unreleased
+
+- Added client-side cache of previous searches
 
 # v1.3.0
 

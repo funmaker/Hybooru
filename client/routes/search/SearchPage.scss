@@ -8,10 +8,15 @@
   }
 
   & > .content {
-    text-align: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 
     .posts {
       line-height: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
 
       img {
         display: inline-block;
@@ -25,10 +30,11 @@
       }
     }
 
-    .end {
+    .bottomPad {
       position: relative;
+      height: 8em;
 
-      &::before {
+      &.end::before {
         content: "End";
         position: absolute;
         top: 0.5em;
@@ -45,8 +51,13 @@
       opacity: 0.7;
     }
 
-    .bottomPad {
-      height: 9em;
+    .Spinner {
+      margin: 2.5em auto;
+    }
+
+    .Pagination {
+      margin-top: auto;
+      padding-top: 3em;
     }
   }
 }

@@ -10,13 +10,14 @@ import "./Thumbnail.scss";
 
 export interface ThumbnailProps {
   post: PostSummary;
+  noFade?: boolean;
 }
 
-export default function Thumbnail({ post }: ThumbnailProps) {
+export default function Thumbnail({ post, noFade }: ThumbnailProps) {
   const SSR = useSSR();
   const config = useConfig();
   const search = useSearch();
-  const [dynamic, setLoaded] = useReducer(() => false, !SSR);
+  const [dynamic, setLoaded] = useReducer(() => false, !SSR && !noFade);
   const query = (typeof search.query === "string" && search.query) ? `?query=${encodeURIComponent(search.query)}` : "";
   
   return (
