@@ -46,6 +46,7 @@ export default function PostPage() {
   
   return (
     <Layout className="PostPage"
+            options
             sidebar={<>
               {rating}
               <div className="namespace">
@@ -67,7 +68,7 @@ export default function PostPage() {
               }
               <Tags tags={pageData.post.tags} grouped />
             </>}> {/* eslint-disable-line react/jsx-closing-tag-location */}
-      <File link={link} post={pageData.post} />
+      <File post={pageData.post} link={link} />
     </Layout>
   );
 }

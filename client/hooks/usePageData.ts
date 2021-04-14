@@ -17,12 +17,14 @@ interface FetchEmitter {
   listeners: number;
   unlisten: UnlistenCallback;
   cancel: Canceler;
+  key: string | undefined;
 }
 
 export function usePageDataInit(initialData: any): ContextType<typeof PageDataContext> {
   if(initialData._error) initialData = null;
-  const locationRef = useRef(useLocation().key);
-  locationRef.current = useLocation().key;
+  const location = useLocation();
+  const locationRef = useRef(location.key);
+  locationRef.current = location.key;
   const [{ locationKey, pageData }, setPageData] = useState({ locationKey: locationRef.current, pageData: initialData || null });
   const [fetching, setFetching] = useState(false);
   const history = useHistory();
@@ -30,9 +32,11 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   
   useEffect(() => {
     return history.listen(() => {
-      fetchEmitter.current?.cancel();
-      fetchEmitter.current = null;
-      setPageData({ locationKey: undefined, pageData: null });
+      if(locationRef.current && fetchEmitter.current?.key !== locationRef.current) {
+        fetchEmitter.current?.cancel();
+        fetchEmitter.current = null;
+        setPageData({ locationKey: undefined, pageData: null });
+      }
     });
   }, [history]);
   
@@ -68,6 +72,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
         if(this.listeners <= 0) this.cancel();
       },
       cancel: cancelFetch,
+      key: locationRef.current,
     };
     fetchEmitter.current.unlisten = fetchEmitter.current.unlisten.bind(fetchEmitter.current);
     
@@ -81,12 +86,10 @@ export default function usePageData<T>(auto = true): [T | null, boolean, () => U
   const currentKey = useLocation().key;
   const { pageData, fetch, locationKey, fetching } = useContext(PageDataContext);
   
-  const loaded = pageData !== null;
-  
   useEffect(() => {
-    if(loaded || !auto || currentKey === locationKey) return;
+    if(!auto || currentKey === locationKey) return;
     else return fetch();
-  }, [fetch, auto, loaded, currentKey, locationKey]);
+  }, [fetch, auto, currentKey, locationKey]);
   
   if(currentKey !== locationKey) {
     return [null, fetching, fetch];

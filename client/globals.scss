@@ -19,6 +19,10 @@
     }
   }
 
+  &.dimmed {
+    overflow: hidden;
+  }
+
   font-family: "Segoe UI", "Open Sans", sans-serif;
   font-size: 20px;
   background: var(--page-background);

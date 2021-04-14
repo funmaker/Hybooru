@@ -1,7 +1,6 @@
 
 ### TODO:
 
-- Gallery
 - API docs
 - RegenDB panel
 - Improve README.md
@@ -11,7 +10,6 @@
 - replace ILIKE with LIKE
 - use darkmode based on browser theme
 - Custom thumbnail location
-- configurable autoplay
 - configurable hide namespaces
 - arrow keys in autocomplete
 - make sure hydrus db is closed gracefully
@@ -19,7 +17,9 @@
 
 # Unreleased
 
+- Added mobile-friendly Popup Gallery
 - Added client-side cache of previous searches
+- Added autoplay to videos
 
 # v1.3.0
 

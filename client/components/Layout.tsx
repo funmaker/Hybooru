@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { Link } from "react-router-dom";
 import ReactForm from "../components/ReactForm";
 import useMeasure from "../hooks/useMeasure";
@@ -19,15 +19,19 @@ export interface LayoutProps {
   extraLink?: React.ReactNode;
   searchAction?: string;
   options?: boolean;
+  dimmed?: boolean;
 }
 
-export default function Layout({ className, sidebar, children, extraLink, searchAction = "/posts", options }: LayoutProps) {
+export default function Layout({ className, sidebar, children, extraLink, searchAction = "/posts", options, dimmed }: LayoutProps) {
   const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
   const [optionsOpen, toggleOptions] = useReducer(s => !s, false);
-  const [sidebarOpen, toggleSidebar] = useReducer(s => !s, false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const openSidebar = useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const [pagination, setPagination] = useLocalStorage("pagination", false);
+  const [popup, setPopup] = useLocalStorage("popup", false);
   const search = useSearch();
   const urlQuery = typeof search.query === "string" ? search.query : "";
   const [query, setQuery] = useState(urlQuery);
@@ -44,6 +48,11 @@ export default function Layout({ className, sidebar, children, extraLink, search
     setPagination(!pagination);
   }, [pagination, setPagination]);
   
+  const togglePopup = useCallback((ev: React.MouseEvent) => {
+    ev.preventDefault();
+    setPopup(!popup);
+  }, [popup, setPopup]);
+  
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
     setQuery(query => {
       const newQuery = query.trimRight()
@@ -57,8 +66,8 @@ export default function Layout({ className, sidebar, children, extraLink, search
   
   const onSidebarButtonClick = useCallback((ev: React.MouseEvent) => {
     ev.preventDefault();
-    toggleSidebar();
-  }, []);
+    openSidebar();
+  }, [openSidebar]);
   
   const onOptionsButtonClick = useCallback((ev: React.MouseEvent) => {
     ev.preventDefault();
@@ -68,6 +77,16 @@ export default function Layout({ className, sidebar, children, extraLink, search
   let domClassName = "Layout";
   if(mobile) domClassName += ` mobile`;
   if(className) domClassName += ` ${className}`;
+  
+  let dimmerActive = dimmed || false;
+  if(mobile && sidebarOpen) dimmerActive = true;
+  
+  useEffect(() => {
+    if(!dimmerActive) return;
+    
+    document.documentElement.classList.add("dimmed");
+    return () => document.documentElement.classList.remove("dimmed");
+  }, [dimmerActive]);
   
   return (
     <div className={domClassName} ref={ref}>
@@ -112,13 +131,12 @@ export default function Layout({ className, sidebar, children, extraLink, search
                 <option value="id">Id</option>
               </select>
             </div>
-            <div><a href="#" onClick={togglePagination}>Auto Paging: {pagination ? "No" : "Yes"}</a></div>
+            <div><a href="#" onClick={togglePagination}>Auto Paging: {!pagination ? "Yes" : "No"}</a></div>
+            <div><a href="#" onClick={togglePopup}>Popup Gallery: {popup ? "Yes" : "No"}</a></div>
           </div>
         }
       </div>
-      {mobile &&
-        <div className="contentDimmer" onClick={toggleSidebar} />
-      }
+      <div className={`contentDimmer${dimmerActive ? " active" : ""}`} onClick={closeSidebar} />
       <div className="content">
         {children}
       </div>

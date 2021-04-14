@@ -157,6 +157,22 @@
     }
   }
 
+  & > .contentDimmer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 5;
+    transition: background 0.2s ease;
+    pointer-events: none;
+
+    &.active {
+      background: rgba(0, 0, 0, 0.50);
+      pointer-events: all;
+    }
+  }
+
   & > .content {
     flex: 1;
     padding-top: 4.5rem;
@@ -171,30 +187,7 @@
 
       &.open {
         left: 0;
-
-        & ~ .contentDimmer {
-          background: rgba(20, 20, 20, 0.25);
-          pointer-events: all;
-
-          :root.dark & {
-            background: rgba(0, 0, 0, 0.75);
-          }
-        }
-
-        & ~ .content {
-        }
       }
-    }
-
-    & > .contentDimmer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 100vh;
-      z-index: 5;
-      transition: background 0.2s ease;
-      pointer-events: none;
     }
 
     & > .content {

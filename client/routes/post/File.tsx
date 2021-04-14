@@ -1,13 +1,22 @@
 import React from "react";
-import { Post } from "../../../server/routes/apiTypes";
-import { Mime } from "../../../server/helpers/consts";
+import { Post, PostSummary } from "../../../server/routes/apiTypes";
+import { fileUrl, Mime } from "../../../server/helpers/consts";
 
 interface FileProps {
-  link: string;
-  post: Post;
+  post: Post | PostSummary;
+  link?: string;
+  className?: string;
+  controls?: boolean;
+  autoPlay?: boolean;
+  muted?: boolean;
 }
 
-export default function File({ link, post }: FileProps) {
+export default function File({ post, link, className, controls = true, autoPlay = true, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
+  const width = "width" in post && post.width || undefined;
+  const height = "height" in post && post.height || undefined;
+  const size = "size" in post && post.size ? post.size + " bytes" : undefined;
+  className = className ? ` ${className}` : "";
+  
   switch(post.mime) {
     case Mime.IMAGE_JPEG:
     case Mime.IMAGE_PNG:
@@ -19,12 +28,11 @@ export default function File({ link, post }: FileProps) {
     case Mime.IMAGE_WEBP:
     case Mime.IMAGE_TIFF:
     case Mime.GENERAL_IMAGE: {
-      return (
-        <a href={link} target="_blank" rel="noreferrer">
-          <img className="File image" src={link} alt={String(post.id)}
-               width={post.width || undefined} height={post.height || undefined} />
-        </a>
-      );
+      const img = <img className={`File image${className}`} src={fileUrl(post)} alt={String(post.id)}
+                       width={width} height={height} {...rest} />;
+      
+      if(link) return <a href={fileUrl(post)} target="_blank" rel="noreferrer">{img}</a>;
+      else return img;
     }
     case Mime.VIDEO_FLV:
     case Mime.VIDEO_MP4:
@@ -39,9 +47,9 @@ export default function File({ link, post }: FileProps) {
     case Mime.GENERAL_VIDEO:
     case Mime.GENERAL_ANIMATION: {
       return (
-        <video className="File video" controls
-               width={post.width || undefined} height={post.height || undefined}>
-          <source src={link} />
+        <video className={`File video${className}`} controls={controls} autoPlay={autoPlay} loop muted={muted}
+               width={width} height={height} {...rest}>
+          <source src={fileUrl(post)} />
           Your browser does not support this video.
         </video>
       );
@@ -54,13 +62,13 @@ export default function File({ link, post }: FileProps) {
     case Mime.AUDIO_REALMEDIA:
     case Mime.AUDIO_TRUEAUDIO:
     case Mime.GENERAL_AUDIO: {
-      return <audio className="File audio" src={link} />;
+      return <audio className={`File audio${className}`} src={fileUrl(post)} {...rest} />;
     }
     case Mime.TEXT_HTML:
     case Mime.TEXT_PLAIN:
     case Mime.APPLICATION_JSON:
     case Mime.APPLICATION_YAML: {
-      return <div className="File text">Here be the text</div>;
+      return <div className={`File text${className}`} {...rest}>Here be the text</div>;
     }
     case Mime.APPLICATION_HYDRUS_CLIENT_COLLECTION:
     case Mime.APPLICATION_CLIP:
@@ -77,7 +85,7 @@ export default function File({ link, post }: FileProps) {
     case Mime.APPLICATION_PSD:
     case Mime.GENERAL_APPLICATION:
     default: {
-      return <div className="File unknown">File{post.size ? post.size + " bytes" : ""}</div>;
+      return <div className={`File unknown${className}`} {...rest}>File{size}</div>;
     }
   }
 }

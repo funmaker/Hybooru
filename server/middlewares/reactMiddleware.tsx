@@ -12,9 +12,7 @@ import { AnySSRPageData } from "../routes/apiTypes";
 
 const removeTags = /[&<>]/g;
 const tagsToReplace: Record<string, string> = {
-  '&': "&amp;",
-  '<': "&lt;",
-  '>': "&gt;",
+  '<': `\u003C`,
 };
 
 export interface OGImage {

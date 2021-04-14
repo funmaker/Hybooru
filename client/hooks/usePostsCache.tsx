@@ -77,33 +77,35 @@ export default function usePostsCache() {
   }, [history]);
   
   const requestNext = useCallback(async () => {
-    if(canceller.current || pageFetching) return;
+    if(canceller.current || pageFetching || !postsCache[key]) return;
     
-    if(postsCache[key]) {
-      try {
-        const cache = postsCache[key];
-        if(cache.posts.length >= (cache.total || 0)) return;
-        
-        setFetching(true);
-        const result = await requestJSON<PostsSearchResponse, PostsSearchRequest>({
-          pathname: "/api/post",
-          search: {
-            query,
-            page: cache.page,
-          },
-          cancelCb: cancel => canceller.current = cancel,
-        });
-        
-        cache.page++;
-        cache.posts = [...cache.posts, ...result.posts];
-        if(result.posts.length === 0) cache.total = cache.posts.length;
-        
-        canceller.current = null;
-      } catch(e) {
-        if(!(e instanceof axios.Cancel)) throw e;
-      } finally {
-        setFetching(false);
-      }
+    try {
+      if(postsCache[key].total !== null && postsCache[key].posts.length >= (postsCache[key].total || 0)) return;
+      
+      setFetching(true);
+      const result = await requestJSON<PostsSearchResponse, PostsSearchRequest>({
+        pathname: "/api/post",
+        search: {
+          query,
+          page: postsCache[key].page,
+        },
+        cancelCb: cancel => canceller.current = cancel,
+      });
+      console.log("done");
+      
+      postsCache[key] = {
+        ...postsCache[key],
+        page: postsCache[key].page + 1,
+        posts: [...postsCache[key].posts, ...result.posts],
+        total: result.posts.length === 0 ? postsCache[key].posts.length : postsCache[key].total,
+      };
+      
+      setCurrentCache(postsCache[key]);
+    } catch(e) {
+      if(!(e instanceof axios.Cancel)) throw e;
+    } finally {
+      canceller.current = null;
+      setFetching(false);
     }
   }, [pageFetching, postsCache, key, query]);
   

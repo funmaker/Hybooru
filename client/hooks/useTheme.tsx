@@ -23,7 +23,8 @@ export function ThemeProvider({ init = Theme.LIGHT, children }: ThemeProviderPro
   const [theme, setTheme] = useState(init);
   
   const onThemeChange = useCallback(async (newTheme: Theme) => {
-    document.documentElement.className = newTheme;
+    document.documentElement.classList.remove(...Object.values(Theme));
+    document.documentElement.classList.add(newTheme);
     setTheme(newTheme);
   }, []);
   
@@ -39,5 +40,5 @@ export function ThemeProvider({ init = Theme.LIGHT, children }: ThemeProviderPro
 function setCookie(name: string, value: string) {
   const expires = new Date();
   expires.setFullYear(expires.getFullYear() + 1);
-  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/`;
+  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
 }
