@@ -30,8 +30,6 @@ export default function Layout({ className, sidebar, children, extraLink, search
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
-  const [pagination, setPagination] = useLocalStorage("pagination", false);
-  const [popup, setPopup] = useLocalStorage("popup", false);
   const search = useSearch();
   const urlQuery = typeof search.query === "string" ? search.query : "";
   const [query, setQuery] = useState(urlQuery);
@@ -43,15 +41,12 @@ export default function Layout({ className, sidebar, children, extraLink, search
     if(newQuery !== query) setQuery(newQuery);
   });
   
-  const togglePagination = useCallback((ev: React.MouseEvent) => {
-    ev.preventDefault();
-    setPagination(!pagination);
-  }, [pagination, setPagination]);
-  
-  const togglePopup = useCallback((ev: React.MouseEvent) => {
-    ev.preventDefault();
-    setPopup(!popup);
-  }, [popup, setPopup]);
+  const [pagination, setPagination] = useLocalStorage("pagination", false);
+  const [popup, setPopup] = useLocalStorage("popup", false);
+  const [namespaces, setNamespaces] = useLocalStorage("namespaces", false);
+  const togglePagination = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setPagination(!pagination); }, [pagination, setPagination]);
+  const togglePopup = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setPopup(!popup); }, [popup, setPopup]);
+  const toggleNamespaces = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setNamespaces(!namespaces); }, [namespaces, setNamespaces]);
   
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
     setQuery(query => {
@@ -133,6 +128,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
             </div>
             <div><a href="#" onClick={togglePagination}>Auto Paging: {!pagination ? "Yes" : "No"}</a></div>
             <div><a href="#" onClick={togglePopup}>Popup Gallery: {popup ? "Yes" : "No"}</a></div>
+            <div><a href="#" onClick={toggleNamespaces}>Hide Namespaces: {namespaces ? "No" : "Yes"}</a></div>
           </div>
         }
       </div>

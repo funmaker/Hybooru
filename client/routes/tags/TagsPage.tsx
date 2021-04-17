@@ -5,8 +5,8 @@ import Layout from "../../components/Layout";
 import Pagination from "../../components/Pagination";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
-import "./TagsPage.scss";
 import { namespaceRegex } from "../../../server/helpers/consts";
+import "./TagsPage.scss";
 
 export default function TagsPage() {
   let [pageData] = usePageData<TagsSearchPageData>();
@@ -23,7 +23,7 @@ export default function TagsPage() {
         <tr>
           <th>Posts</th>
           <th>Name</th>
-          <th>Category</th>
+          <th>Namespace</th>
         </tr>
         {Object.entries(pageData?.results.tags || {}).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} />)}
       </table>

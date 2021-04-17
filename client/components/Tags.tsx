@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import useConfig from "../hooks/useConfig";
 import useSearch from "../hooks/useSearch";
 import { namespaceRegex } from "../../server/helpers/consts";
+import useLocalStorage from "../hooks/useLocalStorage";
 import "./Tags.scss";
 
 export interface TagsProps {
@@ -12,6 +13,8 @@ export interface TagsProps {
 }
 
 export default function Tags({ tags, grouped, searchMod }: TagsProps) {
+  const [showNamespaces] = useLocalStorage("namespaces", false);
+  
   if(grouped) {
     const groups: Record<string, string[]> = {};
     const free = [];
@@ -43,7 +46,7 @@ export default function Tags({ tags, grouped, searchMod }: TagsProps) {
   
   return (
     <div className="Tags">
-      <Namespace members={Object.keys(tags)} tags={tags} searchMod={searchMod} />
+      <Namespace members={Object.keys(tags)} tags={tags} searchMod={searchMod} showNamespaces={showNamespaces} />
     </div>
   );
 }
@@ -54,15 +57,16 @@ interface NamespaceProps {
   tags: Record<string, number>;
   searchMod?: boolean;
   sorted?: boolean;
+  showNamespaces?: boolean;
 }
 
-function Namespace({ header, members, tags, searchMod, sorted }: NamespaceProps) {
+function Namespace({ header, members, tags, searchMod, sorted, showNamespaces }: NamespaceProps) {
   const sortedMembers = useMemo(() => sorted ? members.slice().sort() : members, [members, sorted]);
   
   return (
     <div className="namespace">
       {header && <b>{header}</b>}
-      {sortedMembers.map(tag => <Tag key={tag} searchMod={searchMod} tag={tag} tags={tags} />)}
+      {sortedMembers.map(tag => <Tag key={tag} searchMod={searchMod} tag={tag} tags={tags} showNamespace={showNamespaces} />)}
     </div>
   );
 }
@@ -71,9 +75,10 @@ interface TagProps {
   searchMod?: boolean;
   tag: string;
   tags: Record<string, number>;
+  showNamespace?: boolean;
 }
 
-function Tag({ searchMod, tag, tags }: TagProps) {
+function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   const config = useConfig();
   const search = useSearch();
   const query = typeof search.query === "string" ? search.query : "";
@@ -83,7 +88,7 @@ function Tag({ searchMod, tag, tags }: TagProps) {
   
   const result = name.match(namespaceRegex);
   if(result) {
-    name = result[2];
+    if(!showNamespace) name = result[2];
     color = config.namespaceColors[result[1]];
   }
   

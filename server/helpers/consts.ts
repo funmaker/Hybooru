@@ -76,7 +76,7 @@ export enum Mime {
   APPLICATION_UNKNOWN = 101,
 }
 
-export const namespaceRegex = /(.+):(.+)/;
+export const namespaceRegex = /(.+?):(.+)/;
 export const underscoreRegex = /_/g;
 
 export const fileUrl = (post: Post | PostSummary) => `/files/f${post.hash}${post.extension}`;

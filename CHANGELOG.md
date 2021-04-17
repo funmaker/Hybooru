@@ -11,7 +11,6 @@
 - use darkmode based on browser theme
 - Custom thumbnail location
 - configurable hide namespaces
-- arrow keys in autocomplete
 - make sure hydrus db is closed gracefully
 
 
@@ -20,6 +19,10 @@
 - Added mobile-friendly Popup Gallery
 - Added client-side cache of previous searches
 - Added autoplay to videos
+- Added navigation using arrow keys in autocomplete box
+- Added option to show namespaces
+- Fixed handling of subtags containing `:` character
+
 
 # v1.3.0
 

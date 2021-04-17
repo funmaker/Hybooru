@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useHistory } from "react-router";
 import qs from "query-string";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -22,6 +22,7 @@ export default function SearchPage() {
   const search = useSearch();
   const lastPostsCache = useRef<null | PostsCacheData>(null);
   const popupPushed = useRef(false);
+  const scrollRestore = useRef<null | number>(null);
   const imageFade = postsCache === lastPostsCache.current;
   lastPostsCache.current = postsCache;
   
@@ -29,25 +30,41 @@ export default function SearchPage() {
   const pageCount = Math.ceil((postsCache.total || 0) / postsCache.pageSize);
   const end = postsCache.total && postsCache.posts.length >= postsCache.total;
   
-  const hash = parseInt(history.location.hash.slice(1));
-  let popup: number | null = postsCache.posts.findIndex(post => post.id === hash);
-  if(popup < 0) popup = null;
+  let popup: number | null = parseInt(history.location.hash.slice(1));
+  if(isNaN(popup) || popup >= postsCache.posts.length) popup = null;
   
   useEffect(() => {
-    if(hash && popup === null) history.replace({ ...history.location, hash: "" });
-  }, [hash, history, popup]);
+    if(history.location.hash && popup === null) history.replace({ ...history.location, hash: "" });
+  }, [history, popup]);
+  
+  useEffect(() => {
+    return history.listen(() => {
+      requestAnimationFrame(() => {
+        if(scrollRestore.current !== null) {
+          document.documentElement.scrollTop = scrollRestore.current;
+          scrollRestore.current = null;
+        }
+      });
+    });
+  }, [history]);
   
   const setPopup = useCallback((id: number | null) => {
     if(popupPushed.current && id === null) {
+      scrollRestore.current = document.documentElement.scrollTop;
       history.goBack();
       popupPushed.current = false;
     } else if(popupPushed.current && id !== null) {
-      history.replace({ ...history.location, hash: lastPostsCache.current?.posts[id].id.toString() });
+      history.replace({ ...history.location, hash: id.toString() });
     } else if(id !== null) {
-      history.push({ ...history.location, hash: lastPostsCache.current?.posts[id].id.toString() });
+      history.push({ ...history.location, hash: id.toString() });
       popupPushed.current = true;
     } else {
       history.replace({ ...history.location, hash: "" });
+    }
+    
+    if(id !== null && lastPostsCache.current?.posts[id]) {
+      const postId = lastPostsCache.current.posts[id].id;
+      document.getElementById(postId.toString())?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
   }, [history]);
   
@@ -73,7 +90,11 @@ export default function SearchPage() {
   useEffect(() => {
     checkScroll();
     document.addEventListener("scroll", checkScroll);
-    return () => document.removeEventListener("scroll", checkScroll);
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      document.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
   }, [checkScroll]);
   
   useEffect(() => {

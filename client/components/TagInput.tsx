@@ -1,10 +1,11 @@
 import React, { InputHTMLAttributes, useCallback, useRef, useState } from "react";
 import { Canceler } from "axios";
 import { TagsSearchRequest, TagsSearchResponse } from "../../server/routes/apiTypes";
+import { namespaceRegex } from "../../server/helpers/consts";
 import useConfig from "../hooks/useConfig";
 import requestJSON from "../helpers/requestJSON";
+import useLocalStorage from "../hooks/useLocalStorage";
 import "./TagInput.scss";
-import { namespaceRegex } from "../../server/helpers/consts";
 
 const DEBOUNCE_FREQ = 1000;
 const TAGS_COUNT = 10;
@@ -14,8 +15,10 @@ interface TagInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export default function TagInput({ value, onValueChange, ...rest }: TagInputProps) {
+  const [showNamespace] = useLocalStorage("namespaces", false);
   const [tags, setTags] = useState<Record<string, number> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const tagsRef = useRef<HTMLDivElement | null>(null);
   const box = inputRef.current?.getBoundingClientRect();
   const timeoutRef = useRef<NodeJS.Timeout | number | null>(null);
   const blurRef = useRef<NodeJS.Timeout | number | null>(null);
@@ -89,18 +92,32 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     }
   }, []);
   
-  return <span className="TagInput" onFocus={onFocus} onBlur={onBlur}>
+  const onKeyDown = useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
+    if(ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault();
+      
+      const targets = [inputRef.current, ...Array.from(tagsRef.current?.children || [])] as Array<(null | HTMLAnchorElement | HTMLInputElement)>;
+      const cur = targets.indexOf(document.activeElement as any);
+      console.log(targets, document.activeElement, cur);
+      if(cur < 0) return;
+      
+      const dir = ev.key === "ArrowDown" ? 1 : -1;
+      targets[cur + dir]?.focus();
+    }
+  }, []);
+  
+  return <span className="TagInput" onFocus={onFocus} onBlur={onBlur} onKeyDown={onKeyDown}>
     <input value={value} {...rest} ref={inputRef}
            autoComplete="off" autoCorrect="off"
            onChange={onInputChange} onKeyPress={onKeyPress} />
     {tags && box &&
-      <div className="tags"
+      <div className="tags" ref={tagsRef}
            style={{
              left: `${box.x - 1}px`,
              top: `${box.y + box.height - 1}px`,
              width: `${box.width + 2}px`,
            }}>
-        {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} />)}
+        {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} showNamespace={showNamespace} />)}
       </div>
     }
   </span>; // eslint-disable-line react/jsx-closing-tag-location
@@ -110,9 +127,10 @@ interface RowProps {
   tag: string;
   posts: number;
   onClick: (s: string) => void;
+  showNamespace?: boolean;
 }
 
-function Row({ tag, posts, onClick }: RowProps) {
+function Row({ tag, posts, onClick, showNamespace }: RowProps) {
   const config = useConfig();
   
   let name = tag.replace(/_/g, " ");
@@ -120,7 +138,7 @@ function Row({ tag, posts, onClick }: RowProps) {
   
   const result = name.match(namespaceRegex);
   if(result) {
-    name = result[2];
+    if(!showNamespace) name = result[2];
     color = config.namespaceColors[result[1]];
   }
   
