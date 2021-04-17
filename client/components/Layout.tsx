@@ -6,7 +6,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import useChange from "../hooks/useChange";
 import usePageData from "../hooks/usePageData";
 import useConfig from "../hooks/useConfig";
-import useSearch from "../hooks/useSearch";
+import useQuery from "../hooks/useQuery";
 import TagInput from "./TagInput";
 import SSRCurtain from "./SSRCurtain";
 import ThemeSwitch from "./ThemeSwitch";
@@ -30,8 +30,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
-  const search = useSearch();
-  const urlQuery = typeof search.query === "string" ? search.query : "";
+  const urlQuery = useQuery();
   const [query, setQuery] = useState(urlQuery);
   const mobile = rect?.width && rect.width < 1000;
   
@@ -44,9 +43,11 @@ export default function Layout({ className, sidebar, children, extraLink, search
   const [pagination, setPagination] = useLocalStorage("pagination", false);
   const [popup, setPopup] = useLocalStorage("popup", false);
   const [namespaces, setNamespaces] = useLocalStorage("namespaces", false);
+  const [fullHeight, setFullHeight] = useLocalStorage("fullHeight", false);
   const togglePagination = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setPagination(!pagination); }, [pagination, setPagination]);
   const togglePopup = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setPopup(!popup); }, [popup, setPopup]);
   const toggleNamespaces = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setNamespaces(!namespaces); }, [namespaces, setNamespaces]);
+  const toggleFullHeight = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setFullHeight(!fullHeight); }, [fullHeight, setFullHeight]);
   
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
     setQuery(query => {
@@ -129,6 +130,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
             <div><a href="#" onClick={togglePagination}>Auto Paging: {!pagination ? "Yes" : "No"}</a></div>
             <div><a href="#" onClick={togglePopup}>Popup Gallery: {popup ? "Yes" : "No"}</a></div>
             <div><a href="#" onClick={toggleNamespaces}>Hide Namespaces: {namespaces ? "No" : "Yes"}</a></div>
+            <div><a href="#" onClick={toggleFullHeight}>Limit Img Height: {fullHeight ? "No" : "Yes"}</a></div>
           </div>
         }
       </div>

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useHistory } from "react-router";
 import qs from "query-string";
+import { PostSummary } from "../../../server/routes/apiTypes";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useSSR from "../../hooks/useSSR";
-import useSearch from "../../hooks/useSearch";
 import usePostsCache, { PostsCacheData } from "../../hooks/usePostsCache";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
-import Thumbnail from "../../components/Thumbnail";
+import Thumbnail, { ThumbnailProps } from "../../components/Thumbnail";
 import Pagination from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import GalleryPopup from "./GalleryPopup";
@@ -19,7 +19,7 @@ export default function SearchPage() {
   const [popupEnabled] = useLocalStorage("popup", false);
   const SSR = useSSR();
   const history = useHistory();
-  const search = useSearch();
+  const search = qs.parse(history.location.search);
   const lastPostsCache = useRef<null | PostsCacheData>(null);
   const popupPushed = useRef(false);
   const scrollRestore = useRef<null | number>(null);
@@ -38,13 +38,15 @@ export default function SearchPage() {
   }, [history, popup]);
   
   useEffect(() => {
-    return history.listen(() => {
+    return history.listen((location, action) => {
       requestAnimationFrame(() => {
         if(scrollRestore.current !== null) {
           document.documentElement.scrollTop = scrollRestore.current;
           scrollRestore.current = null;
         }
       });
+      
+      if(action === "POP" && popupPushed.current) popupPushed.current = false;
     });
   }, [history]);
   
@@ -114,7 +116,7 @@ export default function SearchPage() {
             extraLink={postsCache.total !== null && <div className="total">Results: {postsCache.total}</div>}
             sidebar={<Tags tags={postsCache.tags} searchMod />}>
       <div className="posts">
-        {postsCache.posts.map((post, id) => <Thumbnail key={post.id} id={id} post={post} noFade={!imageFade} onClick={onThumbnailClick} useId />)}
+        <Thumbnails posts={postsCache.posts} noFade={!imageFade} onClick={onThumbnailClick} />
         {new Array(16).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
       </div>
       {footer}
@@ -122,3 +124,10 @@ export default function SearchPage() {
     </Layout>
   );
 }
+
+type ThumbnailsPosts = { posts: PostSummary[] } & Partial<ThumbnailProps>;
+
+// eslint-disable-next-line prefer-arrow-callback,@typescript-eslint/naming-convention
+const Thumbnails = React.memo(function Thumbnails({ posts, ...rest }: ThumbnailsPosts) {
+  return <>{posts.map((post, id) => <Thumbnail key={post.id} {...rest} id={id} post={post} useId />)}</>;
+});

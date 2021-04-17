@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import useConfig from "../hooks/useConfig";
-import useSearch from "../hooks/useSearch";
 import { namespaceRegex } from "../../server/helpers/consts";
 import useLocalStorage from "../hooks/useLocalStorage";
+import useQuery from "../hooks/useQuery";
 import "./Tags.scss";
 
 export interface TagsProps {
@@ -12,7 +12,8 @@ export interface TagsProps {
   searchMod?: boolean;
 }
 
-export default function Tags({ tags, grouped, searchMod }: TagsProps) {
+// eslint-disable-next-line prefer-arrow-callback
+export default React.memo(function Tags({ tags, grouped, searchMod }: TagsProps) {
   const [showNamespaces] = useLocalStorage("namespaces", false);
   
   if(grouped) {
@@ -49,7 +50,7 @@ export default function Tags({ tags, grouped, searchMod }: TagsProps) {
       <Namespace members={Object.keys(tags)} tags={tags} searchMod={searchMod} showNamespaces={showNamespaces} />
     </div>
   );
-}
+});
 
 interface NamespaceProps {
   header?: string;
@@ -80,8 +81,7 @@ interface TagProps {
 
 function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   const config = useConfig();
-  const search = useSearch();
-  const query = typeof search.query === "string" ? search.query : "";
+  const query = useQuery();
   
   let name = tag.replace(/_/g, " ");
   let color: string | undefined;

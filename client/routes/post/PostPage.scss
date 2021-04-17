@@ -27,12 +27,16 @@
     text-align: center;
 
     .File {
-      margin-top: 2em;
+      margin: 2em;
       max-height: calc(100% - 5em);
       max-width: calc(100% - 5em);
       height: auto;
       width: auto;
       display: inline-block;
     }
+  }
+
+  &.fullHeight {
+    height: unset;
   }
 }

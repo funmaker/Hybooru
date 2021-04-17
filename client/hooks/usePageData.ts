@@ -22,20 +22,17 @@ interface FetchEmitter {
 
 export function usePageDataInit(initialData: any): ContextType<typeof PageDataContext> {
   if(initialData._error) initialData = null;
-  const location = useLocation();
-  const locationRef = useRef(location.key);
-  locationRef.current = location.key;
-  const [{ locationKey, pageData }, setPageData] = useState({ locationKey: locationRef.current, pageData: initialData || null });
-  const [fetching, setFetching] = useState(false);
   const history = useHistory();
+  const [{ locationKey, pageData }, setPageData] = useState({ locationKey: history.location.key, pageData: initialData || null });
+  const [fetching, setFetching] = useState(false);
   const fetchEmitter = useRef<FetchEmitter | null>(null);
   
   useEffect(() => {
-    return history.listen(() => {
-      if(locationRef.current && fetchEmitter.current?.key !== locationRef.current) {
-        fetchEmitter.current?.cancel();
+    return history.listen(location => {
+      if(fetchEmitter.current?.key && fetchEmitter.current.key !== location.key) {
+        fetchEmitter.current?.cancel("Route Change");
         fetchEmitter.current = null;
-        setPageData({ locationKey: undefined, pageData: null });
+        setPageData(state => (state.locationKey || state.pageData) ? { locationKey: undefined, pageData: null } : state);
       }
     });
   }, [history]);
@@ -57,7 +54,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     requestJSON({
       cancelCb: cancel => cancelFetch = cancel,
     }).then(pageData => {
-      setPageData({ locationKey: locationRef.current, pageData });
+      setPageData({ locationKey: history.location.key, pageData });
     }).catch(error => {
       console.error("Unable to fetch page data: ", error);
     }).finally(() => {
@@ -69,15 +66,15 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
       listeners: 1,
       unlisten() {
         this.listeners--;
-        if(this.listeners <= 0) this.cancel();
+        if(this.listeners <= 0) this.cancel("Orphan");
       },
       cancel: cancelFetch,
-      key: locationRef.current,
+      key: history.location.key,
     };
     fetchEmitter.current.unlisten = fetchEmitter.current.unlisten.bind(fetchEmitter.current);
     
     return fetchEmitter.current.unlisten;
-  }, []);
+  }, [history]);
   
   return useMemo(() => ({ pageData, locationKey, fetch, fetching }), [pageData, locationKey, fetch, fetching]);
 }

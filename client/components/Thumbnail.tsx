@@ -1,27 +1,27 @@
 import React, { useCallback, useReducer } from "react";
 import { Link } from "react-router-dom";
 import { PostSummary } from "../../server/routes/apiTypes";
+import { thumbnailUrl } from "../../server/helpers/consts";
 import { EM_SIZE } from "../App";
 import useSSR from "../hooks/useSSR";
 import useConfig from "../hooks/useConfig";
-import useSearch from "../hooks/useSearch";
-import { thumbnailUrl } from "../../server/helpers/consts";
+import useQuery from "../hooks/useQuery";
 import "./Thumbnail.scss";
 
 export interface ThumbnailProps {
   id: number;
   post: PostSummary;
   noFade?: boolean;
-  onClick: (ev: React.MouseEvent<HTMLAnchorElement>, post: number) => void;
+  onClick?: (ev: React.MouseEvent<HTMLAnchorElement>, post: number) => void;
   useId?: boolean;
 }
 
 export default function Thumbnail({ id, post, noFade, onClick, useId }: ThumbnailProps) {
   const SSR = useSSR();
   const config = useConfig();
-  const search = useSearch();
   const [dynamic, setLoaded] = useReducer(() => false, !SSR && !noFade);
-  const query = (typeof search.query === "string" && search.query) ? `?query=${encodeURIComponent(search.query)}` : "";
+  let query = useQuery();
+  query = query && `?query=${encodeURIComponent(query)}`;
   
   const onClickLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement>) => {
     if(onClick) onClick(ev, id);

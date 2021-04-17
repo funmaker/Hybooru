@@ -10,7 +10,6 @@
 - replace ILIKE with LIKE
 - use darkmode based on browser theme
 - Custom thumbnail location
-- configurable hide namespaces
 - make sure hydrus db is closed gracefully
 
 
@@ -21,6 +20,8 @@
 - Added autoplay to videos
 - Added navigation using arrow keys in autocomplete box
 - Added option to show namespaces
+- Added option to disable image height limit
+- Optimized client rendering
 - Fixed handling of subtags containing `:` character
 
 

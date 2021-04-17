@@ -91,7 +91,6 @@ export default function usePostsCache() {
         },
         cancelCb: cancel => canceller.current = cancel,
       });
-      console.log("done");
       
       postsCache[key] = {
         ...postsCache[key],

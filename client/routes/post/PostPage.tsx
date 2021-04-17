@@ -2,6 +2,7 @@ import React from "react";
 import { PostPageData } from "../../../server/routes/apiTypes";
 import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
+import useLocalStorage from "../../hooks/useLocalStorage";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
 import NotFoundPage from "../error/NotFoundPage";
@@ -14,6 +15,7 @@ const STARS_COUNT = 5;
 
 export default function PostPage() {
   const [pageData] = usePageData<PostPageData>();
+  const [fullHeight] = useLocalStorage("fullHeight", false);
   
   if(!pageData) {
     return (
@@ -45,7 +47,7 @@ export default function PostPage() {
   }
   
   return (
-    <Layout className="PostPage"
+    <Layout className={`PostPage${fullHeight ? " fullHeight" : ""}`}
             options
             sidebar={<>
               {rating}
