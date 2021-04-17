@@ -1,3 +1,4 @@
+@import "../mixins";
 
 .Layout {
   position: absolute;
@@ -109,7 +110,7 @@
           object-fit: contain;
           opacity: 0.25;
 
-          :root.dark & {
+          @include darkMode {
             -webkit-filter: invert(100%);
             filter: invert(100%);
           }
@@ -154,6 +155,14 @@
       background: var(--page-background);
       border-left: 1px solid rgba(127, 127, 127, 0.5);
       border-bottom: 1px solid rgba(127, 127, 127, 0.5);
+
+      hr {
+        color: rgba(127, 127, 127, 0.5);
+        background-color: rgba(127, 127, 127, 0.5);
+        margin: 0.3em 0 0.1em;
+        border: none;
+        height: 1px;
+      }
     }
   }
 

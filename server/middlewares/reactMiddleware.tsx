@@ -63,7 +63,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
     
-    const theme = req.cookies.theme || Theme.LIGHT;
+    const theme = req.cookies.theme || Theme.AUTO;
     const title = options?.title ? `${options?.title} | ${req.config.appName}` : req.config.appName;
     
     // noinspection JSUnreachableSwitchBranches

@@ -50,22 +50,6 @@ export default hot(module)(function App({ initialData }: Props) {
     return () => window.removeEventListener("resize", onResize);
   }, [initialData]);
   
-  useEffect(() => {
-    if(typeof window !== "undefined") {
-      (window as any).regenDB = async () => {
-        const password = prompt("Password");
-        
-        if(password !== null) {
-          await requestJSON<null, RegenDBRequest>({
-            pathname: "/api/regenDB",
-            method: "POST",
-            data: { password, _csrf: initialData._csrf },
-          });
-        }
-      };
-    }
-  }, [initialData._csrf]);
-  
   return (
     <SSRProvider>
       <ThemeProvider init={initialData._theme}>

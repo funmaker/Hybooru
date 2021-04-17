@@ -1,3 +1,4 @@
+@import "../mixins";
 
 .ThemeSwitch {
   color: gray !important;
@@ -22,5 +23,17 @@
     border: none;
     outline: none;
     background: none;
+  }
+
+  &.dark {
+    display: none;
+  }
+
+  @include darkMode {
+    display: none;
+
+    &.dark {
+      display: inline-block;
+    }
   }
 }

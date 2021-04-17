@@ -38,5 +38,9 @@
 
   &.fullHeight {
     height: unset;
+
+    & > .header {
+      position: absolute;
+    }
   }
 }

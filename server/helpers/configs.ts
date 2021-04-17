@@ -11,6 +11,8 @@ type Configs = {
   adminPassword: string | null,
   isTTY: boolean | null,
   importBatchSize: number,
+  filesPathOverride: string | null,
+  thumbnailsPathOverride: string | null,
   db: pg.PoolConfig,
   tags: {
     motd: string | Partial<Record<Theme, string>> | null,
@@ -28,6 +30,8 @@ let configs: Configs = {
   adminPassword: null,
   isTTY: null,
   importBatchSize: 10000,
+  filesPathOverride: null,
+  thumbnailsPathOverride: null,
   db: {
     user: "hybooru",
     host: "localhost",

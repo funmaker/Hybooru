@@ -6,6 +6,8 @@
 	"adminPassword": "kek",
 	"isTTY": null,
 	"importBatchSize": 8192,
+	"filesPathOverride": null,
+	"thumbnailsPathOverride": null,
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",

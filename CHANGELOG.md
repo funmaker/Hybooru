@@ -2,14 +2,12 @@
 ### TODO:
 
 - API docs
-- RegenDB panel
 - Improve README.md
 - Handling txt/unknown files
 - Server Side Cache
 - Nginx configuration
 - replace ILIKE with LIKE
 - use darkmode based on browser theme
-- Custom thumbnail location
 - make sure hydrus db is closed gracefully
 
 
@@ -21,6 +19,9 @@
 - Added navigation using arrow keys in autocomplete box
 - Added option to show namespaces
 - Added option to disable image height limit
+- Added option to rebuild database
+- Added files and thumbnails path override configuration
+- Theme now defaults to browser preferences until changed
 - Optimized client rendering
 - Fixed handling of subtags containing `:` character
 

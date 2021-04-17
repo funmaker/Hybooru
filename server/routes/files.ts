@@ -1,13 +1,14 @@
 import path from "path";
 import PromiseRouter from "express-promise-router";
 import * as db from "../helpers/db";
-import HTTPError from "../helpers/HTTPError";
+import configs from "../helpers/configs";
 
 export const router = PromiseRouter();
 
-
 router.get<{ filename: string }>("/:filename", async (req, res, next) => {
-  const root = path.resolve(db.findHydrusDB(), "client_files");
+  let root = path.resolve(db.findHydrusDB(), "client_files");
+  if(req.params.filename.startsWith("t") && configs.thumbnailsPathOverride) root = configs.thumbnailsPathOverride;
+  else if(configs.filesPathOverride) root = configs.filesPathOverride;
   
   let filename = req.params.filename;
   filename = `./${filename.substr(0, 3)}/${filename.substr(1)}`;

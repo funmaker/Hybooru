@@ -1,3 +1,4 @@
+@import "mixins";
 
 * {
   padding: 0;
@@ -10,17 +11,17 @@
   --page-background: white;
   --text-color: black;
 
-  &.dark {
+  &.dimmed {
+    overflow: hidden;
+  }
+
+  @include darkModeRoot {
     --page-background: #060b11;
     --text-color: white;
 
     &, * {
       scrollbar-color: dark;
     }
-  }
-
-  &.dimmed {
-    overflow: hidden;
   }
 
   font-family: "Segoe UI", "Open Sans", sans-serif;

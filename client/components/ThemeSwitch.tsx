@@ -5,23 +5,28 @@ import useCSRF from "../hooks/useCSRF";
 import "./ThemeSwitch.scss";
 
 export default function ThemeSwitch() {
-  const [theme, setTheme] = useTheme();
+  const [, setTheme] = useTheme();
   const location = useLocation();
   const csrf = useCSRF();
-  const newTheme = theme === Theme.DARK ? Theme.LIGHT : Theme.DARK;
   
-  const onClick = useCallback((ev: React.FormEvent) => {
+  const onClick = useCallback((ev: React.FormEvent<HTMLFormElement>) => {
     ev.preventDefault();
     
-    setTheme(newTheme);
-  }, [newTheme, setTheme]);
+    setTheme(ev.currentTarget.theme.value);
+  }, [setTheme]);
   
-  return (
-    <form className="ThemeSwitch" method="POST" action="/setTheme" onClick={onClick}>
+  return <>
+    <form className="ThemeSwitch light" method="POST" action="/setTheme" onClick={onClick}>
       <input type="hidden" name="_csrf" value={csrf} />
       <input type="hidden" name="redirectUrl" value={location.pathname + location.search} />
-      <input type="hidden" name="theme" value={newTheme} />
-      <input type="image" src={theme === Theme.DARK ? "/static/bulb_on.svg" :  "/static/bulb_off.svg"} alt="Theme" />
+      <input type="hidden" name="theme" value={Theme.DARK} />
+      <input type="image" src="/static/bulb_off.svg" alt="Theme" />
     </form>
-  );
+    <form className="ThemeSwitch dark" method="POST" action="/setTheme" onClick={onClick}>
+      <input type="hidden" name="_csrf" value={csrf} />
+      <input type="hidden" name="redirectUrl" value={location.pathname + location.search} />
+      <input type="hidden" name="theme" value={Theme.LIGHT} />
+      <input type="image" src="/static/bulb_on.svg" alt="Theme" />
+    </form>
+  </>; // eslint-disable-line react/jsx-closing-tag-location
 }

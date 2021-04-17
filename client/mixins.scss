@@ -1,0 +1,22 @@
+
+@mixin darkMode {
+  :root.dark & {
+    @content
+  }
+  @media (prefers-color-scheme: dark) {
+    :root.auto & {
+      @content
+    }
+  }
+}
+
+@mixin darkModeRoot {
+  &.dark {
+    @content
+  }
+  @media (prefers-color-scheme: dark) {
+    &.auto {
+      @content
+    }
+  }
+}

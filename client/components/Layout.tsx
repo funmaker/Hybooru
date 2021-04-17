@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { Link } from "react-router-dom";
+import { RegenDBRequest } from "../../server/routes/apiTypes";
+import requestJSON from "../helpers/requestJSON";
 import ReactForm from "../components/ReactForm";
 import useMeasure from "../hooks/useMeasure";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -7,6 +9,7 @@ import useChange from "../hooks/useChange";
 import usePageData from "../hooks/usePageData";
 import useConfig from "../hooks/useConfig";
 import useQuery from "../hooks/useQuery";
+import useCSRF from "../hooks/useCSRF";
 import TagInput from "./TagInput";
 import SSRCurtain from "./SSRCurtain";
 import ThemeSwitch from "./ThemeSwitch";
@@ -30,6 +33,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const csrf = useCSRF();
   const urlQuery = useQuery();
   const [query, setQuery] = useState(urlQuery);
   const mobile = rect?.width && rect.width < 1000;
@@ -48,6 +52,19 @@ export default function Layout({ className, sidebar, children, extraLink, search
   const togglePopup = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setPopup(!popup); }, [popup, setPopup]);
   const toggleNamespaces = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setNamespaces(!namespaces); }, [namespaces, setNamespaces]);
   const toggleFullHeight = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setFullHeight(!fullHeight); }, [fullHeight, setFullHeight]);
+  
+  const regenDB = useCallback(async (ev: React.MouseEvent) => {
+    ev.preventDefault();
+    const password = prompt("Password");
+    
+    if(password !== null) {
+      await requestJSON<null, RegenDBRequest>({
+        pathname: "/api/regenDB",
+        method: "POST",
+        data: { password, _csrf: csrf },
+      });
+    }
+  }, [csrf]);
   
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
     setQuery(query => {
@@ -131,6 +148,8 @@ export default function Layout({ className, sidebar, children, extraLink, search
             <div><a href="#" onClick={togglePopup}>Popup Gallery: {popup ? "Yes" : "No"}</a></div>
             <div><a href="#" onClick={toggleNamespaces}>Hide Namespaces: {namespaces ? "No" : "Yes"}</a></div>
             <div><a href="#" onClick={toggleFullHeight}>Limit Img Height: {fullHeight ? "No" : "Yes"}</a></div>
+            <hr />
+            <div><a href="#" onClick={regenDB}>Rebuild Database</a></div>
           </div>
         }
       </div>
