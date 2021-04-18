@@ -4,7 +4,11 @@
     float: right;
     opacity: 0.5;
     font-size: 75%;
-    padding: 0.5em 0.75em;
+    margin-left: auto;
+    padding-right: 0.75em;
+    white-space: normal;
+    text-align: right;
+    line-height: 100%;
   }
 
   & > .content {

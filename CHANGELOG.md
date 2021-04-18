@@ -5,9 +5,7 @@
 - Improve README.md
 - Handling txt/unknown files
 - Server Side Cache
-- Nginx configuration
 - replace ILIKE with LIKE
-- use darkmode based on browser theme
 - make sure hydrus db is closed gracefully
 
 
@@ -21,6 +19,7 @@
 - Added option to disable image height limit
 - Added option to rebuild database
 - Added files and thumbnails path override configuration
+- Added example Nginx reverse proxy configuration
 - Theme now defaults to browser preferences until changed
 - Optimized client rendering
 - Fixed handling of subtags containing `:` character
