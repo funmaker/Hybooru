@@ -1,12 +1,13 @@
 
 ### TODO:
 
-- API docs
-- Improve README.md
 - Handling txt/unknown files
 - Server Side Cache
-- replace ILIKE with LIKE
 - make sure hydrus db is closed gracefully
+- DMCA
+- parent sibling relationship
+- support for multiple mappings
+- query by rating
 
 
 # Unreleased
@@ -22,6 +23,7 @@
 - Added example Nginx reverse proxy configuration
 - Theme now defaults to browser preferences until changed
 - Optimized client rendering
+- Improved documentation
 - Fixed handling of subtags containing `:` character
 
 

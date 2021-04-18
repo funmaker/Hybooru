@@ -59,7 +59,7 @@ router.post<any, any, SetThemeRequest>('/setTheme', async (req, res) => {
 
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
-  const theme = req.cookies.theme as Theme || Theme.LIGHT;
+  const theme = req.cookies.theme as Theme || Theme.AUTO;
   
   let motdTag: string | undefined;
   if(configs.tags.motd && typeof configs.tags.motd === "object") motdTag = configs.tags.motd[theme];

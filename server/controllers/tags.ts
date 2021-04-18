@@ -38,7 +38,7 @@ export async function search({ query = "", sorting = "", page = 0, pageSize = PA
     WITH filtered AS (
           SELECT *
           FROM tags
-          WHERE name ILIKE ${pattern} OR subtag ILIKE ${pattern}
+          WHERE name LIKE ${pattern} OR subtag LIKE ${pattern}
         )
     SELECT
       COALESCE(json_object_agg(name, used), '{}') AS tags,

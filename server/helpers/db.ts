@@ -136,10 +136,12 @@ export async function initialize() {
       
       dbImport.printProgress(false, "Removing ignored tags...");
       
+      const ignored = configs.tags.ignore.map(pat => preparePattern(pat));
+      
       await postgres.query(SQL`
         DELETE FROM tags
-        USING unnest(${configs.tags.ignore}::TEXT[]) pat
-        WHERE tags.name ILIKE pat OR tags.subtag ILIKE pat
+        USING unnest(${ignored}::TEXT[]) pat
+        WHERE tags.name LIKE pat OR tags.subtag LIKE pat
       `);
       
       dbImport.printProgress(false, "Indexing");

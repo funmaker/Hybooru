@@ -63,6 +63,8 @@ export default function Layout({ className, sidebar, children, extraLink, search
         method: "POST",
         data: { password, _csrf: csrf },
       });
+      
+      window.location.reload();
     }
   }, [csrf]);
   

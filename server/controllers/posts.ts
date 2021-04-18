@@ -155,7 +155,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         SELECT intersection_agg(ids) as ids FROM (
           SELECT union_agg(tags_postids.postids) AS ids
           FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
-          LEFT JOIN tags ON tags.name ILIKE pat OR tags.subtag ILIKE pat
+          LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
           INNER JOIN tags_postids ON tags_postids.tagid = tags.id
           GROUP BY patid
         ) ids
@@ -163,7 +163,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
       blacklist AS (
         SELECT union_agg(tags_postids.postids) AS ids
         FROM unnest(${blacklist}::TEXT[]) pat
-        LEFT JOIN tags ON tags.name ILIKE pat OR tags.subtag ILIKE pat
+        LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
         INNER JOIN tags_postids ON tags_postids.tagid = tags.id
       ),
       filtered AS `.append(filtered).append(SQL`
@@ -197,7 +197,6 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
 }
 
 export async function random(tag: string | null = null): Promise<PostSummary | null> {
-  
   let sample: SQLStatement;
   if(!tag) {
     sample = SQL`(
@@ -214,7 +213,7 @@ export async function random(tag: string | null = null): Promise<PostSummary | n
         SELECT union_agg(tags_postids.postids) AS ids
         FROM tags
         INNER JOIN tags_postids ON tags_postids.tagid = tags.id
-        WHERE tags.name ILIKE ${pattern} OR tags.subtag ILIKE ${pattern}
+        WHERE tags.name LIKE ${pattern} OR tags.subtag LIKE ${pattern}
       ) filtered
     )`;
   }
