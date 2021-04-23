@@ -6,6 +6,9 @@
 	"adminPassword": null,
 	"isTTY": null,
 	"importBatchSize": 8192,
+	"pageSize": 72,
+	"cachePages": 5,
+	"cacheRecords": 1024,
 	"filesPathOverride": null,
 	"thumbnailsPathOverride": null,
 	"db": {

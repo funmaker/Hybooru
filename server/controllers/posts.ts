@@ -1,15 +1,17 @@
 import SQL, { SQLStatement } from "sql-template-strings";
+import objectHash from "node-object-hash";
 import { PoolClient } from "pg";
 import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { MIME_EXT } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
+import configs from "../helpers/configs";
 
-const PAGE_SIZE = 36;
 const TAGS_COUNT = 40;
 const MAX_PARTS = 40;
 const TAGS_SAMPLE_MAX = 256;
+const CACHE_SIZE = configs.pageSize * configs.cachePages;
 
 const blankPattern = /^[_%]*%[_%]*$/;
 
@@ -28,8 +30,8 @@ interface SearchArgs {
   client?: PoolClient;
 }
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = PAGE_SIZE, client }: SearchArgs): Promise<PostSearchResults> {
-  if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
+export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.pageSize, client }: SearchArgs): Promise<PostSearchResults> {
+  if(pageSize > configs.pageSize) pageSize = configs.pageSize;
   
   const parts = query.split(" ")
                      .filter(p => !!p)
@@ -41,10 +43,6 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   let blacklist = [];
   let sort = SORTS.date;
   let order = "desc";
-  let from = SQL`
-    FROM filtered
-    INNER JOIN posts ON posts.id = filtered.id
-  `;
   
   for(let part of parts) {
     if(part.startsWith("-")) {
@@ -68,126 +66,39 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     }
   }
   
-  const onlyTagged = whitelist.length > 0 && whitelist.every(pat => blankPattern.test(pat));
-  const onlyUntagged = blacklist.some(pat => blankPattern.test(pat));
+  const cached = [];
+  let start = page * pageSize;
+  const end = page * pageSize + pageSize;
+  let tags = {};
+  let total = 0;
   
-  whitelist = whitelist.filter(pat => !blankPattern.test(pat));
-  blacklist = blacklist.filter(pat => !blankPattern.test(pat));
-  
-  let tagsQuery: SQLStatement = SQL``;
-  if(includeTags) {
-    tagsQuery = SQL`
-      , (
-        SELECT
-          COALESCE(json_object_agg(name, used), '{}')
-        FROM (
-          SELECT *
-          FROM(
-            SELECT
-              tags.id,
-              tags.name,
-              tags.used,
-              count(1) as count
-            FROM (SELECT id FROM filtered LIMIT ${TAGS_SAMPLE_MAX}) filtered
-            LEFT  JOIN mappings ON mappings.postid = filtered.id
-            LEFT  JOIN tags     ON mappings.tagid = tags.id
-            GROUP BY tags.id
-          ) x
-          WHERE id IS NOT NULL
-          ORDER BY count DESC, id ASC
-          LIMIT ${TAGS_COUNT}
-        ) x
-      ) AS tags
-    `;
-  }
-  
-  let filteredWhere;
-  if(onlyTagged && onlyUntagged) {
-    filteredWhere = `WHERE FALSE`;
-  } else if(onlyTagged) {
-    filteredWhere = `WHERE EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
-  } else if(onlyUntagged) {
-    filteredWhere = `WHERE NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
-  } else {
-    filteredWhere = ``;
-  }
-  
-  let filtered: SQLStatement;
-  if(onlyTagged && onlyUntagged) {
-    filtered = SQL`(SELECT 0 AS id WHERE FALSE)`;
-  } else if(whitelist.length > 0 && blacklist.length > 0) {
-    filtered = SQL`(
-      SELECT id
-      FROM whitelist
-      CROSS JOIN blacklist
-      CROSS JOIN LATERAL unnest(whitelist.ids - blacklist.ids) id
-      `.append(filteredWhere).append(`
-    )`);
-  } else if(whitelist.length > 0) {
-    filtered = SQL`(
-      SELECT id
-      FROM whitelist
-      CROSS JOIN LATERAL unnest(whitelist.ids) id
-      `.append(filteredWhere).append(`
-    )`);
-  } else if(blacklist.length > 0) {
-    filtered = SQL`(
-      SELECT id
-      FROM posts
-      CROSS JOIN blacklist
-      WHERE posts.id != ALL(blacklist.ids)
-      `.append(filteredWhere).append(`
-    )`);
-  } else if(filteredWhere) {
-    filtered = SQL`(
-      SELECT id
-      FROM posts
-      `.append(filteredWhere).append(`
-    )`);
-  } else {
-    filtered = SQL`(SELECT id FROM posts)`;
-    from = SQL`FROM posts`;
+  while(start < end) {
+    const cacheStart = Math.floor(start / CACHE_SIZE) * CACHE_SIZE;
+    const cacheEnd = cacheStart + CACHE_SIZE;
+    const cachePage = await getCachedPosts({ whitelist, blacklist, sort, order, offset: cacheStart }, client);
+    
+    tags = cachePage.tags;
+    total = cachePage.total;
+    cached.push(...cachePage.posts.slice(start - cacheStart, end - cacheStart));
+    
+    start = cacheEnd;
   }
   
   const result = await db.queryFirst(SQL`
-    WITH
-      whitelist AS (
-        SELECT intersection_agg(ids) as ids FROM (
-          SELECT union_agg(tags_postids.postids) AS ids
-          FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
-          LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-          INNER JOIN tags_postids ON tags_postids.tagid = tags.id
-          GROUP BY patid
-        ) ids
-      ),
-      blacklist AS (
-        SELECT union_agg(tags_postids.postids) AS ids
-        FROM unnest(${blacklist}::TEXT[]) pat
-        LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-        INNER JOIN tags_postids ON tags_postids.tagid = tags.id
-      ),
-      filtered AS `.append(filtered).append(SQL`
     SELECT
       COALESCE(json_agg(json_build_object(
         'id', id,
         'hash', encode(hash, 'hex'),
         'mime', mime,
         'posted', format_date(posted)
-      )), '[]') as posts,
-      (SELECT count(1) FROM filtered) as total,
-      ${pageSize}::INTEGER as "pageSize"
-      `).append(tagsQuery).append(SQL`
-    FROM (
-      SELECT posts.*
-      `).append(from)
-        .append(`
-        WHERE posts."${sort}" IS NOT NULL
-        ORDER BY posts."${sort}" ${order}, posts.id ${order}
-      `).append(SQL`
-      LIMIT ${pageSize}
-      OFFSET ${page * pageSize}
-    ) x
-  `), client);
+      )), '[]') as posts
+    FROM unnest(${cached}::INTEGER[]) cached
+    INNER JOIN posts ON id = cached
+  `, client);
+  
+  result.pageSize = pageSize;
+  result.tags = tags;
+  result.total = total;
   
   for(const post of result.posts) {
     if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
@@ -264,4 +175,168 @@ export async function get(id: number): Promise<Post | null> {
   if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
   
   return post;
+}
+
+interface CacheKey {
+  whitelist: string[];
+  blacklist: string[];
+  sort: string;
+  order: string;
+  offset: number;
+}
+
+interface CacheValue {
+  posts: number[];
+  tags: Record<string, number>;
+  total: number;
+  lastUsed: number;
+}
+
+const keyHasher = objectHash({ alg: "sha1" });
+let postsCache: Record<string, CacheValue> = {};
+
+async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<CacheValue> {
+  const hashed = keyHasher.hash(key);
+  
+  if(postsCache[hashed]) {
+    postsCache[hashed].lastUsed = Date.now();
+    return postsCache[hashed];
+  }
+  
+  let { whitelist, blacklist, sort, order, offset } = key;
+  
+  let from = SQL`
+    FROM filtered
+    INNER JOIN posts ON posts.id = filtered.id
+  `;
+  
+  const onlyTagged = whitelist.length > 0 && whitelist.every(pat => blankPattern.test(pat));
+  const onlyUntagged = blacklist.some(pat => blankPattern.test(pat));
+  
+  whitelist = whitelist.filter(pat => !blankPattern.test(pat));
+  blacklist = blacklist.filter(pat => !blankPattern.test(pat));
+  
+  let filteredWhere;
+  if(onlyTagged && onlyUntagged) {
+    filteredWhere = `WHERE FALSE`;
+  } else if(onlyTagged) {
+    filteredWhere = `WHERE EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
+  } else if(onlyUntagged) {
+    filteredWhere = `WHERE NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
+  } else {
+    filteredWhere = ``;
+  }
+  
+  let filtered: SQLStatement;
+  if(onlyTagged && onlyUntagged) {
+    filtered = SQL`(SELECT 0 AS id WHERE FALSE)`;
+  } else if(whitelist.length > 0 && blacklist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM whitelist
+      CROSS JOIN blacklist
+      CROSS JOIN LATERAL unnest(whitelist.ids - blacklist.ids) id
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(whitelist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM whitelist
+      CROSS JOIN LATERAL unnest(whitelist.ids) id
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(blacklist.length > 0) {
+    filtered = SQL`(
+      SELECT id
+      FROM posts
+      CROSS JOIN blacklist
+      WHERE posts.id != ALL(blacklist.ids)
+      `.append(filteredWhere).append(`
+    )`);
+  } else if(filteredWhere) {
+    filtered = SQL`(
+      SELECT id
+      FROM posts
+      `.append(filteredWhere).append(`
+    )`);
+  } else {
+    filtered = SQL`(SELECT id FROM posts)`;
+    from = SQL`FROM posts`;
+  }
+  
+  const result = await db.queryFirst(SQL`
+    WITH
+      whitelist AS (
+        SELECT intersection_agg(ids) as ids FROM (
+          SELECT union_agg(tags_postids.postids) AS ids
+          FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
+          LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+          INNER JOIN tags_postids ON tags_postids.tagid = tags.id
+          GROUP BY patid
+        ) ids
+      ),
+      blacklist AS (
+        SELECT union_agg(tags_postids.postids) AS ids
+        FROM unnest(${blacklist}::TEXT[]) pat
+        LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+        INNER JOIN tags_postids ON tags_postids.tagid = tags.id
+      ),
+      filtered AS `.append(filtered).append(SQL`
+    SELECT
+      COALESCE(json_agg(id), '[]') as posts,
+      (SELECT count(1) FROM filtered) as total,
+      (
+        SELECT
+          COALESCE(json_object_agg(name, used), '{}')
+        FROM (
+          SELECT *
+          FROM(
+            SELECT
+              tags.id,
+              tags.name,
+              tags.used,
+              count(1) as count
+            FROM (SELECT id FROM filtered LIMIT ${TAGS_SAMPLE_MAX}) filtered
+            LEFT  JOIN mappings ON mappings.postid = filtered.id
+            LEFT  JOIN tags     ON mappings.tagid = tags.id
+            GROUP BY tags.id
+          ) x
+          WHERE id IS NOT NULL
+          ORDER BY count DESC, id ASC
+          LIMIT ${TAGS_COUNT}
+        ) x
+      ) AS tags
+    FROM (
+      SELECT posts.*
+      `).append(from).append(`
+      WHERE posts."${sort}" IS NOT NULL
+      ORDER BY posts."${sort}" ${order}, posts.id ${order}
+      `).append(SQL`
+      LIMIT ${CACHE_SIZE}
+      OFFSET ${offset}
+    ) x
+  `), client);
+  
+  if(Object.keys(postsCache).length >= configs.cacheRecords) {
+    let minKey: string | null = null;
+    let minDate = Date.now();
+    
+    for(const [key, val] of Object.entries(postsCache)) {
+      if(minKey === null || minDate > val.lastUsed) {
+        minKey = key;
+        minDate = val.lastUsed;
+      }
+    }
+    
+    if(minKey !== null) delete postsCache[minKey];
+  }
+  
+  return postsCache[hashed] = {
+    ...result,
+    lastUsed: Date.now(),
+  };
+}
+
+export function clearCache() {
+  postsCache = {};
 }

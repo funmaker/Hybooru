@@ -85,6 +85,8 @@ export async function initialize() {
     try {
       await postgres.query(setupSQL);
       
+      postsController.clearCache();
+      
       const dbPath = findHydrusDB();
       
       const hydrus = new Database(path.resolve(dbPath, "client.db"), { readonly: true });

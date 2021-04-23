@@ -2,23 +2,25 @@
 ### TODO:
 
 - Handling txt/unknown files
-- Server Side Cache
 - make sure hydrus db is closed gracefully
 - DMCA
 - parent sibling relationship
 - support for multiple mappings
 - query by rating
+- choose rating service
+- rating star count
 
 
 # Unreleased
 
 - Added mobile-friendly Popup Gallery
-- Added client-side cache of previous searches
+- Added server-side and client-side cache
 - Added autoplay to videos
 - Added navigation using arrow keys in autocomplete box
 - Added option to show namespaces
 - Added option to disable image height limit
 - Added option to rebuild database
+- Added option to set page size
 - Added files and thumbnails path override configuration
 - Added example Nginx reverse proxy configuration
 - Theme now defaults to browser preferences until changed
