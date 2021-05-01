@@ -22,6 +22,7 @@ interface Configs {
     untagged: string,
     ignore: string[],
     blacklist: string[],
+    whitelist: string[] | null,
   },
   rating: {
     enabled: boolean,
@@ -55,6 +56,7 @@ let configs: Configs = {
     untagged: "-*",
     ignore: [],
     blacklist: [],
+    whitelist: null,
   },
   rating: {
     enabled: true,

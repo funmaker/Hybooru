@@ -2,10 +2,10 @@
 ### TODO:
 
 - Handling txt/unknown files
-- make sure hydrus db is closed gracefully
 - DMCA
-- parent sibling relationship
-- whitelist
+- tag relationships
+- file relationships
+- IPFS integration
 
 
 # Unreleased
@@ -18,6 +18,7 @@
 - Added option to disable image height limit
 - Added option to rebuild database
 - Added option to set page size
+- Added tag whitelist
 - Added rating configuration and filtering
 - Added files and thumbnails path override configuration
 - Added example Nginx reverse proxy configuration
@@ -26,6 +27,7 @@
 - Improved documentation
 - Fixed handling of subtags containing `:` character
 - Fixed negative search autocomplete
+- Fixed Hydrus database not being closed gracefully
 
 
 # v1.3.0

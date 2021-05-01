@@ -124,27 +124,49 @@ export async function initialize() {
           )
       `);
       
-      dbImport.printProgress(false, "Applying blacklist...");
       
-      const blacklist = configs.tags.blacklist.map(pat => preparePattern(pat));
-      
-      await postgres.query(SQL`
+      if(configs.tags.blacklist.length > 0) {
+        dbImport.printProgress(false, "Applying blacklist...");
+        
+        const blacklist = configs.tags.blacklist.map(pat => preparePattern(pat));
+        
+        await postgres.query(SQL`
         DELETE FROM posts
         USING unnest(${blacklist}::TEXT[]) pat
         INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
         INNER JOIN mappings ON mappings.tagid = tags.id
         WHERE mappings.postid = posts.id
       `);
+      }
       
-      dbImport.printProgress(false, "Removing ignored tags...");
+      if(configs.tags.whitelist && configs.tags.whitelist.length > 0) {
+        dbImport.printProgress(false, "Applying whitelist...");
+        
+        const whitelist = configs.tags.whitelist.map(pat => preparePattern(pat));
+        
+        await postgres.query(SQL`
+          DELETE FROM posts
+          WHERE NOT EXISTS(
+            SELECT 1
+            FROM unnest(${whitelist}::TEXT[]) pat
+            INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+            INNER JOIN mappings ON mappings.tagid = tags.id
+            WHERE mappings.postid = posts.id
+          )
+        `);
+      }
       
-      const ignored = configs.tags.ignore.map(pat => preparePattern(pat));
-      
-      await postgres.query(SQL`
+      if(configs.tags.ignore.length > 0) {
+        dbImport.printProgress(false, "Removing ignored tags...");
+        
+        const ignored = configs.tags.ignore.map(pat => preparePattern(pat));
+        
+        await postgres.query(SQL`
         DELETE FROM tags
         USING unnest(${ignored}::TEXT[]) pat
         WHERE tags.name LIKE pat OR tags.subtag LIKE pat
       `);
+      }
       
       dbImport.printProgress(false, "Indexing");
       
@@ -189,6 +211,7 @@ export async function initialize() {
       
       dbImport.printProgress(false, "Finalizing...");
       
+      hydrus.close();
       await postgres.query(SQL`UPDATE meta SET hash = ${setupHash}`);
       await postgres.query(SQL`COMMIT`);
       

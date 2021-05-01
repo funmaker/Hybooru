@@ -58,7 +58,7 @@ Eg: `1girl blue_* -outdoors rating:3-5 order:rating_desc`
 
 ## Configuration
 
-Hybooru's config is stored in `configs.json` file in the project's root directory.
+Hybooru's config is stored in `configs.json` file in the project's root directory. Restart Hybooru to apply changes.
 
 Name            | Type   | Default | Comment
 --------------- | ------ | --- | ---
@@ -77,6 +77,7 @@ tags.motd       | string or object or null | `null` | Tag pattern used to search
 tags.untagged   | string | `"-*"` | Overrides tag pattern used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.
 tags.ignore     | string[] | `[]` | List of tags patterns that will not be imported from Hydrus (posts tagged by these tags will still be imported).
 tags.blacklist  | string[] | `[]` | All posts and tags matching any of specified tag patterns will not be imported from Hydrus.
+tags.whitelist  | string[] or null | `null` | Only posts and tags matching any of specified tag patterns will be imported from Hydrus. Use `null` or empty array to ignore whitelist.
 rating          | object or null | _see below_ | Options related to numerical rating. Set null to remove ratings.
 rating.enabled  | boolean | `true` | Enables or disables rating import.
 rating.stars    | number | `5` | Number of stars used in rating.
