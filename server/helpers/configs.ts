@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import pg from "pg";
 import { Theme } from "../../client/hooks/useTheme";
 
-type Configs = {
+interface Configs {
   port: number,
   hydrusDbPath: string | null,
   appName: string,
@@ -22,8 +22,13 @@ type Configs = {
     untagged: string,
     ignore: string[],
     blacklist: string[],
-  }
-};
+  },
+  rating: {
+    enabled: boolean,
+    stars: number,
+    serviceName: string | null,
+  } | null,
+}
 
 let configs: Configs = {
   port: 3939,
@@ -50,6 +55,11 @@ let configs: Configs = {
     untagged: "-*",
     ignore: [],
     blacklist: [],
+  },
+  rating: {
+    enabled: true,
+    stars: 5,
+    serviceName: null,
   }
 };
 

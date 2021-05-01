@@ -51,7 +51,8 @@ CREATE TABLE global (
   posts INTEGER NOT NULL,
   tags INTEGER NOT NULL,
   mappings INTEGER NOT NULL,
-  needs_tags INTEGER NOT NULL
+  needs_tags INTEGER NOT NULL,
+  rating_stars INTEGER
 );
 
 DROP TABLE IF EXISTS posts CASCADE;

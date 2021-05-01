@@ -8,6 +8,7 @@ export async function getConfig(): Promise<Config> {
   const config = await db.queryFirst(SQL`
     SELECT
       ARRAY[ global.thumbnail_width, global.thumbnail_height ] as "thumbnailSize",
+      global.rating_stars as "ratingStars",
       json_object_agg(namespaces.name, namespaces.color) as "namespaceColors"
     FROM global
     CROSS JOIN namespaces

@@ -41,7 +41,10 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     
     timeoutRef.current = setTimeout(async () => {
       timeoutRef.current = null;
-      const query = `*${valueRef.current.split(" ").slice(-1)[0]}*`;
+      
+      let query = valueRef.current.split(" ").slice(-1)[0];
+      if(query.startsWith("-")) query = query.slice(1);
+      query = `*${query}*`;
       
       const result = await requestJSON<TagsSearchResponse, TagsSearchRequest>({
         pathname: "/api/tags",
@@ -77,6 +80,7 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
   
   const onRowClick = useCallback((tag: string) => {
     const parts = valueRef.current.split(" ");
+    if(parts[parts.length - 1].startsWith("-")) tag = `-${tag}`;
     parts[parts.length - 1] = tag;
     valueRef.current = parts.join(" ") + " ";
     

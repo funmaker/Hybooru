@@ -56,6 +56,7 @@ export interface Config {
   version: string;
   expectMotd: string;
   untaggedQuery: string;
+  ratingStars: number | null;
 }
 
 // PAGES //

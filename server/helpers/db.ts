@@ -176,14 +176,15 @@ export async function initialize() {
       const untagged = await postsController.search({ query: configs.tags.untagged, client: postgres });
       
       await postgres.query(SQL`
-        INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags)
+        INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags, rating_stars)
         SELECT
           ${options.thumbnail_dimensions[0]} AS thumbnail_width,
           ${options.thumbnail_dimensions[1]} AS thumbnail_height,
           (SELECT COUNT(1) FROM posts) AS posts,
           (SELECT COUNT(1) FROM tags) AS tags,
           (SELECT COUNT(1) FROM mappings) AS mappings,
-          ${untagged.total} AS needs_tags
+          ${untagged.total} AS needs_tags,
+          ${configs.rating?.stars || null} AS rating_stars
       `);
       
       dbImport.printProgress(false, "Finalizing...");

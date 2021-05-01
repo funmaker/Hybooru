@@ -3,6 +3,7 @@ import { PostPageData } from "../../../server/routes/apiTypes";
 import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import useLocalStorage from "../../hooks/useLocalStorage";
+import useConfig from "../../hooks/useConfig";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
 import NotFoundPage from "../error/NotFoundPage";
@@ -11,9 +12,8 @@ import File from "./File";
 import SourceLink from "./SourceLink";
 import "./PostPage.scss";
 
-const STARS_COUNT = 5;
-
 export default function PostPage() {
+  const { ratingStars } = useConfig();
   const [pageData] = usePageData<PostPageData>();
   const [fullHeight] = useLocalStorage("fullHeight", false);
   
@@ -30,20 +30,22 @@ export default function PostPage() {
   const link = fileUrl(pageData.post);
   
   let rating;
-  if(pageData.post.rating !== null) {
-    const stars = Math.round(pageData.post.rating * STARS_COUNT);
-    rating = (
-      <div className="rating">
-        <span className="gold">{"★".repeat(stars)}</span>
-        <span className="gray">{"☆".repeat(STARS_COUNT - stars)}</span>
-      </div>
-    );
-  } else {
-    rating = (
-      <div className="rating">
-        <span className="gray">{"★".repeat(STARS_COUNT)}</span>
-      </div>
-    );
+  if(ratingStars !== null) {
+    if(pageData.post.rating !== null) {
+      const stars = Math.round(pageData.post.rating * ratingStars);
+      rating = (
+        <div className="rating">
+          <span className="gold">{"★".repeat(stars)}</span>
+          <span className="gray">{"☆".repeat(ratingStars - stars)}</span>
+        </div>
+      );
+    } else {
+      rating = (
+        <div className="rating">
+          <span className="gray">{"★".repeat(ratingStars)}</span>
+        </div>
+      );
+    }
   }
   
   return (

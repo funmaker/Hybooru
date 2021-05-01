@@ -11,7 +11,7 @@ Demo: https://booru.funmaker.moe/
 [Changelog](CHANGELOG.md)
 
 Hybooru uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite
-database. Files are not cloned and served directly from Hydrus's database. You need to
+database. Files are not cloned and instead served directly from Hydrus's database. You need to
 regenerate the Hybooru's database every time you want to update it. Make sure to
 properly configure `configs.json` file. **Stop Hydrus when you regenerate HyBooru'
 database if you plan to use live Hydrus' database (use hydrus backup instead if
@@ -62,11 +62,15 @@ importBatchSize | boolean or null | `10000` | Base batch size used during import
 filesPathOverride | string or null | `null` | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.
 thumbnailsPathOverride | string or null | `null` | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.
 db              | PoolConfig | local database | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
-tags            | object |  | Options related to tags.
+tags            | object | _see below_ | Options related to tags.
 tags.motd       | string or object or null | `null` | Tag pattern used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)
 tags.untagged   | string | `"-*"` | Overrides tag pattern used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.
 tags.ignore     | string[] | `[]` | List of tags patterns that will not be imported from Hydrus (posts tagged by these tags will still be imported).
 tags.blacklist  | string[] | `[]` | All posts and tags matching any of specified tag patterns will not be imported from Hydrus.
+rating          | object or null | _see below_ | Options related to numerical rating. Set null to remove ratings.
+rating.enabled  | boolean | `true` | Enables or disables rating import.
+rating.stars    | number | `5` | Number of stars used in rating.
+rating.serviceName | string or null | `null` | Name of the numerical rating service name. Set to null to pick any service.
 
 
 ## Development

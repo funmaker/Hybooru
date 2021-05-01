@@ -9,6 +9,7 @@
 - query by rating
 - choose rating service
 - rating star count
+- whitelist
 
 
 # Unreleased
@@ -21,12 +22,14 @@
 - Added option to disable image height limit
 - Added option to rebuild database
 - Added option to set page size
+- Added rating configuration
 - Added files and thumbnails path override configuration
 - Added example Nginx reverse proxy configuration
 - Theme now defaults to browser preferences until changed
 - Optimized client rendering
 - Improved documentation
 - Fixed handling of subtags containing `:` character
+- Fixed negative search autocomplete
 
 
 # v1.3.0
