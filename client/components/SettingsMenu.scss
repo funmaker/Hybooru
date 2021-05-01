@@ -1,0 +1,18 @@
+
+.SettingsMenu {
+  padding: 0.5em;
+  background: var(--page-background);
+
+  select {
+    width: 100%;
+    margin-bottom: 0.25em;
+  }
+
+  hr {
+    color: rgba(127, 127, 127, 0.5);
+    background-color: rgba(127, 127, 127, 0.5);
+    margin: 0.3em 0 0.1em;
+    border: none;
+    height: 1px;
+  }
+}

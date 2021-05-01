@@ -4,7 +4,7 @@ import { PoolClient } from "pg";
 import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
-import { MIME_EXT } from "../helpers/consts";
+import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
 import configs from "../helpers/configs";
 
@@ -43,6 +43,8 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   let blacklist = [];
   let sort = SORTS.date;
   let order = "desc";
+  let rating: undefined | null | [number, number] = undefined;
+  let match: RegExpMatchArray | null = null;
   
   for(let part of parts) {
     if(part.startsWith("-")) {
@@ -61,6 +63,16 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
       
       if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
       sort = SORTS[part as keyof typeof SORTS];
+    } else if(part === "rating:none") {
+      rating = null;
+    } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
+      let min = parseInt(match[1]);
+      let max = parseInt(match[2]);
+      if(match[2] === undefined) max = min;
+      if(isNaN(min) || isNaN(max)) continue;
+      if(min > max) [min, max] = [max, min];
+      
+      rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
     } else {
       whitelist.push(part);
     }
@@ -75,7 +87,7 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   while(start < end) {
     const cacheStart = Math.floor(start / CACHE_SIZE) * CACHE_SIZE;
     const cacheEnd = cacheStart + CACHE_SIZE;
-    const cachePage = await getCachedPosts({ whitelist, blacklist, sort, order, offset: cacheStart }, client);
+    const cachePage = await getCachedPosts({ whitelist, blacklist, sort, order, rating, offset: cacheStart }, client);
     
     tags = cachePage.tags;
     total = cachePage.total;
@@ -182,6 +194,7 @@ interface CacheKey {
   blacklist: string[];
   sort: string;
   order: string;
+  rating: undefined | null | [number, number];
   offset: number;
 }
 
@@ -192,7 +205,7 @@ interface CacheValue {
   lastUsed: number;
 }
 
-const keyHasher = objectHash({ alg: "sha1" });
+const keyHasher = objectHash({ alg: "sha1", coerce: false });
 let postsCache: Record<string, CacheValue> = {};
 
 async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<CacheValue> {
@@ -203,8 +216,9 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     return postsCache[hashed];
   }
   
-  let { whitelist, blacklist, sort, order, offset } = key;
+  let { whitelist, blacklist, sort, order, offset, rating } = key;
   
+  let ratingFilter = SQL``;
   let from = SQL`
     FROM filtered
     INNER JOIN posts ON posts.id = filtered.id
@@ -264,6 +278,14 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     from = SQL`FROM posts`;
   }
   
+  if(rating === null) {
+    ratingFilter = SQL`AND posts.rating IS NULL`;
+  } else if(Array.isArray(rating)) {
+    ratingFilter = SQL`AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`;
+  }
+  
+  console.log(ratingFilter);
+  
   const result = await db.queryFirst(SQL`
     WITH
       whitelist AS (
@@ -310,6 +332,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       SELECT posts.*
       `).append(from).append(`
       WHERE posts."${sort}" IS NOT NULL
+      `).append(ratingFilter).append(`
       ORDER BY posts."${sort}" ${order}, posts.id ${order}
       `).append(SQL`
       LIMIT ${CACHE_SIZE}

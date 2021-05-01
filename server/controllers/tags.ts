@@ -14,7 +14,7 @@ const SORTS = {
 export async function search({ query = "", sorting = "", page = 0, pageSize = PAGE_SIZE }): Promise<TagsSearchResponse> {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
-  let pattern = preparePattern(query);
+  let pattern = preparePattern(query.trim());
   
   let sort = SORTS.posts;
   let order = "desc";

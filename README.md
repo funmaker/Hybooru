@@ -2,7 +2,7 @@
 
 <p align="center"><img src="static/logo.svg" width="256"></p>
 
-Hydrus-based booru-styled imageboard in React, inspired by [hyve](https://github.com/imtbl/hyve).
+[Hydrus](https://github.com/hydrusnetwork/hydrus)-based booru-styled imageboard in React, inspired by [hyve](https://github.com/imtbl/hyve).
 
 Demo: https://booru.funmaker.moe/
 
@@ -10,8 +10,10 @@ Demo: https://booru.funmaker.moe/
 
 [Changelog](CHANGELOG.md)
 
-Hybooru uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite
-database. Files are not cloned and instead served directly from Hydrus's database. You need to
+Hybooru allows you to create an online booru-styled imageboard and REST API on top of Hydrus,
+allowing you to access your collection from anywhere, without the need for running Hydrus Client.
+It uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite database.
+Files are not cloned and instead served directly from Hydrus's database. You need to
 regenerate the Hybooru's database every time you want to update it. Make sure to
 properly configure `configs.json` file. **Stop Hydrus when you regenerate HyBooru'
 database if you plan to use live Hydrus' database (use hydrus backup instead if
@@ -29,10 +31,14 @@ possible)**
 - REST API
 - Mobile support
 - OpenGraph and OpenSearch
-- Works without JS in browser
+- Supports browsers without JS
+
+Keep in mind this project is not a standalone, fully-fledged booru, but rather a read-only interface to your Hydrus database.
+It does not provide any way to manage your posts or tags. The only way to add/modify your data is to do these
+changes in Hydrus and then rebuild Hybooru's database again(can be done from the cog menu on search/post page).
 
 
-## Searching Query
+## Searching Query Syntax
 
 Searching tries to imitate classical booru's syntax. All tags are lowercase and use `_` instead of space character.
 You can also use `?` to match for single character(eg: `?girl`) and `*` to match number of characters(eg: `blue_*`).
@@ -43,7 +49,11 @@ Additionally you can sort results by including `order:*` in query. Supported sor
 `order:id`, `order:rating`, `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:posted_asc`).
 If not specified, post are sorted by date descending.
 
-Eg: `1girl blue_* -outdoors order:rating_desc`
+If you use a numeric rating service and successfully imported the ratings, you can also filter posts by their ratings
+using `rating:` namespace. You can search posts with specific rating(`rating:3`), range(`rating:2-4`) or query posts
+that have not been rated(`rating:none`).
+
+Eg: `1girl blue_* -outdoors rating:3-5 order:rating_desc`
 
 
 ## Configuration
@@ -61,7 +71,7 @@ isTTY           | boolean or null | `null` | Overrides colorful/fancy output. `t
 importBatchSize | boolean or null | `10000` | Base batch size used during importing. Decrease it if hybooru crashes during import
 filesPathOverride | string or null | `null` | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.
 thumbnailsPathOverride | string or null | `null` | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.
-db              | PoolConfig | local database | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
+db              | PoolConfig | _local database_ | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
 tags            | object | _see below_ | Options related to tags.
 tags.motd       | string or object or null | `null` | Tag pattern used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)
 tags.untagged   | string | `"-*"` | Overrides tag pattern used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.

@@ -112,7 +112,7 @@ export default function SearchPage() {
   else if(fetching) footer = <Spinner />;
   
   return (
-    <Layout className="SearchPage" options dimmed={popup !== null}
+    <Layout className="SearchPage" dimmed={popup !== null}
             extraLink={postsCache.total !== null && <div className="total">Results: {postsCache.total}</div>}
             sidebar={<Tags tags={postsCache.tags} searchMod />}>
       <div className="posts">

@@ -151,22 +151,12 @@
       100% { width: 100% }
     }
 
-    .menu {
+    .SettingsMenu {
       position: absolute;
-      padding: 0.5em;
-      right: 0;
       top: 100%;
-      background: var(--page-background);
+      right: 0;
       border-left: 1px solid rgba(127, 127, 127, 0.5);
       border-bottom: 1px solid rgba(127, 127, 127, 0.5);
-
-      hr {
-        color: rgba(127, 127, 127, 0.5);
-        background-color: rgba(127, 127, 127, 0.5);
-        margin: 0.3em 0 0.1em;
-        border: none;
-        height: 1px;
-      }
     }
   }
 

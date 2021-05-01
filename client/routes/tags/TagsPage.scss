@@ -1,6 +1,6 @@
 
 .TagsPage {
-  .tags {
+  .content > .tags {
     margin: 2em auto 3em;
     width: calc(100% - 2em);
     max-width: 40em;
@@ -11,16 +11,18 @@
       border: 1px solid rgba(127, 127, 127, 0.2);
     }
 
-    tr:nth-child(2n + 1) {
-      background-color: rgba(127, 200, 255, 0.05);
-    }
-
-    tr:first-child {
+    thead {
       background-color: rgba(50, 120, 255, 0.5);
     }
 
-    td:nth-child(3) {
-      text-transform: capitalize;
+    tbody {
+      tr:nth-child(2n) {
+        background-color: rgba(127, 200, 255, 0.05);
+      }
+
+      td:nth-child(3) {
+        text-transform: capitalize;
+      }
     }
   }
 }

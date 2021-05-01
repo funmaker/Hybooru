@@ -5,16 +5,13 @@ import { namespaceRegex } from "../../server/helpers/consts";
 import useConfig from "../hooks/useConfig";
 import requestJSON from "../helpers/requestJSON";
 import useLocalStorage from "../hooks/useLocalStorage";
+import { useRTQuery } from "../hooks/useQuery";
 import "./TagInput.scss";
 
 const DEBOUNCE_FREQ = 1000;
 const TAGS_COUNT = 10;
 
-interface TagInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  onValueChange?: (value: string) => void;
-}
-
-export default function TagInput({ value, onValueChange, ...rest }: TagInputProps) {
+export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   const [showNamespace] = useLocalStorage("namespaces", false);
   const [tags, setTags] = useState<Record<string, number> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -23,7 +20,10 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
   const timeoutRef = useRef<NodeJS.Timeout | number | null>(null);
   const blurRef = useRef<NodeJS.Timeout | number | null>(null);
   const requestRef = useRef<Canceler | null>(null);
-  const valueRef = useRef(typeof value === "string" ? value : "");
+  
+  const [query, setQuery] = useRTQuery();
+  const queryRef = useRef(query);
+  queryRef.current = query;
   
   const stop = useCallback(() => {
     if(timeoutRef.current) {
@@ -42,7 +42,7 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     timeoutRef.current = setTimeout(async () => {
       timeoutRef.current = null;
       
-      let query = valueRef.current.split(" ").slice(-1)[0];
+      let query = queryRef.current.split(" ").slice(-1)[0];
       if(query.startsWith("-")) query = query.slice(1);
       query = `*${query}*`;
       
@@ -73,22 +73,20 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
   }, [stop]);
   
   const onInputChange = useCallback((ev: React.ChangeEvent<HTMLInputElement>) => {
-    valueRef.current = ev.target.value;
     reset();
-    if(onValueChange) onValueChange(ev.target.value);
-  }, [onValueChange, reset]);
+    setQuery(ev.target.value, true);
+  }, [reset, setQuery]);
   
   const onRowClick = useCallback((tag: string) => {
-    const parts = valueRef.current.split(" ");
-    if(parts[parts.length - 1].startsWith("-")) tag = `-${tag}`;
-    parts[parts.length - 1] = tag;
-    valueRef.current = parts.join(" ") + " ";
-    
-    if(onValueChange) onValueChange(valueRef.current);
-    else if(inputRef.current) inputRef.current.value = valueRef.current;
-    
-    inputRef.current?.focus();
-  }, [onValueChange]);
+    setQuery(query => {
+      inputRef.current?.focus();
+      
+      const parts = query.split(" ");
+      if(parts[parts.length - 1].startsWith("-")) tag = `-${tag}`;
+      parts[parts.length - 1] = tag;
+      return parts.join(" ") + " ";
+    }, true);
+  }, [setQuery]);
   
   const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
     if(ev.key === "Enter") {
@@ -110,21 +108,23 @@ export default function TagInput({ value, onValueChange, ...rest }: TagInputProp
     }
   }, []);
   
-  return <span className="TagInput" onFocus={onFocus} onBlur={onBlur} onKeyDown={onKeyDown}>
-    <input value={value} {...rest} ref={inputRef}
-           autoComplete="off" autoCorrect="off"
-           onChange={onInputChange} onKeyPress={onKeyPress} />
-    {tags && box &&
-      <div className="tags" ref={tagsRef}
-           style={{
-             left: `${box.x - 1}px`,
-             top: `${box.y + box.height - 1}px`,
-             width: `${box.width + 2}px`,
-           }}>
-        {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} showNamespace={showNamespace} />)}
-      </div>
-    }
-  </span>; // eslint-disable-line react/jsx-closing-tag-location
+  return (
+    <span className="TagInput" onFocus={onFocus} onBlur={onBlur} onKeyDown={onKeyDown}>
+      <input value={query} {...rest} ref={inputRef}
+             autoComplete="off" autoCorrect="off"
+             onChange={onInputChange} onKeyPress={onKeyPress} />
+      {tags && box &&
+        <div className="tags" ref={tagsRef}
+             style={{
+               left: `${box.x - 1}px`,
+               top: `${box.y + box.height - 1}px`,
+               width: `${box.width + 2}px`,
+             }}>
+          {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} showNamespace={showNamespace} />)}
+        </div>
+      }
+    </span>
+  );
 }
 
 interface RowProps {

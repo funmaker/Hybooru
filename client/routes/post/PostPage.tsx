@@ -50,7 +50,7 @@ export default function PostPage() {
   
   return (
     <Layout className={`PostPage${fullHeight ? " fullHeight" : ""}`}
-            options
+            simpleSettings
             sidebar={<>
               {rating}
               <div className="namespace">

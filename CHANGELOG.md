@@ -5,10 +5,6 @@
 - make sure hydrus db is closed gracefully
 - DMCA
 - parent sibling relationship
-- support for multiple mappings
-- query by rating
-- choose rating service
-- rating star count
 - whitelist
 
 
@@ -22,7 +18,7 @@
 - Added option to disable image height limit
 - Added option to rebuild database
 - Added option to set page size
-- Added rating configuration
+- Added rating configuration and filtering
 - Added files and thumbnails path override configuration
 - Added example Nginx reverse proxy configuration
 - Theme now defaults to browser preferences until changed

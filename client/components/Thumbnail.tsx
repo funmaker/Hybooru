@@ -20,7 +20,7 @@ export default function Thumbnail({ id, post, noFade, onClick, useId }: Thumbnai
   const SSR = useSSR();
   const config = useConfig();
   const [dynamic, setLoaded] = useReducer(() => false, !SSR && !noFade);
-  let query = useQuery();
+  let [query] = useQuery();
   query = query && `?query=${encodeURIComponent(query)}`;
   
   const onClickLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement>) => {

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import useConfig from "../hooks/useConfig";
 import { namespaceRegex } from "../../server/helpers/consts";
@@ -72,6 +72,22 @@ function Namespace({ header, members, tags, searchMod, sorted, showNamespaces }:
   );
 }
 
+function addTag(query: string, tag: string): string {
+  const parts = query.split(" ");
+  const partsClean = parts.filter(p => p && p !== tag && p !== `-${tag}`);
+  
+  if(!parts.includes(tag)) return [...partsClean, tag].join(" ");
+  else return partsClean.join(" ");
+}
+
+function delTag(query: string, tag: string): string {
+  const parts = query.split(" ");
+  const partsClean = parts.filter(p => p && p !== tag && p !== `-${tag}`);
+  
+  if(!parts.includes(`-${tag}`)) return [...partsClean, `-${tag}`].join(" ");
+  else return partsClean.join(" ");
+}
+
 interface TagProps {
   searchMod?: boolean;
   tag: string;
@@ -81,7 +97,7 @@ interface TagProps {
 
 function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   const config = useConfig();
-  const query = useQuery();
+  const [query, setQuery, genLink] = useQuery();
   
   let name = tag.replace(/_/g, " ");
   let color: string | undefined;
@@ -92,35 +108,29 @@ function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
     color = config.namespaceColors[result[1]];
   }
   
-  let addLink = "#";
-  let delLink = "#";
-  let addCh = "+";
-  let delCh = "-";
+  const parts = query.split(" ");
+  const addLink = genLink(addTag(query, tag));
+  const delLink = genLink(delTag(query, tag));
+  const addCh = parts.includes(tag) ? "•" : "+";
+  const delCh = parts.includes(`-${tag}`) ? "•" : "-";
   
-  if(searchMod) {
-    const parts = query.split(" ");
-    const partsClean = parts.filter(p => p !== tag && p !== `-${tag}`);
-    
-    if(!parts.includes(tag)) addLink = `/posts?query=${encodeURIComponent([...partsClean, tag].join(" "))}`;
-    else {
-      addLink = `/posts?query=${encodeURIComponent(partsClean.join(" "))}`;
-      addCh = "•";
-    }
-    
-    if(!parts.includes(`-${tag}`)) delLink = `/posts?query=${encodeURIComponent([...partsClean, `-${tag}`].join(" "))}`;
-    else {
-      addLink = `/posts?query=${encodeURIComponent(partsClean.join(" "))}`;
-      delCh = "•";
-    }
-  }
+  const onAdd = useCallback<React.MouseEventHandler>(ev => {
+    ev.preventDefault();
+    setQuery(query => addTag(query, tag));
+  }, [setQuery, tag]);
+  
+  const onDel = useCallback<React.MouseEventHandler>(ev => {
+    ev.preventDefault();
+    setQuery(query => addTag(query, tag));
+  }, [setQuery, tag]);
   
   return (
     <div>
       {searchMod && <>
-        <Link className="btn" to={addLink}>{addCh}</Link>
-        <Link className="btn" to={delLink}>{delCh}</Link>
+        <Link className="btn" to={addLink} onClick={onAdd}>{addCh}</Link>
+        <Link className="btn" to={delLink} onClick={onDel}>{delCh}</Link>
       </> /* eslint-disable-line react/jsx-closing-tag-location */ }
-      <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
+      <Link to={genLink(tag)} style={{ color }}>{name}</Link>
       {" "}
       <span>{tags[tag]}</span>
     </div>

@@ -78,6 +78,8 @@ export enum Mime {
 
 export const namespaceRegex = /(.+?):(.+)/;
 export const underscoreRegex = /_/g;
+export const rangeRatingRegex = /^rating:(\d+)(?:-(\d+))?$/;
+export const anyRatingRegex = /^rating:(\d+(?:-\d+)?|none)$/;
 
 export const fileUrl = (post: Post | PostSummary) => `/files/f${post.hash}${post.extension}`;
 export const thumbnailUrl = (post: Post | PostSummary) =>  `/files/t${post.hash}.thumbnail`;
