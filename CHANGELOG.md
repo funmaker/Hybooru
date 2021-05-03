@@ -5,7 +5,6 @@
 - tag relationships
 - file relationships
 - IPFS integration
-- Fix titles when switching pages
 
 
 # Unreleased
@@ -29,6 +28,7 @@
 - Fixed handling of subtags containing `:` character
 - Fixed negative search autocomplete
 - Fixed Hydrus database not being closed gracefully
+- Fixed page title not updating when traversing browser history
 
 
 # v1.3.0

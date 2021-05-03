@@ -26,6 +26,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   const [{ locationKey, pageData }, setPageData] = useState({ locationKey: history.location.key, pageData: initialData || null });
   const [fetching, setFetching] = useState(false);
   const fetchEmitter = useRef<FetchEmitter | null>(null);
+  const titleCache = useRef<Record<string, string>>({});
   
   useEffect(() => {
     return history.listen(location => {
@@ -34,14 +35,16 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
         fetchEmitter.current = null;
         setPageData(state => (state.locationKey || state.pageData) ? { locationKey: undefined, pageData: null } : state);
       }
+      
+      if(titleCache.current[history.location.pathname]) document.title = titleCache.current[history.location.pathname];
     });
   }, [history]);
   
   useEffect(() => {
     if(typeof pageData?._title === "string") {
-      document.title = pageData._title;
+      document.title = titleCache.current[history.location.pathname] = pageData._title;
     }
-  }, [pageData]);
+  }, [history, pageData]);
   
   const fetch = useCallback(() => {
     if(fetchEmitter.current) {
