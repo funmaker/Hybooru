@@ -21,7 +21,17 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
   const lastMove = useRef(Date.now());
   const wrapper = useRef<HTMLDivElement>(null);
   
+  const onBackgroundClick = useCallback<React.MouseEventHandler>(ev => {
+    ev.stopPropagation();
+    ev.preventDefault();
+    
+    if(Math.abs(offset.current) < 1) {
+      setId(null);
+    }
+  }, [setId]);
+  
   const onClick = useCallback<React.MouseEventHandler>(ev => {
+    ev.stopPropagation();
     ev.preventDefault();
     
     if(Math.abs(offset.current) < 1) {
@@ -29,23 +39,24 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       let outside = false;
       
       if(target instanceof HTMLImageElement) {
-        let boundsX = target.naturalWidth;
-        let boundsY = target.naturalHeight;
+        let boundsX = target.naturalWidth || target.width;
+        let boundsY = target.naturalHeight || target.height;
+        const bbox = target.getBoundingClientRect();
         
-        if(boundsX > target.width) {
-          boundsY = boundsY * (target.width / boundsX);
-          boundsX = target.width;
+        if(boundsX > bbox.width) {
+          boundsY = boundsY * (bbox.width / boundsX);
+          boundsX = bbox.width;
         }
         
-        if(boundsY > target.height) {
-          boundsX = boundsX * (target.height / boundsY);
-          boundsY = target.height;
+        if(boundsY > bbox.height) {
+          boundsX = boundsX * (bbox.height / boundsY);
+          boundsY = bbox.height;
         }
         
-        if((target.width - boundsX) / 2 > ev.clientX) outside = true;
-        if((target.width + boundsX) / 2 < ev.clientX) outside = true;
-        if((target.height - boundsY) / 2 > ev.clientY) outside = true;
-        if((target.height + boundsY) / 2 < ev.clientY) outside = true;
+        if((target.width - boundsX) / 2 > ev.clientX - bbox.x) outside = true;
+        if((target.width + boundsX) / 2 < ev.clientX - bbox.x) outside = true;
+        if((target.height - boundsY) / 2 > ev.clientY - bbox.y) outside = true;
+        if((target.height + boundsY) / 2 < ev.clientY - bbox.y) outside = true;
       }
       
       if(outside) setId(null);
@@ -136,9 +147,19 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
         <div className="closeBtn" onClick={onClose}>✕</div>
         <Link to={`/posts/${post.id}`} className="moreBtn">Open Post</Link>
       </div>
-      {leftPost && <File key={leftPost.id} post={leftPost} className="left" draggable={false} controls={false} muted />}
-      <File key={post.id} post={post} onClick={onClick} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerMove={onPointerMove} draggable={false} controls={false} autoPlay />
-      {rightPost && <File key={rightPost.id} post={rightPost} className="right" draggable={false} controls={false} muted />}
+      {leftPost &&
+        <div key={leftPost.id} className="wrap left">
+          <File post={leftPost} draggable={false} controls={false} muted />
+        </div>
+      }
+      <div key={post.id} className="wrap" onClick={onBackgroundClick} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerMove={onPointerMove} >
+        <File post={post} draggable={false} controls={false} onClickCapture={onClick} autoPlay />
+      </div>
+      {rightPost &&
+        <div key={rightPost.id} className="wrap right">
+          <File post={rightPost} draggable={false} controls={false} muted />
+        </div>
+      }
     </div>
   );
 }

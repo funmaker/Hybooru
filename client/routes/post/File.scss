@@ -1,0 +1,35 @@
+
+.File {
+  &.unknown {
+    position: relative;
+
+    img {
+      height: 12.5em;
+      width: auto;
+    }
+
+    &::after, &::before {
+      position: absolute;
+      left: 0.6rem;
+      right: 0.6rem;
+      text-align: center;
+      font-weight: bold;
+      color: #888;
+      text-transform: uppercase;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    &::after {
+      content: attr(data-ext);
+      font-size: 300%;
+      bottom: 3rem;
+    }
+
+    &::before {
+      content: attr(data-size);
+      font-size: 130%;
+      bottom: 1.5rem;
+    }
+  }
+}

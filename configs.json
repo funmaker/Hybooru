@@ -3,7 +3,7 @@
 	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
-	"adminPassword": null,
+	"adminPassword": "kek",
 	"isTTY": null,
 	"importBatchSize": 8192,
 	"pageSize": 72,
@@ -19,7 +19,7 @@
 		"port": 5432
 	},
 	"tags": {
-		"motd": null,
+		"motd": "fm:motd",
 		"untagged": "-*",
 		"ignore": [],
 		"blacklist": [],

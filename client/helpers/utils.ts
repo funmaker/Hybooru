@@ -9,7 +9,7 @@ export function parseSize(size: number) {
   } else if(size > 1024) {
     return Math.round(size / 1024 * 100) / 100 + " KB";
   } else {
-    return Math.round(size * 100) / 100 + " bytes";
+    return Math.round(size * 100) / 100 + " B";
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer, useRef } from "react";
 import { Link } from "react-router-dom";
 import { PostSummary } from "../../server/routes/apiTypes";
 import { thumbnailUrl } from "../../server/helpers/consts";
@@ -19,7 +19,9 @@ export interface ThumbnailProps {
 export default function Thumbnail({ id, post, noFade, onClick, useId }: ThumbnailProps) {
   const SSR = useSSR();
   const config = useConfig();
+  const ref = useRef<HTMLImageElement>(null);
   const [dynamic, setLoaded] = useReducer(() => false, !SSR && !noFade);
+  const [unknown, setUnknown] = useReducer(() => true, false);
   let [query] = useQuery();
   query = query && `?query=${encodeURIComponent(query)}`;
   
@@ -27,15 +29,22 @@ export default function Thumbnail({ id, post, noFade, onClick, useId }: Thumbnai
     if(onClick) onClick(ev, id);
   }, [onClick, id]);
   
+  useEffect(() => {
+    if(ref.current?.complete && ref.current.naturalWidth === 0) setUnknown();
+  }, []);
+  
+  let url = thumbnailUrl(post);
+  if(unknown) url = "/static/file.svg";
+  
   return (
-    <Link className={`Thumbnail${dynamic ? " dynamic" : ""}`} to={`/posts/${post.id}${query}`} onClick={onClickLink}>
-      <img src={thumbnailUrl(post)} alt={String(post.id)}
+    <Link className={`Thumbnail${dynamic ? " dynamic" : ""}${unknown ? " unknown" : ""}`} to={`/posts/${post.id}${query}`} onClick={onClickLink} data-ext={post.extension.slice(1)}>
+      <img src={url} alt={String(post.id)}
            id={useId ? post.id.toString() : undefined}
            style={{
              width: config.thumbnailSize[0] / EM_SIZE + "em",
              height: config.thumbnailSize[1] / EM_SIZE + "em",
            }}
-           onLoad={setLoaded} onError={setLoaded} />
+           onLoad={setLoaded} onError={setUnknown} ref={ref} />
     </Link>
   );
 }

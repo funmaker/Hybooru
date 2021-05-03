@@ -1,11 +1,11 @@
 
 ### TODO:
 
-- Handling txt/unknown files
 - DMCA
 - tag relationships
 - file relationships
 - IPFS integration
+- Fix titles when switching pages
 
 
 # Unreleased
@@ -25,6 +25,7 @@
 - Theme now defaults to browser preferences until changed
 - Optimized client rendering
 - Improved documentation
+- Improved unknown/binary/missing file handling
 - Fixed handling of subtags containing `:` character
 - Fixed negative search autocomplete
 - Fixed Hydrus database not being closed gracefully
