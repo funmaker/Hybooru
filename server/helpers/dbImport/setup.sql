@@ -70,6 +70,15 @@ CREATE TABLE posts (
   posted TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS relations CASCADE;
+CREATE TABLE relations (
+  postid INTEGER NOT NULL,
+  other_postid INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+
+  PRIMARY KEY(postid, other_postid)
+);
+
 DROP TABLE IF EXISTS urls CASCADE;
 CREATE TABLE urls (
   id INTEGER,

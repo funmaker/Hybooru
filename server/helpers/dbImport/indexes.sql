@@ -21,3 +21,8 @@ CREATE UNIQUE INDEX ON tags_postids(tagid);
 CREATE INDEX ON posts(posted, id);
 CREATE INDEX ON posts(rating, id);
 CREATE INDEX ON posts(size, id);
+
+DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
+DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = other_postid);
+ALTER TABLE relations ADD CONSTRAINT relations_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE,
+                      ADD CONSTRAINT relations_other_postid_fkey FOREIGN KEY (other_postid) REFERENCES posts(id) ON DELETE CASCADE;

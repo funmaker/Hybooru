@@ -1,21 +1,33 @@
-import React from "react";
-import { PostPageData } from "../../../server/routes/apiTypes";
+import React, { useMemo } from "react";
+import { PostPageData, Relation } from "../../../server/routes/apiTypes";
 import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
+import { parseDuration, parseSize } from "../../helpers/utils";
 import usePageData from "../../hooks/usePageData";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useConfig from "../../hooks/useConfig";
 import Layout from "../../components/Layout";
+import Thumbnail from "../../components/Thumbnail";
 import Tags from "../../components/Tags";
 import NotFoundPage from "../error/NotFoundPage";
-import { parseDuration, parseSize } from "../../helpers/utils";
 import File from "./File";
 import SourceLink from "./SourceLink";
 import "./PostPage.scss";
+
+const RELATION_STRING: Record<Relation, string> = {
+  [Relation.ALTERNATE]: "Alternative",
+  [Relation.DUPLICATE]: "Duplicate",
+  [Relation.DUPLICATE_BEST]: "Duplicate (best)",
+};
 
 export default function PostPage() {
   const { ratingStars } = useConfig();
   const [pageData] = usePageData<PostPageData>();
   const [fullHeight] = useLocalStorage("fullHeight", false);
+  
+  const sortedRelations = useMemo(() => {
+    if(!pageData?.post) return [];
+    else return [...pageData.post.relations, pageData.post].sort((a, b) => a.id - b.id);
+  }, [pageData?.post]);
   
   if(!pageData) {
     return (
@@ -72,7 +84,15 @@ export default function PostPage() {
               }
               <Tags tags={pageData.post.tags} grouped />
             </>}> {/* eslint-disable-line react/jsx-closing-tag-location */}
-      <File post={pageData.post} link={link} />
+      <div className="fileWrap">
+        <File post={pageData.post} link={link} />
+      </div>
+      {pageData.post.relations.length > 0 &&
+        <div className="relations">
+          {sortedRelations.map(relation => <Thumbnail key={relation.id} id={relation.id} post={relation} label={"kind" in relation ? RELATION_STRING[relation.kind] : <b>This Post</b>} />)}
+        </div>
+      }
     </Layout>
   );
 }
+

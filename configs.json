@@ -19,7 +19,7 @@
 		"port": 5432
 	},
 	"tags": {
-		"motd": "fm:motd",
+		"motd": null,
 		"untagged": "-*",
 		"ignore": [],
 		"blacklist": [],

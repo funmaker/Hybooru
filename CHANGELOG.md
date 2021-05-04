@@ -1,9 +1,8 @@
 
 ### TODO:
 
-- DMCA
+- DMCA page
 - tag relationships
-- file relationships
 - IPFS integration
 
 
@@ -17,6 +16,7 @@
 - Added option to disable image height limit
 - Added option to rebuild database
 - Added option to set page size
+- Added post relations (alternatives, duplicates)
 - Added tag whitelist
 - Added rating configuration and filtering
 - Added files and thumbnails path override configuration

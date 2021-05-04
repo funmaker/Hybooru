@@ -25,22 +25,75 @@
   .content {
     height: 100%;
     text-align: center;
+    display: flex;
+    align-items: center;
 
-    .File {
-      margin: 2em;
-      max-height: calc(100% - 5em);
-      max-width: calc(100% - 5em);
-      height: auto;
-      width: auto;
-      display: inline-block;
+    .fileWrap {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      align-self: flex-start;
+      padding: 1rem;
+
+      a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        font-size: 0;
+        pointer-events: none;
+      }
+
+      .File {
+        max-height: 100%;
+        max-width: 100%;
+        height: auto;
+        width: auto;
+        display: inline-block;
+        pointer-events: all;
+        margin: auto;
+      }
+    }
+
+    .relations {
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden auto;
+
+      .Thumbnail {
+        display: flex;
+        flex-direction: column;
+
+        &:first-child {
+          margin-top: auto;
+        }
+
+        &:last-child {
+          margin-bottom: auto;
+        }
+      }
     }
   }
 
   &.fullHeight {
-    height: unset;
+    .fileWrap {
+      .File {
+        max-height: unset !important;
+      }
+    }
+
+    .relations {
+      overflow: visible;
+    }
 
     & > .header {
       position: absolute;
+    }
+
+    .sidebar {
+      height: unset;
     }
   }
 }

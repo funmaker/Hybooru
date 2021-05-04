@@ -4,12 +4,22 @@
 import { Mime } from "../helpers/consts";
 import { Theme } from "../../client/hooks/useTheme";
 
+export enum Relation {
+  DUPLICATE = "DUPLICATE",
+  DUPLICATE_BEST = "DUPLICATE_BEST",
+  ALTERNATE = "ALTERNATE",
+}
+
 export interface PostSummary {
   id: number;
   hash: string;
   extension: string;
   mime: Mime | null;
   posted: string;
+}
+
+export interface PostRelation extends PostSummary {
+  kind: Relation;
 }
 
 export interface PostSearchResults {
@@ -40,6 +50,7 @@ export interface Post {
   posted: string;
   tags: Record<string, number>;
   sources: string[];
+  relations: PostRelation[];
 }
 
 export interface Stats {

@@ -5,6 +5,7 @@ import SQL, { SQLStatement } from "sql-template-strings";
 import chalk from "chalk";
 import Database from "better-sqlite3";
 import * as postsController from "../controllers/posts";
+import { Relation } from "../routes/apiTypes";
 import configs from "./configs";
 import setupSQL from "./dbImport/setup.sql";
 import indexesSQL from "./dbImport/indexes.sql";
@@ -124,6 +125,64 @@ export async function initialize() {
           )
       `);
       
+      dbImport.printProgress(false, "Resolving file relationships...");
+      
+      const groups: Array<{
+        mediaId: number;
+        bestPostId: number;
+        duplicates: string | null;
+        alternatives: string | null;
+      }> = await hydrus.prepare(`
+        SELECT
+          duplicate_files.media_id AS "mediaId", duplicate_files.king_hash_id AS "bestPostId",
+          group_concat(duplicate_file_members.hash_id) AS duplicates,
+          (
+            SELECT group_concat(alts.hash_id)
+            FROM duplicate_file_members alts
+            INNER JOIN alternate_file_group_members afgm1 ON afgm1.media_id = alts.media_id
+            INNER JOIN alternate_file_group_members afgm2 ON afgm2.alternates_group_id = afgm1.alternates_group_id AND afgm1.media_id != afgm2.media_id
+            WHERE afgm2.media_id = duplicate_files.media_id
+          ) AS alternatives
+        FROM duplicate_files
+        LEFT JOIN duplicate_file_members ON duplicate_files.media_id == duplicate_file_members.media_id
+        GROUP BY duplicate_files.media_id
+        HAVING count(1) > 1 OR alternatives IS NOT NULL
+      `).all();
+      
+      const relations: Array<{ post: number; other: number; kind: Relation }> = [];
+      
+      for(const group of groups) {
+        if(!group.duplicates) continue;
+        
+        const duplicates = group.duplicates.split(",").map(dup => parseInt(dup));
+        const alternatives = group.alternatives?.split(",").map(dup => parseInt(dup)) || [];
+        
+        for(const post of duplicates) {
+          for(const other of duplicates) {
+            if(post === other) continue;
+            
+            relations.push({
+              post,
+              other,
+              kind: other === group.bestPostId ? Relation.DUPLICATE_BEST : Relation.DUPLICATE,
+            });
+          }
+          
+          for(const other of alternatives) {
+            relations.push({
+              post,
+              other,
+              kind: Relation.ALTERNATE,
+            });
+          }
+        }
+      }
+      
+      await postgres.query(SQL`
+        INSERT INTO relations(postid, other_postid, kind)
+        SELECT (relation->>'post')::INTEGER, (relation->>'other')::INTEGER, relation->>'kind'
+        FROM unnest(${relations}::JSON[]) relation
+      `);
       
       if(configs.tags.blacklist.length > 0) {
         dbImport.printProgress(false, "Applying blacklist...");
@@ -131,12 +190,12 @@ export async function initialize() {
         const blacklist = configs.tags.blacklist.map(pat => preparePattern(pat));
         
         await postgres.query(SQL`
-        DELETE FROM posts
-        USING unnest(${blacklist}::TEXT[]) pat
-        INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-        INNER JOIN mappings ON mappings.tagid = tags.id
-        WHERE mappings.postid = posts.id
-      `);
+          DELETE FROM posts
+          USING unnest(${blacklist}::TEXT[]) pat
+          INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+          INNER JOIN mappings ON mappings.tagid = tags.id
+          WHERE mappings.postid = posts.id
+        `);
       }
       
       if(configs.tags.whitelist && configs.tags.whitelist.length > 0) {

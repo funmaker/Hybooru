@@ -48,7 +48,7 @@ export default function usePostsCache() {
   const search = qs.parse(location.search);
   const query = typeof search.query === "string" ? search.query : "";
   const key = JSON.stringify([search.page, query]);
-  const [pageData, pageFetching] = usePageData<PostsSearchPageData>(!postsCache[key]);
+  const [pageData, pageFetching] = usePageData<PostsSearchPageData>(!postsCache[key], false);
   
   let postsCacheDefault = emptyPage;
   if(postsCache[key]) {

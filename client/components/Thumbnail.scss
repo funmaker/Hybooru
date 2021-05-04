@@ -4,9 +4,15 @@
   margin: 0.5em;
   opacity: 1;
   transition: 0.3s opacity;
+  text-align: center;
 
   img {
     object-fit: contain;
+  }
+
+  label {
+    font-size: 75%;
+    color: var(--text-color);
   }
 
   &.dynamic {

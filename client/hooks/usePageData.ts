@@ -82,16 +82,19 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   return useMemo(() => ({ pageData, locationKey, fetch, fetching }), [pageData, locationKey, fetch, fetching]);
 }
 
-export default function usePageData<T>(auto = true): [T | null, boolean, () => UnlistenCallback] {
+export default function usePageData<T>(auto = true, cache = true): [T | null, boolean, () => UnlistenCallback] {
   const currentKey = useLocation().key;
   const { pageData, fetch, locationKey, fetching } = useContext(PageDataContext);
+  const cached = useRef(false);
+  
+  if(locationKey === currentKey && cache) cached.current = true;
   
   useEffect(() => {
     if(!auto || currentKey === locationKey) return;
     else return fetch();
   }, [fetch, auto, currentKey, locationKey]);
   
-  if(currentKey !== locationKey) {
+  if(currentKey !== locationKey && !cached.current) {
     return [null, fetching, fetch];
   } else {
     return [pageData, fetching, fetch];

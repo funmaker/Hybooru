@@ -16,7 +16,6 @@ import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
 import TagsPage from "./routes/tags/TagsPage";
 import NotFoundPage from "./routes/error/NotFoundPage";
-import DMCAPage from "./routes/dmca/DMCAPage";
 import "./globals.scss";
 
 interface Props {
@@ -63,7 +62,6 @@ export default hot(module)(function App({ initialData }: Props) {
                     <Route path="/tags" component={TagsPage} />
                     <Route path="/posts/:id" component={PostPage} />
                     <Route path="/posts" component={SearchPage} />
-                    <Route path="/dmca" component={DMCAPage} />
                     <Route path="/" exact component={IndexPage} />
                     <NotFoundPage />
                   </Switch>

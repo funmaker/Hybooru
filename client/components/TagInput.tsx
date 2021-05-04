@@ -100,7 +100,6 @@ export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputEleme
       
       const targets = [inputRef.current, ...Array.from(tagsRef.current?.children || [])] as Array<(null | HTMLAnchorElement | HTMLInputElement)>;
       const cur = targets.indexOf(document.activeElement as any);
-      console.log(targets, document.activeElement, cur);
       if(cur < 0) return;
       
       const dir = ev.key === "ArrowDown" ? 1 : -1;

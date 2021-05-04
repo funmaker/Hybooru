@@ -14,9 +14,10 @@ export interface ThumbnailProps {
   noFade?: boolean;
   onClick?: (ev: React.MouseEvent<HTMLAnchorElement>, post: number) => void;
   useId?: boolean;
+  label?: React.ReactNode;
 }
 
-export default function Thumbnail({ id, post, noFade, onClick, useId }: ThumbnailProps) {
+export default function Thumbnail({ id, post, noFade, onClick, useId, label }: ThumbnailProps) {
   const SSR = useSSR();
   const config = useConfig();
   const ref = useRef<HTMLImageElement>(null);
@@ -45,6 +46,7 @@ export default function Thumbnail({ id, post, noFade, onClick, useId }: Thumbnai
              height: config.thumbnailSize[1] / EM_SIZE + "em",
            }}
            onLoad={setLoaded} onError={setUnknown} ref={ref} />
+      {label && <label>{label}</label>}
     </Link>
   );
 }

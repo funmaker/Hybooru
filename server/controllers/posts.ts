@@ -1,7 +1,7 @@
 import SQL, { SQLStatement } from "sql-template-strings";
 import objectHash from "node-object-hash";
 import { PoolClient } from "pg";
-import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
+import { Post, PostRelation, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
@@ -175,16 +175,37 @@ export async function get(id: number): Promise<Post | null> {
         tags.name, tags.used
         ORDER BY name ASC, tags.id ASC
       ) FILTER (WHERE tags.id IS NOT NULL), '{}') AS tags,
-      COALESCE(array_agg(DISTINCT urls.url) FILTER (WHERE urls.id IS NOT NULL), '{}') AS sources
+      (
+        SELECT COALESCE(array_agg(DISTINCT urls.url) FILTER (WHERE urls.id IS NOT NULL), '{}')
+        FROM urls
+        WHERE urls.postid = posts.id
+      ) AS sources,
+      (
+        SELECT COALESCE(array_agg(json_build_object(
+          'id', other.id,
+          'hash', encode(other.hash, 'hex'),
+          'mime', other.mime,
+          'posted', format_date(other.posted),
+          'kind', relations.kind
+        )) FILTER (WHERE relations.postid IS NOT NULL), '{}')
+        FROM relations
+        INNER JOIN posts other ON other.id = relations.other_postid
+        WHERE relations.postid = posts.id
+      ) AS relations
     FROM posts
     LEFT  JOIN mappings ON mappings.postid = posts.id
     LEFT  JOIN tags     ON mappings.tagid = tags.id
-    LEFT  JOIN urls     ON urls.postid = posts.id
     WHERE posts.id = ${id}
     GROUP BY posts.id
   `);
   
-  if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+  if(post) {
+    post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+    
+    for(const relation of post.relations) {
+      relation.extension = MIME_EXT[relation.mime as keyof typeof MIME_EXT] || "";
+    }
+  }
   
   return post;
 }
@@ -283,8 +304,6 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   } else if(Array.isArray(rating)) {
     ratingFilter = SQL`AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`;
   }
-  
-  console.log(ratingFilter);
   
   const result = await db.queryFirst(SQL`
     WITH
