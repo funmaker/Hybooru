@@ -34,8 +34,9 @@
       height: 100%;
       align-self: flex-start;
       padding: 1rem;
+      display: flex;
 
-      a {
+      a:not(.File) {
         display: flex;
         justify-content: center;
         align-items: center;

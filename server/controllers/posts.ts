@@ -103,8 +103,8 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
         'hash', encode(hash, 'hex'),
         'mime', mime,
         'posted', format_date(posted)
-      )), '[]') as posts
-    FROM unnest(${cached}::INTEGER[]) cached
+      ) ORDER BY rn), '[]') as posts
+    FROM unnest(${cached}::INTEGER[]) WITH ORDINALITY x(cached, rn)
     INNER JOIN posts ON id = cached
   `, client);
   

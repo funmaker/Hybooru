@@ -130,7 +130,7 @@ function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
         <Link className="btn" to={addLink} onClick={onAdd}>{addCh}</Link>
         <Link className="btn" to={delLink} onClick={onDel}>{delCh}</Link>
       </> /* eslint-disable-line react/jsx-closing-tag-location */ }
-      <Link to={genLink(tag)} style={{ color }}>{name}</Link>
+      <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
       {" "}
       <span>{tags[tag]}</span>
     </div>
