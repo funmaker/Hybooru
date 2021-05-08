@@ -8,7 +8,7 @@
 - IPFS integration
 
 
-# Unreleased
+# v1.4.0
 
 - Added mobile-friendly Popup Gallery
 - Added server-side and client-side cache

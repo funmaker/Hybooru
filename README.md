@@ -69,7 +69,10 @@ appName         | string | `"Hybooru"` | Specify name of your booru (appears as 
 appDescription  | string | `"Hydrus-based booru-styled imageboard in React"` | Booru's description used in OpenGraph.
 adminPassword   | string or null | `null` | Password used to regenerate database (can be accessed from the cog button). Null disables manual database regeneration.
 isTTY           | boolean or null | `null` | Overrides colorful/fancy output. `true` forces, `false` disables, `null` automatically determines. Useful when piping output.
-importBatchSize | boolean or null | `10000` | Base batch size used during importing. Decrease it if hybooru crashes during import
+importBatchSize | number | `8192` | Base batch size used during importing. Decrease it if hybooru crashes during import.
+pageSize        | number | `72` | Number of posts on single page.
+cachePages      | number | `5` | Number of pages cached in single cache entry.
+cacheRecords    | number | `1024` | Max number of cache entries.
 filesPathOverride | string or null | `null` | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.
 thumbnailsPathOverride | string or null | `null` | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.
 db              | PoolConfig | _local database_ | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
