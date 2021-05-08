@@ -110,3 +110,19 @@ CREATE TABLE mappings (
 
   PRIMARY KEY(postid, tagid)
 );
+
+DROP TABLE IF EXISTS tag_parents CASCADE;
+CREATE TABLE tag_parents (
+  tagid INTEGER NOT NULL,
+  parentid INTEGER NOT NULL,
+
+  PRIMARY KEY(tagid, parentid)
+);
+
+DROP TABLE IF EXISTS tag_siblings CASCADE;
+CREATE TABLE tag_siblings (
+  tagid INTEGER NOT NULL,
+  betterid INTEGER NOT NULL,
+
+  PRIMARY KEY(tagid, betterid)
+);

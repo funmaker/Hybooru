@@ -1,4 +1,4 @@
-import React, { useReducer, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
 import { fileUrl } from "../../../server/helpers/consts";

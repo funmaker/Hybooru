@@ -25,6 +25,13 @@ export enum ServiceID {
   NULL_SERVICE = 100,
 }
 
+export enum ContentStatus {
+  CURRENT = 0,
+  PENDING = 1,
+  DELETED = 2,
+  PETITIONED = 3,
+}
+
 export enum Mime {
   APPLICATION_HYDRUS_CLIENT_COLLECTION = 0,
   IMAGE_JPEG = 1,

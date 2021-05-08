@@ -2,7 +2,9 @@
 ### TODO:
 
 - DMCA page
-- tag relationships
+- Optimize tag relation resolving
+- Importing tag repository mappings/relations
+- Display tag relations in tag search page
 - IPFS integration
 
 
@@ -17,6 +19,7 @@
 - Added option to rebuild database
 - Added option to set page size
 - Added post relations (alternatives, duplicates)
+- Added tag relations (siblings, parents)
 - Added tag whitelist
 - Added rating configuration and filtering
 - Added files and thumbnails path override configuration

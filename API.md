@@ -22,7 +22,7 @@ pageSize | number | _(optional)_ Ignored if larger than the default page size.
 
 Name     | Type   | Comment
 -------- | ------ | ---
-posts    | PostSummary[] | Results
+posts    | [PostSummary](#PostSummary)[] | Results
 total    | number | Total amount of matched posts.
 pageSize | number | Actual page size.
 
@@ -59,6 +59,15 @@ mime      | number or null | Hydrus internal mime id. See [HydrusConstants.py](h
 posted    | string | ISO 8601 date time when original post was created.
 tags      | object | Post's tags(keys are the names, values are their global usage).
 sources   | string[] | List of source urls.
+relations | [PostRelation](#PostRelation)[] | List of source urls.
+
+### PostRelation
+
+Same as [PostSummary](#PostSummary) with additional fields:
+
+Name      | Type   | Comment
+--------- | ------ | ---
+kind      | string | `"DUPLICATE"`(duplicate), `"DUPLICATE_BEST"`(better quality duplicate), `"ALTERNATE"`(related alternative),
 
 
 ## GET /api/tags

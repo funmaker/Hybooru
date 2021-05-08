@@ -1,66 +1,432 @@
-import { Writable } from "stream";
-import { Database, Statement } from "better-sqlite3";
+import path from "path";
+import chalk from "chalk";
+import SqliteDatabase, { Database } from "better-sqlite3";
+import YAML from "yaml";
+import SQL from "sql-template-strings";
 import { PoolClient } from "pg";
-import copy from "pg-copy-streams";
+import * as postsController from "../../controllers/posts";
+import { Relation } from "../../routes/apiTypes";
+import { preparePattern } from "../utils";
+import { findHydrusDB, pool } from "../db";
+import { ServiceID } from "../consts";
 import configs from "../configs";
-import { printProgress, elapsed } from "./pretty";
+import { elapsed, printProgress } from "./pretty";
+import indexesSQL from "./indexes.sql";
+import setupSQL from "./setup.sql";
+import Posts from "./posts";
+import Tags from "./tags";
+import Mappings from "./mappings";
+import Urls from "./urls";
+import TagParents from "./tagParents";
+import TagSiblings from "./tagSiblings";
 
-export abstract class Import<Key> {
-  constructor(protected hydrus: Database, protected postgres: PoolClient) {}
+// https://stackoverflow.com/a/7616484
+function hashCode(s: string) {
+  let hash = 0;
   
-  abstract display: string;
-  batchSizeMul = 1;
-  
-  abstract totalQuery: string;
-  abstract inputQuery: string;
-  abstract outputQuery: string;
-  
-  total() {
-    return this.hydrus.prepare(this.totalQuery).raw().get()[0];
+  for(let i = 0; i < s.length; i++) {
+    const chr = s.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0;
   }
   
-  async importBatch(lastKey: Key | null, limit: number, input: Statement, output: Writable): Promise<Key | null> {
-    const rows = input.all(lastKey === null ? -1 : lastKey, limit);
-    
-    let buf = "";
-    for(const row of rows) {
-      buf += row[1];
-    }
-    output.write(buf);
-    
-    if(rows.length > 0) return rows[rows.length - 1][0];
-    else return null;
-  }
+  return hash;
+}
+
+export const setupHash = hashCode(setupSQL + indexesSQL);
+
+export async function rebuild() {
+  console.log(chalk.cyan.bold("\nRebuilding Database!\n"));
+  const startTime = Date.now();
   
-  async start() {
-    const batchSize = Math.ceil(configs.importBatchSize * this.batchSizeMul);
-    const total = await this.total();
+  const postgres = await pool.connect();
+  await postgres.query("BEGIN");
+  
+  try {
+    await postgres.query(setupSQL);
     
-    const input = this.hydrus.prepare(this.inputQuery).raw(true);
-    const output: Writable = await this.postgres.query(copy.from(this.outputQuery));
+    postsController.clearCache();
     
-    let lastKey: Key | null = null;
+    const dbPath = findHydrusDB();
+    const resolveRelations = configs.tags.resolveRelations;
     
-    for(let count = 0; count < total; count += batchSize) {
-      lastKey = await this.importBatch(lastKey, batchSize, input, output);
-      if(lastKey === null) break;
-      
-      if(output.writableLength > output.writableHighWaterMark) {
-        printProgress([count, total], this.display);
-        await new Promise(res => output.once("drain", res));
-      } else {
-        await new Promise(res => setImmediate(res));
-      }
-    }
+    const hydrus = new SqliteDatabase(path.resolve(dbPath, "client.db"), { readonly: true });
+    await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
+    await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
     
-    await new Promise(res => output.end(res));
+    const ratingsService = findRatingsService(hydrus);
+    const mappingsService = findMappingsService(hydrus);
     
-    printProgress([total, total], this.display);
+    await new Posts(hydrus, postgres, ratingsService).start();
+    await new Urls(hydrus, postgres).start();
+    await new Tags(hydrus, postgres).start();
+    await new Mappings(hydrus, postgres, mappingsService).start();
+    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsService).start();
+    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsService).start();
+    
+    const options = await importOptions(hydrus, postgres);
+    
+    await resolveFileRelations(hydrus, postgres);
+    if(resolveRelations) await normalizeTagRelations(postgres);
+    
+    if(configs.tags.blacklist.length > 0) await applyBlacklist(postgres);
+    if(configs.tags.whitelist && configs.tags.whitelist.length > 0) await applyWhitelist(postgres);
+    if(configs.tags.ignore.length > 0) await removeIgnored(postgres);
+    
+    if(resolveRelations) await applyTagParents(postgres);
+    await createIndexes(postgres);
+    if(resolveRelations) await applyTagSiblings(postgres);
+    await countUsage(postgres);
+    await calculateStatistics(postgres, options);
+    
+    printProgress(false, "Finalizing...");
+    hydrus.close();
+    await postgres.query(SQL`UPDATE meta SET hash = ${setupHash}`);
+    await postgres.query(SQL`COMMIT`);
+    printProgress(true, "Finalizing...");
+    
+    console.log(`${chalk.bold.green("\nDatabase rebuild completed")} in ${elapsed(startTime)}\n`);
+  } catch(e) {
+    await postgres.query("ROLLBACK");
+    throw e;
+  } finally {
+    postgres.release();
   }
 }
 
-export { default as Posts } from "./posts";
-export { default as Tags } from "./tags";
-export { default as Mappings } from "./mappings";
-export { default as Urls } from "./urls";
-export { printProgress, elapsed };
+
+function findRatingsService(hydrus: Database) {
+  if(configs.rating && configs.rating.enabled) {
+    if(configs.rating.serviceName !== null) {
+      const service: { id: number; type: number } | undefined = hydrus.prepare(`SELECT service_id AS id, service_type AS type FROM services WHERE name = ?`).get(configs.rating.serviceName);
+      
+      if(!service) throw new Error(`There is no rating service ${configs.rating.serviceName}!`);
+      else if(service.type !== ServiceID.LOCAL_RATING_NUMERICAL) throw new Error(`Service ${configs.rating.serviceName} is not a numerical rating service!`);
+      else return service.id;
+    } else {
+      const service: { id: number } | undefined = hydrus.prepare(`SELECT service_id AS id FROM services WHERE service_type = ?`).get(ServiceID.LOCAL_RATING_NUMERICAL);
+      
+      if(!service) {
+        console.error(chalk.yellow("Unable to locate any numerical rating service! Rating disabled."));
+        configs.rating = null;
+      } else {
+        return service.id;
+      }
+    }
+  }
+  
+  return null;
+}
+
+function findMappingsService(hydrus: Database) {
+  const service: { id: number } = hydrus.prepare(`SELECT service_id AS id FROM services WHERE service_type = ${ServiceID.LOCAL_TAG} LIMIT 1`).get();
+  if(!service) throw new Error("Unable to locate local tags service!");
+  
+  return service.id;
+}
+
+async function importOptions(hydrus: Database, postgres: PoolClient) {
+  printProgress(false, "Importing options... ");
+  
+  let { options } = hydrus.prepare('SELECT options FROM options').get();
+  (global as any).YAML_SILENCE_WARNINGS = true;
+  options = YAML.parse(options);
+  (global as any).YAML_SILENCE_WARNINGS = false;
+  
+  const namespaceColours: Record<string, [number, number, number]> = options.namespace_colours;
+  
+  const namespaces = Object.entries(namespaceColours)
+                           .map(([name, color], id) => ({
+                             id,
+                             name,
+                             color: "#" + (color[0] * 256 * 256 + color[1] * 256 + color[2]).toString(16).padStart(6, "0"),
+                           }));
+  
+  await postgres.query(SQL`
+    INSERT INTO namespaces(id, name, color)
+    SELECT id, name, color
+    FROM json_to_recordset(${JSON.stringify(namespaces)})
+      AS x(
+        id INTEGER,
+        name TEXT,
+        color TEXT
+      )
+  `);
+  
+  printProgress(true, "Importing options... ");
+  
+  return options;
+}
+
+async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
+  printProgress(false, "Resolving file relations...");
+  
+  const groups: Array<{
+    mediaId: number;
+    bestPostId: number;
+    duplicates: string | null;
+    alternatives: string | null;
+  }> = await hydrus.prepare(`
+    SELECT
+      duplicate_files.media_id AS "mediaId", duplicate_files.king_hash_id AS "bestPostId",
+      group_concat(duplicate_file_members.hash_id) AS duplicates,
+      (
+        SELECT group_concat(alts.hash_id)
+        FROM duplicate_file_members alts
+        INNER JOIN alternate_file_group_members afgm1 ON afgm1.media_id = alts.media_id
+        INNER JOIN alternate_file_group_members afgm2 ON afgm2.alternates_group_id = afgm1.alternates_group_id AND afgm1.media_id != afgm2.media_id
+        WHERE afgm2.media_id = duplicate_files.media_id
+      ) AS alternatives
+    FROM duplicate_files
+    LEFT JOIN duplicate_file_members ON duplicate_files.media_id == duplicate_file_members.media_id
+    GROUP BY duplicate_files.media_id
+    HAVING count(1) > 1 OR alternatives IS NOT NULL
+  `).all();
+  
+  const relations: Array<{ post: number; other: number; kind: Relation }> = [];
+  
+  for(const group of groups) {
+    if(!group.duplicates) continue;
+    
+    const duplicates = group.duplicates.split(",").map(dup => parseInt(dup));
+    const alternatives = group.alternatives?.split(",").map(dup => parseInt(dup)) || [];
+    
+    for(const post of duplicates) {
+      for(const other of duplicates) {
+        if(post === other) continue;
+        
+        relations.push({
+          post,
+          other,
+          kind: other === group.bestPostId ? Relation.DUPLICATE_BEST : Relation.DUPLICATE,
+        });
+      }
+      
+      for(const other of alternatives) {
+        relations.push({
+          post,
+          other,
+          kind: Relation.ALTERNATE,
+        });
+      }
+    }
+  }
+  
+  await postgres.query(SQL`
+    INSERT INTO relations(postid, other_postid, kind)
+    SELECT (relation->>'post')::INTEGER, (relation->>'other')::INTEGER, relation->>'kind'
+    FROM unnest(${relations}::JSON[]) relation
+  `);
+  
+  printProgress(true, "Resolving file relations...");
+}
+
+async function normalizeTagRelations(postgres: PoolClient) {
+  printProgress([0, 4], "Normalizing tags");
+  
+  await postgres.query(SQL`
+    WITH RECURSIVE roots(tagid, rootid) AS (
+        SELECT DISTINCT betterid, betterid
+        FROM tag_siblings
+        WHERE NOT EXISTS(SELECT 1 FROM tag_siblings ts2 WHERE ts2.tagid = tag_siblings.betterid)
+      UNION ALL
+        SELECT tag_siblings.tagid, roots.rootid
+        FROM roots
+        INNER JOIN tag_siblings ON tag_siblings.betterid = roots.tagid
+    )
+    UPDATE tag_siblings
+    SET betterid = roots.rootid
+    FROM roots
+    WHERE roots.tagid = tag_siblings.tagid
+  `);
+  
+  printProgress([1, 4], "Normalizing tags");
+  
+  await postgres.query(SQL`
+    WITH bad_parents AS (
+      DELETE FROM tag_parents
+      USING tag_siblings
+      WHERE tag_siblings.tagid = tag_parents.tagid
+      RETURNING tag_siblings.betterid, tag_parents.parentid
+    )
+    INSERT INTO tag_parents(tagid, parentid)
+    TABLE bad_parents
+    ON CONFLICT DO NOTHING
+  `);
+  
+  printProgress([2, 4], "Normalizing tags");
+  
+  await postgres.query(SQL`
+    WITH bad_parents AS (
+      DELETE FROM tag_parents
+      USING tag_siblings
+      WHERE tag_siblings.tagid = tag_parents.parentid
+      RETURNING tag_parents.tagid, tag_siblings.betterid
+    )
+    INSERT INTO tag_parents(tagid, parentid)
+    TABLE bad_parents
+    ON CONFLICT DO NOTHING
+  `);
+  
+  printProgress([3, 4], "Normalizing tags");
+  
+  await postgres.query(SQL`
+    WITH bad_maps AS (
+      DELETE FROM mappings
+      USING tag_siblings
+      WHERE tag_siblings.tagid = mappings.tagid
+      RETURNING mappings.postid, tag_siblings.betterid
+    )
+    INSERT INTO mappings(postid, tagid)
+    SELECT DISTINCT postid, betterid FROM bad_maps
+    ON CONFLICT DO NOTHING
+  `);
+  
+  printProgress([4, 4], "Normalizing tags");
+}
+
+async function applyBlacklist(postgres: PoolClient) {
+  printProgress(false, "Applying blacklist...");
+  
+  const blacklist = configs.tags.blacklist.map(pat => preparePattern(pat));
+  
+  await postgres.query(SQL`
+    DELETE FROM posts
+    USING unnest(${blacklist}::TEXT[]) pat
+    INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+    INNER JOIN mappings ON mappings.tagid = tags.id
+    WHERE mappings.postid = posts.id
+  `);
+  
+  printProgress(true, "Applying blacklist...");
+}
+
+async function applyWhitelist(postgres: PoolClient) {
+  printProgress(false, "Applying whitelist...");
+  
+  const whitelist = configs.tags.whitelist?.map(pat => preparePattern(pat)) || [];
+  
+  await postgres.query(SQL`
+    DELETE FROM posts
+    WHERE NOT EXISTS(
+      SELECT 1
+      FROM unnest(${whitelist}::TEXT[]) pat
+      INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+      INNER JOIN mappings ON mappings.tagid = tags.id
+      WHERE mappings.postid = posts.id
+    )
+  `);
+  
+  printProgress(true, "Applying whitelist...");
+}
+
+async function removeIgnored(postgres: PoolClient) {
+  printProgress(false, "Removing ignored tags...");
+  
+  const ignored = configs.tags.ignore.map(pat => preparePattern(pat));
+  
+  const result = await postgres.query<{ id: number }>(SQL`
+    DELETE FROM tags
+    USING unnest(${ignored}::TEXT[]) pat
+    WHERE tags.name LIKE pat OR tags.subtag LIKE pat
+    RETURNING id
+  `);
+  
+  await postgres.query(SQL`
+    DELETE FROM tags
+    USING unnest(${result.rows.map(row => row.id)}::INTEGER[]) deleted
+    LEFT JOIN tag_siblings ON tag_siblings.tagid = deleted
+    WHERE tag_siblings.betterid = tags.id
+  `);
+  
+  await postgres.query(SQL`
+    DELETE FROM tags
+    USING unnest(${result.rows.map(row => row.id)}::INTEGER[]) deleted
+    LEFT JOIN tag_siblings ON tag_siblings.betterid = deleted
+    WHERE tag_siblings.tagid = tags.id
+  `);
+  
+  printProgress(true, "Removing ignored tags...");
+}
+
+async function applyTagParents(postgres: PoolClient) {
+  printProgress(false, "Resolving tag parents...");
+  
+  await postgres.query(SQL`
+    WITH RECURSIVE ancestors(tagid, ancestorid) AS (
+        SELECT tagid, parentid
+        FROM tag_parents
+      UNION ALL
+        SELECT tag_parents.tagid, ancestors.ancestorid
+        FROM ancestors
+        INNER JOIN tag_parents ON tag_parents.parentid = ancestors.tagid
+    )
+    INSERT INTO mappings(postid, tagid)
+    SELECT mappings.postid, ancestors.ancestorid
+    FROM mappings
+    INNER JOIN ancestors ON mappings.tagid = ancestors.tagid
+    ON CONFLICT DO NOTHING
+  `);
+  
+  printProgress(true, "Resolving tag parents...");
+}
+
+async function createIndexes(postgres: PoolClient) {
+  printProgress(false, "Indexing");
+  
+  const stmts = (indexesSQL as string).split(";").map(s => s.trim()).filter(s => s);
+  printProgress([0, stmts.length], "Indexing");
+  
+  let id = 0;
+  for(const stmt of stmts) {
+    await postgres.query(stmt);
+    id++;
+    printProgress([id, stmts.length], "Indexing");
+  }
+}
+
+async function applyTagSiblings(postgres: PoolClient) {
+  printProgress(false, "Resolving tag siblings...");
+  
+  await postgres.query(SQL`
+    INSERT INTO tag_postids
+    SELECT tag_siblings.tagid, tag_postids.postids
+    FROM tag_siblings
+    INNER JOIN tag_postids ON tag_postids.tagid = tag_siblings.betterid
+  `);
+  
+  printProgress(true, "Resolving tag siblings...");
+}
+
+async function countUsage(postgres: PoolClient) {
+  printProgress(false, "Counting tags usage...");
+  
+  await postgres.query(SQL`
+    UPDATE tags
+    SET used = icount(tag_postids.postids)
+    FROM tag_postids
+    WHERE tag_postids.tagid = tags.id
+  `);
+  
+  printProgress(true, "Counting tags usage...");
+}
+
+async function calculateStatistics(postgres: PoolClient, options: any) {
+  printProgress(false, "Calculating statistics...");
+  
+  const untagged = await postsController.search({ query: configs.tags.untagged, client: postgres });
+  
+  await postgres.query(SQL`
+    INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags, rating_stars)
+    SELECT
+      ${options.thumbnail_dimensions[0]} AS thumbnail_width,
+      ${options.thumbnail_dimensions[1]} AS thumbnail_height,
+      (SELECT COUNT(1) FROM posts) AS posts,
+      (SELECT COUNT(1) FROM tags) AS tags,
+      (SELECT COUNT(1) FROM mappings) AS mappings,
+      ${untagged.total} AS needs_tags,
+      ${configs.rating?.stars || null} AS rating_stars
+  `);
+  
+  printProgress(true, "Calculating statistics...");
+}

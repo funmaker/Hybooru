@@ -23,6 +23,7 @@ interface Configs {
     ignore: string[],
     blacklist: string[],
     whitelist: string[] | null,
+    resolveRelations: boolean,
   },
   rating: {
     enabled: boolean,
@@ -57,6 +58,7 @@ let configs: Configs = {
     ignore: [],
     blacklist: [],
     whitelist: null,
+    resolveRelations: true,
   },
   rating: {
     enabled: true,

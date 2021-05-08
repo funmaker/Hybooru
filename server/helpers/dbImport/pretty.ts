@@ -29,7 +29,7 @@ export function printProgress(progress: boolean | [number, number], name: string
     bar = progress ? BAR_LENGTH : 0;
     done = progress;
   } else {
-    bar = Math.round(progress[0] / progress[1] * BAR_LENGTH);
+    bar = Math.min(Math.round(progress[0] / progress[1] * BAR_LENGTH), BAR_LENGTH);
     done = progress[0] === progress[1];
   }
   

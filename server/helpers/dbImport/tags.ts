@@ -1,6 +1,6 @@
-import { Import } from "./index";
+import { Import } from "./import";
 
-export default class Tags extends Import<number> {
+export default class Tags extends Import {
   display = "Tags";
   batchSizeMul = 1 / 2;
   

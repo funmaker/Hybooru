@@ -1,6 +1,6 @@
-import { Import } from "./index";
+import { Import } from "./import";
 
-export default class Urls extends Import<number> {
+export default class Urls extends Import {
   display = "Urls";
   batchSizeMul = 1 / 2;
   

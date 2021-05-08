@@ -23,10 +23,11 @@
 		"untagged": "-*",
 		"ignore": [],
 		"blacklist": [],
-		"whitelist": null
+		"whitelist": null,
+		"resolveRelations": true
 	},
 	"rating": {
-		"enabled": true,
+		"enabled": false,
 		"stars": 5,
 		"serviceName": null
 	}

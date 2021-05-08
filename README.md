@@ -27,6 +27,7 @@ possible)**
 - Ratings
 - Sorting (date imported, rating, size, etc)
 - Searching tags and autocomplete
+- tag and post relations (parents/siblings, duplicates/alternatives)
 - Colored tags
 - REST API
 - Mobile support
@@ -78,6 +79,7 @@ tags.untagged   | string | `"-*"` | Overrides tag pattern used to determine whic
 tags.ignore     | string[] | `[]` | List of tags patterns that will not be imported from Hydrus (posts tagged by these tags will still be imported).
 tags.blacklist  | string[] | `[]` | All posts and tags matching any of specified tag patterns will not be imported from Hydrus.
 tags.whitelist  | string[] or null | `null` | Only posts and tags matching any of specified tag patterns will be imported from Hydrus. Use `null` or empty array to ignore whitelist.
+tags.resolveRelations | boolean | `true` | Resolve tag siblings and parents. Can be slow in large databases.
 rating          | object or null | _see below_ | Options related to numerical rating. Set null to remove ratings.
 rating.enabled  | boolean | `true` | Enables or disables rating import.
 rating.stars    | number | `5` | Number of stars used in rating.
