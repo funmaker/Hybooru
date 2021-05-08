@@ -39,6 +39,21 @@ It does not provide any way to manage your posts or tags. The only way to add/mo
 changes in Hydrus and then rebuild Hybooru's database again(can be done from the cog menu on search/post page).
 
 
+## Setup
+
+1) Install NodeJS, npm and PostgreSQL.
+2) Create new Postgresql database and user.
+3) Allow user to use `pg_trgm` and `intarray` extensions. Either:
+   - Grant the user permission to create trusted extensions: `GRANT CREATE ON DATABASE <database> TO <user>`.
+   - Create the extensions yourself: `CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS intarray;`.
+4) Download latest [Release](/releases) production build [or build it yourself](#development).
+5) Extract server files.
+6) Edit `configs.json` to specify database credentials, hydrus db location and other options. See [Configuration](#configuration).
+7) (Optional) Configure [reverse proxy](#reverse-proxy).
+7) Run `npm start` to start server.
+
+
+
 ## Searching Query Syntax
 
 Searching tries to imitate classical booru's syntax. All tags are lowercase and use `_` instead of space character.

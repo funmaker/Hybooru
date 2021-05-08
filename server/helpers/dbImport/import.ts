@@ -40,6 +40,11 @@ export abstract class Import {
     const total = await this.total();
     let count = 0;
     
+    if(total === 0) {
+      printProgress(true, this.display);
+      return;
+    }
+    
     const input = this.hydrus.prepare(this.inputQuery).raw(true);
     const output: Writable = await this.postgres.query(copy.from(this.outputQuery));
     
