@@ -29,6 +29,8 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   const titleCache = useRef<Record<string, string>>({});
   
   useEffect(() => {
+    titleCache.current[history.location.pathname] = document.title;
+    
     return history.listen(location => {
       if(fetchEmitter.current?.key && fetchEmitter.current.key !== location.key) {
         fetchEmitter.current?.cancel("Route Change");
