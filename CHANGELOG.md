@@ -6,6 +6,10 @@
 - Importing tag repository mappings/relations
 - Display tag relations in tag search page
 - IPFS integration
+- Fix `Error: Request aborted`
+- Scroll bug when clicking on tag name while being scrolled down in search(needs confirmation)
+- Sorting and rating buttons do not have text in mobile/chrome
+- Hide db regen button if password not set
 
 
 # v1.4.0
