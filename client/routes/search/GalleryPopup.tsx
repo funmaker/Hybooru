@@ -126,14 +126,15 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     if(id === null) return;
     
     const onKeyDown = (ev: KeyboardEvent) => {
-      if(ev.key === "ArrowLeft") velocity.current = 10;
-      else if(ev.key === "ArrowRight") velocity.current = -10;
+      if(ev.key === "ArrowLeft" && hasLeft) setId(id - 1);
+      else if(ev.key === "ArrowRight" && hasRight) setId(id + 1);
+      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}`);
       else if(ev.key === "Escape") setId(null);
     };
     
     document.documentElement.addEventListener("keydown", onKeyDown);
     return () => document.documentElement.removeEventListener("keydown", onKeyDown);
-  }, [history, id, setId]);
+  }, [history, posts, id, setId, hasLeft, hasRight]);
   
   if(id === null || !posts[id]) return null;
   

@@ -1,4 +1,4 @@
-FROM node:latest
+FROM node:16.1.0
 ENV DOCKERIZED=1
 
 EXPOSE 80
