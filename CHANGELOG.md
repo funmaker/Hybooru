@@ -15,7 +15,7 @@
 - Research if VACUUMing has any value
 
 
-# Unreleased
+# v1.4.1
 
 - Updated to Node v16.1.0
 - Added support for scroll wheel in gallery

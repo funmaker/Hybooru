@@ -91,12 +91,12 @@ cacheRecords    | number | `1024` | Max number of cache entries.
 filesPathOverride | string or null | `null` | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.
 thumbnailsPathOverride | string or null | `null` | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.
 db              | PoolConfig | _local database_ | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
-tags            | object | _see below_ | Options related to tags.
-tags.motd       | string or object or null | `null` | Tag pattern used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)
-tags.untagged   | string | `"-*"` | Overrides tag pattern used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.
-tags.ignore     | string[] | `[]` | List of tags patterns that will not be imported from Hydrus (posts tagged by these tags will still be imported).
-tags.blacklist  | string[] | `[]` | All posts and tags matching any of specified tag patterns will not be imported from Hydrus.
-tags.whitelist  | string[] or null | `null` | Only posts and tags matching any of specified tag patterns will be imported from Hydrus. Use `null` or empty array to ignore whitelist.
+tags            | object | _see below_ | Options related to tags. All tags below support wildcards.
+tags.motd       | string or object or null | `null` | Tag used to for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)
+tags.untagged   | string | `"-*"` | Overrides query used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.
+tags.ignore     | string[] | `[]` | List of tags that will not be imported from Hydrus (posts tagged by these tags will still be imported).
+tags.blacklist  | string[] | `[]` | All posts and tags matching any of specified tags will not be imported from Hydrus.
+tags.whitelist  | string[] or null | `null` | Only posts matching specified tags will be imported from Hydrus. Use `null` or empty array to ignore whitelist.
 tags.resolveRelations | boolean | `true` | Resolve tag siblings and parents. Can be slow in large databases.
 rating          | object or null | _see below_ | Options related to numerical rating. Set null to remove ratings.
 rating.enabled  | boolean | `true` | Enables or disables rating import.
