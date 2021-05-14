@@ -11,15 +11,15 @@
 - Sorting and rating buttons do not have text in mobile/chrome
 - Hide db regen button if password not set
 - Investigate potential hour long going requests
-- Scroll to change image in gallery
 - Add zoom in to gallery
 - Research if VACUUMing has any value
 
 
 # Unreleased
 
-- Disabled animation in gallery when using keyboard buttons
 - Updated to Node v16.1.0
+- Added support for scroll wheel in gallery
+- Disabled animation in gallery when using keyboard buttons
 
 
 # v1.4.0

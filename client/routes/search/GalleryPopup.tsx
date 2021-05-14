@@ -132,8 +132,18 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       else if(ev.key === "Escape") setId(null);
     };
     
+    const onWheel = (ev: WheelEvent) => {
+      ev.preventDefault();
+      if(ev.deltaY < 0 && hasLeft) setId(id - 1);
+      else if(ev.deltaY > 0 && hasRight) setId(id + 1);
+    };
+    
     document.documentElement.addEventListener("keydown", onKeyDown);
-    return () => document.documentElement.removeEventListener("keydown", onKeyDown);
+    document.documentElement.addEventListener("wheel", onWheel);
+    return () => {
+      document.documentElement.removeEventListener("keydown", onKeyDown);
+      document.documentElement.removeEventListener("wheel", onWheel);
+    };
   }, [history, posts, id, setId, hasLeft, hasRight]);
   
   if(id === null || !posts[id]) return null;
