@@ -13,7 +13,8 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
-# Unreleased
+
+# v1.4.2
 
 - Added support for large files (2GB+)
 - Rebuild Database button now hides if password is not set
