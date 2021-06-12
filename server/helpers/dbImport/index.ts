@@ -77,7 +77,7 @@ export async function rebuild() {
     await createIndexes(postgres);
     if(resolveRelations) await applyTagSiblings(postgres);
     await countUsage(postgres);
-    await calculateStatistics(postgres, options);
+    await calculateStatistics(postgres, options, ratingsService);
     
     printProgress(false, "Finalizing...");
     hydrus.close();
@@ -411,10 +411,13 @@ async function countUsage(postgres: PoolClient) {
   printProgress(true, "Counting tags usage...");
 }
 
-async function calculateStatistics(postgres: PoolClient, options: any) {
+async function calculateStatistics(postgres: PoolClient, options: any, ratingsService: number | null) {
   printProgress(false, "Calculating statistics...");
   
   const untagged = await postsController.search({ query: configs.tags.untagged, client: postgres });
+  
+  let stars = configs.rating?.stars || null;
+  if(ratingsService === null) stars = null;
   
   await postgres.query(SQL`
     INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags, rating_stars)
@@ -425,7 +428,7 @@ async function calculateStatistics(postgres: PoolClient, options: any) {
       (SELECT COUNT(1) FROM tags) AS tags,
       (SELECT COUNT(1) FROM mappings) AS mappings,
       ${untagged.total} AS needs_tags,
-      ${configs.rating?.stars || null} AS rating_stars
+      ${stars} AS rating_stars
   `);
   
   printProgress(true, "Calculating statistics...");

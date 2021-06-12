@@ -18,7 +18,8 @@
 - Added support for large files (2GB+)
 - Rebuild Database button now hides if password is not set
 - Fixed broken bugged gallery after page refresh
-- Fixed sorting and rating buttons not having text in mobile/chrome browsers.
+- Fixed sorting and rating buttons not having text in mobile/chrome browsers
+- Fixed rating stars not hiding if rating is disabled 
 
 
 # v1.4.1
