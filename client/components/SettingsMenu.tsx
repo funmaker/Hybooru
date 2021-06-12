@@ -74,7 +74,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     extraSettings = <>
       <div>
         <select value="label" onChange={onSort}>
-          <option value="label" disabled>Sorting</option>
+          <option value="label" disabled selected hidden>Sorting</option>
           <option value="date">Date Imported (Newest First)</option>
           <option value="date_asc">Date Imported (Oldest First)</option>
           <option value="score">Score (Descending)</option>
@@ -87,7 +87,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
       {config.ratingStars !== null &&
         <div>
           <select value="label" onChange={onRating}>
-            <option value="label" disabled>Rating</option>
+            <option value="label" disabled selected hidden>Rating</option>
             {new Array(config.ratingStars + 1).fill(0)
                                               .map((_, id) => <option key={id} value={id.toString()}>{id}</option>)
                                               .reverse()}
@@ -100,6 +100,14 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     </>; // eslint-disable-line react/jsx-closing-tag-location
   }
   
+  let adminButtons: React.ReactNode = null;
+  if(config.passwordSet) {
+    adminButtons = <>
+      <hr />
+      <div><a href="#" onClick={onDbRegen}>Rebuild Database</a></div>
+    </>; // eslint-disable-line react/jsx-closing-tag-location
+  }
+  
   if(!open) return null;
   else return (
     <div className="SettingsMenu" {...rest}>
@@ -108,8 +116,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
       <div><a href="#" onClick={togglePopup}>Popup Gallery: {popup ? "Yes" : "No"}</a></div>
       <div><a href="#" onClick={toggleNamespaces}>Hide Namespaces: {namespaces ? "No" : "Yes"}</a></div>
       <div><a href="#" onClick={toggleFullHeight}>Limit Img Height: {fullHeight ? "No" : "Yes"}</a></div>
-      <hr />
-      <div><a href="#" onClick={onDbRegen}>Rebuild Database</a></div>
+      {adminButtons}
     </div>
   );
 }

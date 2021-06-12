@@ -16,6 +16,7 @@ export interface PostSummary {
   extension: string;
   mime: Mime | null;
   posted: string;
+  size: number | null;
 }
 
 export interface PostRelation extends PostSummary {
@@ -62,12 +63,14 @@ export interface Stats {
 
 export interface Config {
   thumbnailSize: [number, number];
+  ratingStars: number | null;
   namespaceColors: Record<string, string>;
   appName: string;
   version: string;
   expectMotd: string;
   untaggedQuery: string;
-  ratingStars: number | null;
+  maxPreviewSize: number;
+  passwordSet: boolean;
 }
 
 // PAGES //

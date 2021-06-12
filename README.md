@@ -90,6 +90,7 @@ cachePages      | number | `5` | Number of pages cached in single cache entry.
 cacheRecords    | number | `1024` | Max number of cache entries.
 filesPathOverride | string or null | `null` | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.
 thumbnailsPathOverride | string or null | `null` | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.
+maxPreviewSize  | number | `104857600` | Max size in bytes of post that can be previewed in post page/gallery. Default is 100MB.
 db              | PoolConfig | _local database_ | node-postgres config object. See https://node-postgres.com/api/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.
 tags            | object | _see below_ | Options related to tags. All tags below support wildcards.
 tags.motd       | string or object or null | `null` | Tag used to for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)

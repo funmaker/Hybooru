@@ -73,7 +73,7 @@ button {
 
 select {
   font-size: 0.75rem;
-  line-height: 0rem;
+  line-height: 2em;
   height: 2em;
   padding: 0;
   transition: 0.1s background-color;
@@ -81,7 +81,7 @@ select {
   border: 1px solid rgba(127, 127, 127, 0.5);
   border-radius: 5px;
   color: inherit;
-  appearance: none;
+  -moz-appearance: none;
   position: relative;
   outline: none;
 
@@ -91,6 +91,10 @@ select {
 
   &:active {
     background-color: rgba(127, 127, 127, 0.5);
+  }
+
+  option {
+    color: initial;
   }
 }
 

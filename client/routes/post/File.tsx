@@ -2,6 +2,7 @@ import React, { useReducer } from "react";
 import { Post, PostSummary } from "../../../server/routes/apiTypes";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { parseSize } from "../../helpers/utils";
+import useConfig from "../../hooks/useConfig";
 import "./File.scss";
 
 interface FileProps {
@@ -14,14 +15,20 @@ interface FileProps {
 }
 
 export default function File({ post, link, className, controls = true, autoPlay = true, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
+  const config = useConfig();
   const [error, setError] = useReducer(() => true, false);
   
   const width = "width" in post && post.width || undefined;
   const height = "height" in post && post.height || undefined;
-  const size = "size" in post && post.size ? parseSize(post.size) : undefined;
+  const size = post.size && parseSize(post.size);
   className = className ? ` ${className}` : "";
   
-  switch(error || post.mime) {
+  let mime = post.mime;
+  if(error || (post.size && post.size > config.maxPreviewSize)) {
+    mime = Mime.GENERAL_APPLICATION;
+  }
+  
+  switch(mime) {
     case Mime.IMAGE_JPEG:
     case Mime.IMAGE_PNG:
     case Mime.IMAGE_GIF:

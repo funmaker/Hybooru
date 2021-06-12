@@ -3,7 +3,7 @@
 	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
-	"adminPassword": null,
+	"adminPassword": "kek",
 	"isTTY": null,
 	"importBatchSize": 8192,
 	"pageSize": 72,
@@ -11,6 +11,7 @@
 	"cacheRecords": 1024,
 	"filesPathOverride": null,
 	"thumbnailsPathOverride": null,
+	"maxPreviewSize": 104857600,
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",

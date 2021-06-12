@@ -31,11 +31,7 @@ export default function SearchPage() {
   const end = postsCache.total && postsCache.posts.length >= postsCache.total;
   
   let popup: number | null = parseInt(history.location.hash.slice(1));
-  if(isNaN(popup) || popup >= postsCache.posts.length) popup = null;
-  
-  useEffect(() => {
-    if(history.location.hash && popup === null) history.replace({ ...history.location, hash: "" });
-  }, [history, popup]);
+  if(isNaN(popup) || popup >= postsCache.posts.length || SSR) popup = null;
   
   useEffect(() => {
     return history.listen((location, action) => {
@@ -57,7 +53,7 @@ export default function SearchPage() {
       popupPushed.current = false;
     } else if(popupPushed.current && id !== null) {
       history.replace({ ...history.location, hash: id.toString() });
-    } else if(id !== null) {
+    } else if(id !== null && !history.location.hash) {
       history.push({ ...history.location, hash: id.toString() });
       popupPushed.current = true;
     } else {
@@ -69,6 +65,14 @@ export default function SearchPage() {
       document.getElementById(postId.toString())?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
   }, [history]);
+  
+  useEffect(() => {
+    const ssrPopup = parseInt(history.location.hash.slice(1));
+    
+    if(history.location.hash && popup === null) history.replace({ ...history.location, hash: "" });
+    
+    if(SSR && ssrPopup) setPopup(ssrPopup);
+  }, [history, popup, SSR, setPopup]);
   
   const checkScroll = useCallback(() => {
     if(usePagination) return;

@@ -1,8 +1,10 @@
-import { Pool, PoolClient } from 'pg';
+import pg, { Pool, PoolClient } from 'pg';
 import SQL, { SQLStatement } from "sql-template-strings";
 import chalk from "chalk";
 import configs from "./configs";
 import * as dbImport from "./dbImport";
+
+pg.types.setTypeParser(20, Number); // Type Id 20 = BIGINT | BIGSERIAL
 
 export const pool = new Pool(configs.db);
 

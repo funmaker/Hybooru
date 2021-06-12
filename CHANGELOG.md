@@ -8,11 +8,17 @@
 - IPFS integration
 - Fix `Error: Request aborted`
 - Scroll bug when clicking on tag name while being scrolled down in search(needs confirmation)
-- Sorting and rating buttons do not have text in mobile/chrome
-- Hide db regen button if password not set
 - Investigate potential hour long going requests
 - Add zoom in to gallery
 - Research if VACUUMing has any value
+- search md5/sha
+
+# Unreleased
+
+- Added support for large files (2GB+)
+- Rebuild Database button now hides if password is not set
+- Fixed broken bugged gallery after page refresh
+- Fixed sorting and rating buttons not having text in mobile/chrome browsers.
 
 
 # v1.4.1

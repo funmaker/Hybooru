@@ -16,6 +16,7 @@ interface Configs {
   cacheRecords: number,
   filesPathOverride: string | null,
   thumbnailsPathOverride: string | null,
+  maxPreviewSize: number,
   db: pg.PoolConfig,
   tags: {
     motd: string | Partial<Record<Theme, string>> | null,
@@ -45,6 +46,7 @@ let configs: Configs = {
   cacheRecords: 1024,
   filesPathOverride: null,
   thumbnailsPathOverride: null,
+  maxPreviewSize: 104857600,
   db: {
     user: "hybooru",
     host: "localhost",

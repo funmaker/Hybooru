@@ -41,7 +41,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     if(!search.query) delete search.query;
     const searchEncoded = qs.stringify(search);
     
-    return `${history.location.pathname}${searchEncoded ? `?${searchEncoded}` : ""}${history.location.hash}`;
+    return `${history.location.pathname}${searchEncoded ? `?${searchEncoded}` : ""}`;
   }, [history]);
   
   const onQueryChange = useCallback<SetState>((update, silent) => {
