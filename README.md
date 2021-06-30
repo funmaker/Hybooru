@@ -10,8 +10,8 @@ Demo: https://booru.funmaker.moe/
 
 [Changelog](CHANGELOG.md)
 
-Hybooru allows you to create an online booru-styled imageboard and REST API on top of Hydrus,
-allowing you to access your collection from anywhere, without the need for running Hydrus Client.
+Hybooru allows you to create an online booru-styled imageboard and REST API on top of Hydrus client,
+allowing you to access your collection from anywhere, without the need for running Hydrus instance.
 It uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite database.
 Files are not cloned and instead served directly from Hydrus's database. You need to
 regenerate the Hybooru's database every time you want to update it. Make sure to
@@ -37,6 +37,8 @@ possible)**
 Keep in mind this project is not a standalone, fully-fledged booru, but rather a read-only interface to your Hydrus database.
 It does not provide any way to manage your posts or tags. The only way to add/modify your data is to do these
 changes in Hydrus and then rebuild Hybooru's database again(can be done from the cog menu on search/post page).
+
+Currently, only Hydrus Client database is supported. You cannot use it on top of Hydrus Server.
 
 
 ## Setup
