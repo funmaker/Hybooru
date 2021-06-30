@@ -15,7 +15,7 @@ allowing you to access your collection from anywhere, without the need for runni
 It uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite database.
 Files are not cloned and instead served directly from Hydrus's database. You need to
 regenerate the Hybooru's database every time you want to update it. Make sure to
-properly configure `configs.json` file. **Stop Hydrus when you regenerate HyBooru'
+properly configure `configs.json` file. **Stop Hydrus when you regenerate HyBooru's
 database if you plan to use live Hydrus' database (use hydrus backup instead if
 possible)**
 
@@ -46,7 +46,7 @@ changes in Hydrus and then rebuild Hybooru's database again(can be done from the
 3) Allow user to use `pg_trgm` and `intarray` extensions. Either:
    - Grant the user permission to create trusted extensions: `GRANT CREATE ON DATABASE <database> TO <user>`.
    - Create the extensions yourself: `CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS intarray;`.
-4) Download latest [Release](/releases) production build [or build it yourself](#development).
+4) Download latest [Release](https://github.com/funmaker/Hybooru/releases) production build [or build it yourself](#development).
 5) Extract server files.
 6) Edit `configs.json` to specify database credentials, hydrus db location and other options. See [Configuration](#configuration).
 7) (Optional) Configure [reverse proxy](#reverse-proxy).
