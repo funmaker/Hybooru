@@ -14,6 +14,11 @@
 - search md5/sha
 
 
+# v1.4.3
+
+- Optimized Docker image (by [98WuG](https://github.com/98WuG))
+
+
 # v1.4.2
 
 - Added support for large files (2GB+)
