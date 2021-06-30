@@ -38,7 +38,7 @@ Keep in mind this project is not a standalone, fully-fledged booru, but rather a
 It does not provide any way to manage your posts or tags. The only way to add/modify your data is to do these
 changes in Hydrus and then rebuild Hybooru's database again(can be done from the cog menu on search/post page).
 
-Currently, only Hydrus Client database is supported. You cannot use it on top of Hydrus Server.
+Currently, only Hydrus Client database is supported. You cannot use Hybooru on top of Hydrus Server.
 
 
 ## Setup
