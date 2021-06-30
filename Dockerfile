@@ -1,17 +1,25 @@
-FROM node:16.1.0
-ENV DOCKERIZED=1
-
-EXPOSE 80
+FROM node:16.1.0-alpine AS builder
 
 WORKDIR /build
 COPY . .
-RUN npm install
-RUN npm run build:prod
-RUN mv dist /app
-RUN npm prune --production
-RUN mv node_modules /app
+
+RUN apk add --update --no-cache python3 make g++ && \
+    rm -rf /var/cache/apk/*
+
+RUN npm install && \
+    npm run build:prod && \
+    mv dist /app && \
+    npm prune --production && \
+    mv node_modules /app
+
+
+FROM node:16.1.0-alpine
+
+ENV DOCKERIZED=1
 
 WORKDIR /app
-RUN rm -rf /build
 
-CMD npm start
+COPY --from=builder /app .
+
+EXPOSE 80
+CMD ["npm", "start"]
