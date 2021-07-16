@@ -1,23 +1,16 @@
 import { PoolClient } from "pg";
 import { Database } from "better-sqlite3";
-import { ServiceID } from "../consts";
 import { Import } from "./import";
 
 export default class Posts extends Import {
   display = "Posts";
   batchSizeMul = 1 / 2;
   
-  totalQuery = `
-    SELECT count(1)
-    FROM current_files
-      LEFT JOIN services ON services.service_id = current_files.service_id
-    WHERE services.service_type = ${ServiceID.LOCAL_FILE_DOMAIN} AND services.name != 'repository updates'
-  `;
-  
+  totalQuery = ``;
   outputQuery = 'COPY posts(id, hash, size, width, height, duration, num_frames, has_audio, rating, mime, posted) FROM STDIN (FORMAT CSV)';
   inputQuery = ``;
   
-  constructor(hydrus: Database, postgres: PoolClient, ratingService: number | null) {
+  constructor(hydrus: Database, postgres: PoolClient, filesService: number, ratingService: number | null) {
     super(hydrus, postgres);
     
     this.inputQuery = `
@@ -34,16 +27,15 @@ export default class Posts extends Import {
         COALESCE(local_ratings.rating, '') || ',' ||
         COALESCE(files_info.mime, '') || ',' ||
         datetime(current_files.timestamp, 'unixepoch', 'utc') || '\n'
-      FROM current_files
-        LEFT JOIN services ON services.service_id = current_files.service_id
+      FROM current_files_${filesService} current_files
         LEFT JOIN files_info ON files_info.hash_id = current_files.hash_id
         LEFT JOIN hashes ON hashes.hash_id = current_files.hash_id
         LEFT JOIN local_ratings ON local_ratings.service_id = ${ratingService} AND local_ratings.hash_id = current_files.hash_id
-      WHERE services.service_type = ${ServiceID.LOCAL_FILE_DOMAIN}
-        AND services.name != 'repository updates'
-        AND current_files.hash_id > ?
+      WHERE current_files.hash_id > ?
       ORDER BY current_files.hash_id ASC
       LIMIT ?
     `;
+    
+    this.totalQuery = `SELECT count(1) FROM current_files_${filesService}`;
   }
 }

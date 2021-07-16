@@ -54,10 +54,11 @@ export async function rebuild() {
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
     
+    const filesService = findFilesService(hydrus);
     const ratingsService = findRatingsService(hydrus);
     const mappingsService = findMappingsService(hydrus);
     
-    await new Posts(hydrus, postgres, ratingsService).start();
+    await new Posts(hydrus, postgres, filesService, ratingsService).start();
     await new Urls(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
     await new Mappings(hydrus, postgres, mappingsService).start();
@@ -94,6 +95,18 @@ export async function rebuild() {
   }
 }
 
+function findFilesService(hydrus: Database) {
+  const service: { id: number } = hydrus.prepare(`
+    SELECT service_id AS id
+    FROM services
+    WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN}
+          AND name != 'repository updates'
+    LIMIT 1
+  `).get();
+  if(!service) throw new Error("Unable to locate local tags service!");
+  
+  return service.id;
+}
 
 function findRatingsService(hydrus: Database) {
   if(configs.rating && configs.rating.enabled) {

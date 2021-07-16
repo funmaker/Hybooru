@@ -13,6 +13,10 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
+# Unreleased
+
+- Updated for Hydrus v447
+
 
 # v1.4.3
 
