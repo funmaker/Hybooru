@@ -1,6 +1,10 @@
 # Hybooru
 
-<p align="center"><img src="static/logo.svg" width="256"></p>
+<p align="center">
+   <img src="static/logo.svg" width="256"><br/>
+   <a href="https://github.com/funmaker/Hybooru/releases/latest"><img src="https://github.com/funmaker/Hybooru/actions/workflows/release_build.yml/badge.svg"></a>
+   <a href="https://github.com/funmaker/Hybooru/pkgs/container/hybooru"><img src="https://github.com/funmaker/Hybooru/actions/workflows/docker_build.yml/badge.svg"></a>
+</p>
 
 [Hydrus](https://github.com/hydrusnetwork/hydrus)-based booru-styled imageboard in React, inspired by [hyve](https://github.com/imtbl/hyve).
 

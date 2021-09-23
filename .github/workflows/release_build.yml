@@ -1,0 +1,38 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: []
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2.3.4
+      -
+        name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      -
+        name: Install Deps
+        run: npm install --unsafe-perm
+      -
+        name: Build Production
+        run: npm run build:prod
+      -
+        name: Compress Artifacts
+        run: |
+          cd dist
+          zip -r ../ProductionBuild.zip *
+          cd ..
+      -
+        name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ProductionBuild.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
