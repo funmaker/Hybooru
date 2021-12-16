@@ -24,6 +24,7 @@
 
   .content {
     height: 100%;
+    align-self: flex-start;
     text-align: center;
     display: flex;
     align-items: center;
@@ -31,8 +32,7 @@
     .fileWrap {
       position: relative;
       flex: 1;
-      height: 100%;
-      align-self: flex-start;
+      align-self: stretch;
       padding: 1rem;
       display: flex;
 
@@ -79,6 +79,13 @@
   }
 
   &.fullHeight {
+    height: unset;
+
+    .content {
+      height: fit-content;
+      min-height: 100vh;
+    }
+
     .fileWrap {
       .File {
         max-height: unset !important;
@@ -93,8 +100,12 @@
       position: absolute;
     }
 
-    .sidebar {
-      height: unset;
+    &:not(.mobile) {
+      .sidebar {
+        height: unset;
+        min-height: 100vh;
+      }
     }
   }
 }
+

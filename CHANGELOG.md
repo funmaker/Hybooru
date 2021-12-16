@@ -13,6 +13,12 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
+# v1.4.6
+
+- Fixed compatibility problems with newer node/npm
+- Improved full-height post page style
+
+
 # v1.4.4
 
 - Updated for Hydrus v447

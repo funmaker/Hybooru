@@ -1,7 +1,7 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.4.5",
+	"version": "1.4.6-dev",
 	"engines": {
 		"node": ">=14.0.0",
 		"npm": ">=7.0.0"
@@ -24,7 +24,7 @@
 		"axios": "^0.21.1",
 		"better-sqlite3": "^7.1.4",
 		"body-parser": "^1.19.0",
-		"chalk": "latest",
+		"chalk": "^4.1.0",
 		"compression": "^1.7.4",
 		"cookie-parser": "^1.4.5",
 		"csurf": "^1.11.0",
