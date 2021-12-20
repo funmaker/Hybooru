@@ -13,6 +13,10 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
+# v1.4.7
+
+- Resolves problem with new OpenSSL in newer Node https://github.com/webpack/webpack/issues/14532
+
 # v1.4.6
 
 - Fixed compatibility problems with newer node/npm
