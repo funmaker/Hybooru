@@ -5,7 +5,7 @@ import { AppContainer } from "react-hot-loader";
 import App from "./client/App";
 import 'react-toastify/dist/ReactToastify.css';
 
-const initialData = JSON.parse(document?.getElementById('initialData')?.innerHTML || "{}");
+const initialData = JSON.parse(document?.getElementById('initialData')?.innerHTML || "{}"); // TODO: Inner text?
 
 ReactDOM.hydrate(
   <AppContainer>

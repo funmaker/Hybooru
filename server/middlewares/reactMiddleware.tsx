@@ -10,9 +10,10 @@ import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
 import { AnySSRPageData } from "../routes/apiTypes";
 
-const removeTags = /[&<>]/g;
+const removeTags = /[<>]/g;
 const tagsToReplace: Record<string, string> = {
-  '<': `\u003C`,
+  '<': `\\u003C`, // eslint-disable-line @typescript-eslint/naming-convention
+  '>': `\\u003E`, // eslint-disable-line @typescript-eslint/naming-convention
 };
 
 export interface OGImage {
