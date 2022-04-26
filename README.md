@@ -58,8 +58,8 @@ Currently, only Hydrus Client database is supported. You cannot use Hybooru on t
 5) Extract server files.
 6) Edit `configs.json` to specify database credentials, hydrus db location and other options. See [Configuration](#configuration).
 7) (Optional) Configure [reverse proxy](#reverse-proxy).
-7) Run `npm start` to start server.
-
+8) Run `npm install` to install dependencies.
+9) Run `npm start` to start server.
 
 
 ## Searching Query Syntax

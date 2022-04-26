@@ -1,6 +1,7 @@
 
 ### TODO:
 
+- include package-lock in builds
 - DMCA page
 - Optimize tag relation resolving
 - Importing tag repository mappings/relations
