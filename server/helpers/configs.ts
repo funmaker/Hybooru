@@ -19,6 +19,7 @@ interface Configs {
   maxPreviewSize: number,
   db: pg.PoolConfig,
   tags: {
+    services: string[] | null,
     motd: string | Partial<Record<Theme, string>> | null,
     untagged: string,
     ignore: string[],
@@ -55,6 +56,7 @@ let configs: Configs = {
     port: 5432,
   },
   tags: {
+    services: null,
     motd: null,
     untagged: "-*",
     ignore: [],

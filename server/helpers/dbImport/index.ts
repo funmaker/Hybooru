@@ -19,6 +19,7 @@ import Mappings from "./mappings";
 import Urls from "./urls";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
+import config from "../../../webpack/client.dev.babel";
 
 // https://stackoverflow.com/a/7616484
 function hashCode(s: string) {
@@ -56,14 +57,22 @@ export async function rebuild() {
     
     const filesService = findFilesService(hydrus);
     const ratingsService = findRatingsService(hydrus);
-    const mappingsService = findMappingsService(hydrus);
+    const mappingsServices = findMappingsServices(hydrus);
+    const mappingsServicesIds = mappingsServices.map(s => s.id);
     
     await new Posts(hydrus, postgres, filesService, ratingsService).start();
     await new Urls(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
-    await new Mappings(hydrus, postgres, mappingsService).start();
-    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsService).start();
-    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsService).start();
+    
+    let useTemp = false;
+    for(const service of mappingsServices) {
+      await new Mappings(hydrus, postgres, service.id, useTemp).start();
+      
+      useTemp = true;
+    }
+    
+    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServicesIds).start();
+    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServicesIds).start();
     
     const options = await importOptions(hydrus, postgres);
     
@@ -131,11 +140,24 @@ function findRatingsService(hydrus: Database) {
   return null;
 }
 
-function findMappingsService(hydrus: Database) {
-  const service: { id: number } = hydrus.prepare(`SELECT service_id AS id FROM services WHERE service_type = ${ServiceID.LOCAL_TAG} LIMIT 1`).get();
-  if(!service) throw new Error("Unable to locate local tags service!");
+interface Service {
+  id: number;
+  name: string;
+}
+
+function findMappingsServices(hydrus: Database) {
+  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_TAG}`).all();
+  if(services.length === 0) throw new Error("Unable to locate any tag service!");
   
-  return service.id;
+  if(configs.tags.services) {
+    for(const name of configs.tags.services) {
+      if(services.every(s => s.name !== name)) throw new Error(`Unable to locate '${name}' tag service`);
+    }
+    
+    services = services.filter(s => configs.tags.services?.includes(s.name));
+  }
+  
+  return services;
 }
 
 async function importOptions(hydrus: Database, postgres: PoolClient) {

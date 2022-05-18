@@ -45,6 +45,8 @@ export abstract class Import {
       return;
     }
     
+    await this.beforeImport();
+    
     const input = this.hydrus.prepare(this.inputQuery).raw(true);
     const output: Writable = await this.postgres.query(copy.from(this.outputQuery));
     
@@ -69,6 +71,11 @@ export abstract class Import {
     
     await new Promise(res => output.end(res));
     
+    await this.afterImport();
+    
     printProgress([total, total], this.display);
   }
+  
+  async beforeImport() {}
+  async afterImport() {}
 }

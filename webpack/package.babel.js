@@ -26,3 +26,4 @@ const configs = {
 };
 
 fs.writeFileSync("dist/configs.json", JSON.stringify(configs, null, 4));
+fs.copyFileSync("package-lock.json", "dist/package-lock.json");

@@ -1,10 +1,8 @@
 
 ### TODO:
 
-- include package-lock in builds
 - DMCA page
 - Optimize tag relation resolving
-- Importing tag repository mappings/relations
 - Display tag relations in tag search page
 - IPFS integration
 - Fix `Error: Request aborted`
@@ -13,6 +11,11 @@
 - Add zoom in to gallery
 - Research if VACUUMing has any value
 - search md5/sha
+
+# v1.5.0
+
+- Added support for importing from multiple tag services/repositories
+- package-lock.json is now included in production builds
 
 # v1.4.8
 
