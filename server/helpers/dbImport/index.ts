@@ -146,7 +146,7 @@ interface Service {
 }
 
 function findMappingsServices(hydrus: Database) {
-  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_TAG}`).all();
+  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_TAG} OR service_type = ${ServiceID.TAG_REPOSITORY}`).all();
   if(services.length === 0) throw new Error("Unable to locate any tag service!");
   
   if(configs.tags.services) {
