@@ -10,6 +10,7 @@ import { preparePattern } from "../utils";
 import { findHydrusDB, pool } from "../db";
 import { ServiceID } from "../consts";
 import configs from "../configs";
+import config from "../../../webpack/client.dev.babel";
 import { elapsed, printProgress } from "./pretty";
 import indexesSQL from "./indexes.sql";
 import setupSQL from "./setup.sql";
@@ -19,7 +20,6 @@ import Mappings from "./mappings";
 import Urls from "./urls";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
-import config from "../../../webpack/client.dev.babel";
 
 // https://stackoverflow.com/a/7616484
 function hashCode(s: string) {
@@ -64,9 +64,12 @@ export async function rebuild() {
     await new Urls(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
     
+    const mappingImports = mappingsServicesIds.map(id => new Mappings(hydrus, postgres, id));
+    mappingImports.sort((a, b) => b.total() - a.total());
+    
     let useTemp = false;
-    for(const service of mappingsServices) {
-      await new Mappings(hydrus, postgres, service.id, useTemp).start();
+    for(const mappingImport of mappingImports) {
+      await mappingImport.start(useTemp);
       
       useTemp = true;
     }
@@ -201,7 +204,7 @@ async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
     bestPostId: number;
     duplicates: string | null;
     alternatives: string | null;
-  }> = await hydrus.prepare(`
+  }> = hydrus.prepare(`
     SELECT
       duplicate_files.media_id AS "mediaId", duplicate_files.king_hash_id AS "bestPostId",
       group_concat(duplicate_file_members.hash_id) AS duplicates,
@@ -313,7 +316,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
       RETURNING mappings.postid, tag_siblings.betterid
     )
     INSERT INTO mappings(postid, tagid)
-    SELECT DISTINCT postid, betterid FROM bad_maps
+    SELECT postid, betterid FROM bad_maps
     ON CONFLICT DO NOTHING
   `);
   

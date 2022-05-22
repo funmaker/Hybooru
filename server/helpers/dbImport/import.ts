@@ -16,8 +16,11 @@ export abstract class Import {
   abstract inputQuery: string;
   abstract outputQuery: string;
   
+  private totalCount: number | null = null;
+  
   total() {
-    return this.hydrus.prepare(this.totalQuery).raw().get()[0];
+    if(this.totalCount === null) this.totalCount = this.hydrus.prepare(this.totalQuery).raw().get()[0];
+    return this.totalCount!;
   }
   
   async importBatch(lastKey: any[], limit: number, input: Statement, output: Writable): Promise<any[] | null> {
@@ -45,14 +48,14 @@ export abstract class Import {
       return;
     }
     
+    printProgress([0, total], this.display);
+    
     await this.beforeImport();
     
     const input = this.hydrus.prepare(this.inputQuery).raw(true);
     const output: Writable = await this.postgres.query(copy.from(this.outputQuery));
     
     let lastKey: any[] = this.initialKey;
-    
-    printProgress([0, total], this.display);
     
     // eslint-disable-next-line no-constant-condition
     while(true) {

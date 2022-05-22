@@ -11,11 +11,12 @@ export default class Mappings extends Import {
   outputQuery = '';
   inputQuery = '';
   
-  constructor(hydrus: Database, postgres: PoolClient, service: number, private useTemp: boolean = false) {
+  private useTemp = false;
+  
+  constructor(hydrus: Database, postgres: PoolClient, service: number) {
     super(hydrus, postgres);
     
     const mappingsTable = `current_mappings_${service}`;
-    const outputTable = useTemp ? 'mappings_temp' : 'mappings';
     
     this.inputQuery = `
       SELECT
@@ -30,8 +31,15 @@ export default class Mappings extends Import {
     `;
     
     this.totalQuery = `SELECT count(1) FROM ${mappingsTable}`;
+  }
+  
+  async start(useTemp?: boolean) {
+    if(useTemp !== undefined) this.useTemp = useTemp;
     
+    const outputTable = this.useTemp ? 'mappings_temp' : 'mappings';
     this.outputQuery = `COPY ${outputTable}(postid, tagid) FROM STDIN (FORMAT CSV)`;
+    
+    return await super.start();
   }
   
   async beforeImport() {

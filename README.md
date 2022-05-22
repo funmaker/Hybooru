@@ -115,6 +115,16 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 
 ## Development
 
+Build scripts are written for Linux. Building on Windows is currently not supported.
+However, you can still look into `package.json` and change `scripts` to use Window's commands.
+Alternatively you can probably just use Docker or a virtual machine.
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
 ### Run development
 
 ```bash
@@ -127,12 +137,13 @@ npm run start
 npm run build:prod
 ```
 
-Output is saved to `dist/` folder in project's root directory.
+Output is saved to `dist/` folder in project's root directory. These are the files you will want to deploy.
 
 ### Start production
 
 ```bash
-npm run start:prod
+cd dist
+npm start
 ```
 
 

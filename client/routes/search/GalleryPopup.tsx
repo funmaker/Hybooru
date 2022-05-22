@@ -44,12 +44,12 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
         const bbox = target.getBoundingClientRect();
         
         if(boundsX > bbox.width) {
-          boundsY = boundsY * (bbox.width / boundsX);
+          boundsY *= (bbox.width / boundsX);
           boundsX = bbox.width;
         }
         
         if(boundsY > bbox.height) {
-          boundsX = boundsX * (bbox.height / boundsY);
+          boundsX *= (bbox.height / boundsY);
           boundsY = bbox.height;
         }
         

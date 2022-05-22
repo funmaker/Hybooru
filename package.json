@@ -8,7 +8,7 @@
 	},
 	"main": "server.ts",
 	"author": "Fun Maker",
-	"repository": "https://github.com/funmaker/webapp-boilerplate",
+	"repository": "https://github.com/funmaker/Hybooru",
 	"scripts": {
 		"start": "rm -rf build && webpack --config webpack/server.dev.babel.js",
 		"start:prod": "cd dist && npm start",

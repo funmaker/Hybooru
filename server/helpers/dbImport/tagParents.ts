@@ -1,3 +1,4 @@
+import SQL from "sql-template-strings";
 import { Database } from "better-sqlite3";
 import { PoolClient } from "pg";
 import { ContentStatus } from "../consts";
@@ -8,7 +9,7 @@ export default class TagParents extends Import {
   
   initialKey = [-1, -1];
   totalQuery = '';
-  outputQuery = 'COPY tag_parents(tagid, parentid) FROM STDIN (FORMAT CSV)';
+  outputQuery = 'COPY tag_parents_temp(tagid, parentid) FROM STDIN (FORMAT CSV)';
   inputQuery = ``;
   
   constructor(hydrus: Database, postgres: PoolClient, services: number[]) {
@@ -26,5 +27,18 @@ export default class TagParents extends Import {
     `;
     
     this.totalQuery = `SELECT count(1) FROM tag_parents WHERE service_id IN (${services.join(", ")}) AND status=${ContentStatus.CURRENT}`;
+  }
+  
+  async beforeImport() {
+    await this.postgres.query(SQL`
+      CREATE TEMP TABLE tag_parents_temp (LIKE tag_parents);
+    `);
+  }
+  
+  async afterImport() {
+    await this.postgres.query(SQL`
+      INSERT INTO tag_parents SELECT * FROM tag_parents_temp ON CONFLICT DO NOTHING;
+      DROP TABLE tag_parents_temp;
+    `);
   }
 }

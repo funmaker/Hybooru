@@ -9,6 +9,7 @@ type QueryContextData = [string, SetState, GenLink];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const RTQueryContext = React.createContext<QueryContextData>(["", () => {}, () => ""]);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const URLQueryContext = React.createContext<QueryContextData>(["", () => {}, () => ""]);
 
 export default function useQuery() {

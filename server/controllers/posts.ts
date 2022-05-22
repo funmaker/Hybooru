@@ -39,8 +39,8 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   
   if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
   
-  let whitelist = [];
-  let blacklist = [];
+  const whitelist = [];
+  const blacklist = [];
   let sort = SORTS.date;
   let order = "desc";
   let rating: undefined | null | [number, number] = undefined;
