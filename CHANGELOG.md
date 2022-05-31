@@ -12,18 +12,26 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
+# Unreleased
+
+- Disallowed crawlers from indexing random search terms
+
+
 # v1.5.0
 
 - Added support for importing from multiple tag services/repositories
 - package-lock.json is now included in production builds
 
+
 # v1.4.8
 
 - Security update
 
+
 # v1.4.7
 
 - Resolves problem with new OpenSSL in newer Node https://github.com/webpack/webpack/issues/14532
+
 
 # v1.4.6
 
