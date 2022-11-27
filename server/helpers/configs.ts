@@ -19,13 +19,14 @@ interface Configs {
   maxPreviewSize: number,
   db: pg.PoolConfig,
   tags: {
-    services: string[] | null,
+    services: Array<string | number> | null,
     motd: string | Partial<Record<Theme, string>> | null,
     untagged: string,
     ignore: string[],
     blacklist: string[],
     whitelist: string[] | null,
     resolveRelations: boolean,
+    reportLoops: boolean,
   },
   rating: {
     enabled: boolean,
@@ -63,6 +64,7 @@ let configs: Configs = {
     blacklist: [],
     whitelist: null,
     resolveRelations: true,
+    reportLoops: false,
   },
   rating: {
     enabled: true,

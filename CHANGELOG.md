@@ -14,7 +14,12 @@
 
 # Unreleased
 
-- Disallowed crawlers from indexing random search terms
+- Added support for filtering services by ids
+- Added `tags.printLoops` config option to print tag relationships loops
+- Fixed import getting suck in case of loops in parent tag relationships
+- Fixed siblings tag relationships not getting normalized in case of a sibling relationship loop
+- Fixed inaccuracies in API.md
+- Fixed web crawlers following tag links and indexing random search terms
 
 
 # v1.5.0

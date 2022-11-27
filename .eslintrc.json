@@ -220,7 +220,7 @@
     "no-extra-semi": "warn",
     "no-fallthrough": "warn",
     "no-inner-declarations": "warn",
-    "no-lonely-if": "warn",
+    "no-lonely-if": "off",
     "no-mixed-spaces-and-tabs": "warn",
     "no-multiple-empty-lines": [
       "warn",

@@ -58,7 +58,7 @@ Fetches post details by given `id`.
 | posted    | string                          | ISO 8601 date time when original post was created.                                                                                                      |
 | tags      | object                          | Post's tags(keys are the names, values are their global usage).                                                                                         |
 | sources   | string[]                        | List of source urls.                                                                                                                                    |
-| relations | [PostRelation](#PostRelation)[] | List of source urls.                                                                                                                                    |
+| relations | [PostRelation](#PostRelation)[] | List of post relations.                                                                                                                                 |
 
 ### PostRelation
 
@@ -85,7 +85,7 @@ Searches tags by query.
 
 | Name     | Type   | Comment                                                     |
 |----------|--------|-------------------------------------------------------------|
-| posts    | object | Results(keys are the names, values are their global usage). |
+| tags     | object | Results(keys are the names, values are their global usage). |
 | total    | number | Total amount of matched tags.                               |
 | pageSize | number | Actual page size.                                           |
 

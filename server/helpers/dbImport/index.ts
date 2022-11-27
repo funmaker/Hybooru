@@ -10,7 +10,6 @@ import { preparePattern } from "../utils";
 import { findHydrusDB, pool } from "../db";
 import { ServiceID } from "../consts";
 import configs from "../configs";
-import config from "../../../webpack/client.dev.babel";
 import { elapsed, printProgress } from "./pretty";
 import indexesSQL from "./indexes.sql";
 import setupSQL from "./setup.sql";
@@ -57,14 +56,13 @@ export async function rebuild() {
     
     const filesService = findFilesService(hydrus);
     const ratingsService = findRatingsService(hydrus);
-    const mappingsServices = findMappingsServices(hydrus);
-    const mappingsServicesIds = mappingsServices.map(s => s.id);
+    const mappingsServicess = findMappingsServices(hydrus);
     
     await new Posts(hydrus, postgres, filesService, ratingsService).start();
     await new Urls(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
     
-    const mappingImports = mappingsServicesIds.map(id => new Mappings(hydrus, postgres, id));
+    const mappingImports = mappingsServicess.map(id => new Mappings(hydrus, postgres, id));
     mappingImports.sort((a, b) => b.total() - a.total());
     
     let useTemp = false;
@@ -74,8 +72,8 @@ export async function rebuild() {
       useTemp = true;
     }
     
-    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServicesIds).start();
-    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServicesIds).start();
+    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServicess).start();
+    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServicess).start();
     
     const options = await importOptions(hydrus, postgres);
     
@@ -153,14 +151,18 @@ function findMappingsServices(hydrus: Database) {
   if(services.length === 0) throw new Error("Unable to locate any tag service!");
   
   if(configs.tags.services) {
-    for(const name of configs.tags.services) {
-      if(services.every(s => s.name !== name)) throw new Error(`Unable to locate '${name}' tag service`);
+    for(const desired of configs.tags.services) {
+      if(typeof desired === "string") {
+        if(services.every(s => s.name !== desired)) throw new Error(`Unable to locate tag service with name '${desired}'`);
+      } else {
+        if(services.every(s => s.id !== desired)) throw new Error(`Unable to locate tag service with id '${desired}'`);
+      }
     }
     
-    services = services.filter(s => configs.tags.services?.includes(s.name));
+    services = services.filter(s => configs.tags.services?.includes(s.name) || configs.tags.services?.includes(s.id));
   }
   
-  return services;
+  return services.map(service => service.id);
 }
 
 async function importOptions(hydrus: Database, postgres: PoolClient) {
@@ -260,7 +262,30 @@ async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
 }
 
 async function normalizeTagRelations(postgres: PoolClient) {
-  printProgress([0, 4], "Normalizing tags");
+  printProgress([0, 6], "Normalizing tags");
+  
+  const siblingsLoops = await postgres.query(SQL`
+    WITH RECURSIVE paths(tagid, visited) AS (
+        SELECT DISTINCT tag_siblings.betterid, ARRAY[tag_siblings.tagid]
+        FROM tag_siblings
+      UNION ALL
+        SELECT tag_siblings.betterid, paths.visited || paths.tagid
+        FROM paths
+        INNER JOIN tag_siblings ON tag_siblings.tagid = paths.tagid
+        WHERE paths.tagid != ALL(paths.visited)
+    ), loops(tagid, visited) AS (
+      SELECT *
+      FROM paths
+      WHERE tagid = visited[1] AND tagid <= ALL(visited)
+      ORDER BY tagid
+    )
+    DELETE FROM tag_siblings
+    USING loops
+    WHERE tag_siblings.tagid = loops.tagid AND tag_siblings.betterid = loops.visited[array_upper(loops.visited, 1)]
+    RETURNING loops.visited || loops.tagid AS path
+  `);
+  
+  printProgress([1, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH RECURSIVE roots(tagid, rootid) AS (
@@ -278,7 +303,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     WHERE roots.tagid = tag_siblings.tagid
   `);
   
-  printProgress([1, 4], "Normalizing tags");
+  printProgress([2, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_parents AS (
@@ -292,7 +317,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([2, 4], "Normalizing tags");
+  printProgress([3, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_parents AS (
@@ -306,7 +331,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([3, 4], "Normalizing tags");
+  printProgress([4, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_maps AS (
@@ -320,7 +345,70 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([4, 4], "Normalizing tags");
+  printProgress([5, 6], "Normalizing tags");
+  
+  const parentLoops = await postgres.query(SQL`
+    WITH RECURSIVE paths(tagid, visited) AS (
+        SELECT DISTINCT tag_parents.parentid, ARRAY[tag_parents.tagid]
+        FROM tag_parents
+      UNION ALL
+        SELECT tag_parents.parentid, paths.visited || paths.tagid
+        FROM paths
+        INNER JOIN tag_parents ON tag_parents.tagid = paths.tagid
+        WHERE paths.tagid != ALL(paths.visited)
+    ), loops(tagid, visited) AS (
+      SELECT *
+      FROM paths
+      WHERE tagid = visited[1] AND tagid <= ALL(visited)
+      ORDER BY tagid
+    )
+    DELETE FROM tag_parents
+    USING loops
+    WHERE tag_parents.tagid = loops.tagid AND tag_parents.parentid = loops.visited[array_upper(loops.visited, 1)]
+    RETURNING loops.visited || loops.tagid AS path
+  `);
+  
+  printProgress([6, 6], "Normalizing tags");
+  
+  if(siblingsLoops.rows.length > 0) {
+    console.error(`${chalk.bold.yellow("Warning!")} Detected ${siblingsLoops.rows.length} loops in tag siblings!`);
+    
+    if(configs.tags.reportLoops) {
+      console.error();
+      
+      const mapped = await postgres.query(SQL`
+        SELECT string_agg(COALESCE(tags.name, 'null'), ' <- ' ORDER BY path_el.id) AS path
+        FROM jsonb_array_elements(${JSON.stringify(siblingsLoops.rows.map(row => row.path))}) WITH ORDINALITY paths(path, pathid),
+             jsonb_array_elements(paths.path) WITH ORDINALITY path_el(tagid, id)
+        LEFT JOIN tags ON tags.id = path_el.tagid::INTEGER
+        GROUP BY paths.pathid
+      `);
+      
+      for(const loop of mapped.rows) console.error(chalk.gray(loop.path));
+      
+      console.error(chalk.bold("\nLast relation of these chains has been ignored.\n"));
+    }
+  }
+  
+  if(parentLoops.rows.length > 0) {
+    console.error(`${chalk.bold.yellow("Warning!")} Detected ${parentLoops.rows.length} loops in tag parents!`);
+    
+    if(configs.tags.reportLoops) {
+      console.error();
+      
+      const mapped = await postgres.query(SQL`
+        SELECT string_agg(COALESCE(tags.name, 'null'), ' <- ' ORDER BY path_el.id) AS path
+        FROM jsonb_array_elements(${JSON.stringify(parentLoops.rows.map(row => row.path))}) WITH ORDINALITY paths(path, pathid),
+             jsonb_array_elements(paths.path) WITH ORDINALITY path_el(tagid, id)
+        LEFT JOIN tags ON tags.id = path_el.tagid::INTEGER
+        GROUP BY paths.pathid
+      `);
+      
+      for(const loop of mapped.rows) console.error(chalk.gray(loop.path));
+      
+      console.error(chalk.bold("\nLast relation of these chains has been ignored.\n"));
+    }
+  }
 }
 
 async function applyBlacklist(postgres: PoolClient) {
