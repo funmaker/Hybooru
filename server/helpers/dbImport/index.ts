@@ -54,26 +54,17 @@ export async function rebuild() {
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
     
-    const filesService = findFilesService(hydrus);
+    const filesServices = findFilesServices(hydrus);
     const ratingsService = findRatingsService(hydrus);
-    const mappingsServicess = findMappingsServices(hydrus);
+    const mappingsServices = findMappingsServices(hydrus);
     
-    await new Posts(hydrus, postgres, filesService, ratingsService).start();
+    await new Posts(hydrus, postgres, ratingsService).startEach(filesServices);
     await new Urls(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
+    await new Mappings(hydrus, postgres).startEach(mappingsServices);
     
-    const mappingImports = mappingsServicess.map(id => new Mappings(hydrus, postgres, id));
-    mappingImports.sort((a, b) => b.total() - a.total());
-    
-    let useTemp = false;
-    for(const mappingImport of mappingImports) {
-      await mappingImport.start(useTemp);
-      
-      useTemp = true;
-    }
-    
-    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServicess).start();
-    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServicess).start();
+    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServices).start();
+    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServices).start();
     
     const options = await importOptions(hydrus, postgres);
     
@@ -105,17 +96,28 @@ export async function rebuild() {
   }
 }
 
-function findFilesService(hydrus: Database) {
-  const service: { id: number } = hydrus.prepare(`
-    SELECT service_id AS id
-    FROM services
-    WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN}
-          AND name != 'repository updates'
-    LIMIT 1
-  `).get();
-  if(!service) throw new Error("Unable to locate local tags service!");
+interface Service {
+  id: number;
+  name: string;
+}
+
+function findFilesServices(hydrus: Database) {
+  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN} OR service_type = ${ServiceID.FILE_REPOSITORY}`).all();
+  if(services.length === 0) throw new Error("Unable to locate any file services!");
   
-  return service.id;
+  if(configs.posts.services) {
+    for(const desired of configs.posts.services) {
+      if(typeof desired === "string") {
+        if(services.every(s => s.name !== desired)) throw new Error(`Unable to locate file service with name '${desired}'`);
+      } else {
+        if(services.every(s => s.id !== desired)) throw new Error(`Unable to locate file service with id '${desired}'`);
+      }
+    }
+    
+    services = services.filter(s => configs.posts.services?.includes(s.name) || configs.posts.services?.includes(s.id));
+  }
+  
+  return services.map(service => service.id);
 }
 
 function findRatingsService(hydrus: Database) {
@@ -141,14 +143,9 @@ function findRatingsService(hydrus: Database) {
   return null;
 }
 
-interface Service {
-  id: number;
-  name: string;
-}
-
 function findMappingsServices(hydrus: Database) {
   let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_TAG} OR service_type = ${ServiceID.TAG_REPOSITORY}`).all();
-  if(services.length === 0) throw new Error("Unable to locate any tag service!");
+  if(services.length === 0) throw new Error("Unable to locate any tag services!");
   
   if(configs.tags.services) {
     for(const desired of configs.tags.services) {

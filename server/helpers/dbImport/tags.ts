@@ -4,9 +4,10 @@ export default class Tags extends Import {
   display = "Tags";
   batchSizeMul = 1 / 2;
   
-  totalQuery = 'SELECT count(1) FROM tags';
-  outputQuery = 'COPY tags(id, name, subtag) FROM STDIN (FORMAT CSV)';
-  inputQuery = `
+  outputTable = "tags";
+  totalQuery = () => 'SELECT count(1) FROM tags';
+  outputQuery = (table: string) => `COPY ${table}(id, name, subtag) FROM STDIN (FORMAT CSV)`;
+  inputQuery = () => `
     SELECT
       tags.tag_id,
       REPLACE(

@@ -25,10 +25,7 @@ export default {
   mode: 'production',
   target: 'web',
   context: root,
-  entry: [
-    '@babel/polyfill',
-    './client.tsx',
-  ],
+  entry: './client.tsx',
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss'],
     modules: [root, 'node_modules'],

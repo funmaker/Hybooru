@@ -28,7 +28,6 @@ export default {
   context: root,
   devtool: 'source-map',
   entry: [
-    '@babel/polyfill',
     'webpack-hot-middleware/client',
     './client.tsx',
   ],

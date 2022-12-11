@@ -4,9 +4,10 @@ export default class Urls extends Import {
   display = "Urls";
   batchSizeMul = 1 / 2;
   
-  totalQuery = 'SELECT count(1) FROM urls INNER JOIN url_map ON url_map.url_id = urls.url_id';
-  outputQuery = 'COPY urls(id, postid, url) FROM STDIN (FORMAT CSV)';
-  inputQuery = `
+  outputTable = "urls";
+  totalQuery = () => 'SELECT count(1) FROM urls INNER JOIN url_map ON url_map.url_id = urls.url_id';
+  outputQuery = (table: string) => `COPY ${table}(id, postid, url) FROM STDIN (FORMAT CSV)`;
+  inputQuery = () => `
     SELECT
       urls.url_id,
       urls.url_id || ',' ||

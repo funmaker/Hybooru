@@ -23,7 +23,7 @@ export async function getConfig(): Promise<Config> {
     version: packageJSON.version,
     expectMotd: !!configs.tags.motd,
     untaggedQuery: configs.tags.untagged,
-    maxPreviewSize: configs.maxPreviewSize,
+    maxPreviewSize: configs.posts.maxPreviewSize,
     passwordSet: !!configs.adminPassword,
   };
 }

@@ -10,7 +10,7 @@ import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBReque
 
 export const router = PromiseRouter();
 
-router.post<any, RegenDBResponse, RegenDBRequest>("/regendb", async (req, res) => {
+router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", async (req, res) => {
   if(typeof configs.adminPassword !== "string") throw new HTTPError(400, "Admin password has not been set in configs.json");
   if(req.body.password !== configs.adminPassword) throw new HTTPError(400, "Invalid Password");
   

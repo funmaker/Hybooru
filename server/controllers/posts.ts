@@ -8,10 +8,9 @@ import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
 import configs from "../helpers/configs";
 
-const TAGS_COUNT = 40;
 const MAX_PARTS = 40;
 const TAGS_SAMPLE_MAX = 256;
-const CACHE_SIZE = configs.pageSize * configs.cachePages;
+const CACHE_SIZE = configs.posts.pageSize * configs.posts.cachePages;
 
 const blankPattern = /^[_%]*%[_%]*$/;
 
@@ -30,8 +29,8 @@ interface SearchArgs {
   client?: PoolClient;
 }
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.pageSize, client }: SearchArgs): Promise<PostSearchResults> {
-  if(pageSize > configs.pageSize) pageSize = configs.pageSize;
+export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.posts.pageSize, client }: SearchArgs): Promise<PostSearchResults> {
+  if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
   
   const parts = query.split(" ")
                      .filter(p => !!p)
@@ -345,7 +344,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
           ) x
           WHERE id IS NOT NULL
           ORDER BY count DESC, id ASC
-          LIMIT ${TAGS_COUNT}
+          LIMIT ${configs.tags.searchSummary}
         ) x
       ) AS tags
     FROM (
@@ -360,7 +359,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     ) x
   `), client);
   
-  if(Object.keys(postsCache).length >= configs.cacheRecords) {
+  if(Object.keys(postsCache).length >= configs.posts.cacheRecords) {
     let minKey: string | null = null;
     let minDate = Date.now();
     

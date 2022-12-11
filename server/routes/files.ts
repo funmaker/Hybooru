@@ -8,8 +8,8 @@ export const router = PromiseRouter();
 
 router.get<{ filename: string }>("/:filename", async (req, res, next) => {
   let root = path.resolve(db.findHydrusDB(), "client_files");
-  if(req.params.filename.startsWith("t") && configs.thumbnailsPathOverride) root = configs.thumbnailsPathOverride;
-  else if(configs.filesPathOverride) root = configs.filesPathOverride;
+  if(req.params.filename.startsWith("t") && configs.posts.thumbnailsPathOverride) root = configs.posts.thumbnailsPathOverride;
+  else if(configs.posts.filesPathOverride) root = configs.posts.filesPathOverride;
   
   let filename = req.params.filename;
   filename = `./${filename.substr(0, 3)}/${filename.substr(1)}`;

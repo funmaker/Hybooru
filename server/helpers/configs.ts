@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import pg from "pg";
 import { Theme } from "../../client/hooks/useTheme";
+import chalk from "chalk";
 
 interface Configs {
   port: number,
@@ -11,13 +12,22 @@ interface Configs {
   adminPassword: string | null,
   isTTY: boolean | null,
   importBatchSize: number,
-  pageSize: number,
-  cachePages: number,
-  cacheRecords: number,
-  filesPathOverride: string | null,
-  thumbnailsPathOverride: string | null,
-  maxPreviewSize: number,
+  pageSize?: number, // deprecated
+  cachePages?: number, // deprecated
+  cacheRecords?: number, // deprecated
+  filesPathOverride?: string | null, // deprecated
+  thumbnailsPathOverride?: string | null, // deprecated
+  maxPreviewSize?: number, // deprecated
   db: pg.PoolConfig,
+  posts: {
+    services: Array<string | number> | null,
+    pageSize: number,
+    cachePages: number,
+    cacheRecords: number,
+    filesPathOverride: string | null,
+    thumbnailsPathOverride: string | null,
+    maxPreviewSize: number,
+  },
   tags: {
     services: Array<string | number> | null,
     motd: string | Partial<Record<Theme, string>> | null,
@@ -27,6 +37,7 @@ interface Configs {
     whitelist: string[] | null,
     resolveRelations: boolean,
     reportLoops: boolean,
+    searchSummary: number,
   },
   rating: {
     enabled: boolean,
@@ -43,18 +54,21 @@ let configs: Configs = {
   adminPassword: null,
   isTTY: null,
   importBatchSize: 8192,
-  pageSize: 72,
-  cachePages: 5,
-  cacheRecords: 1024,
-  filesPathOverride: null,
-  thumbnailsPathOverride: null,
-  maxPreviewSize: 104857600,
   db: {
     user: "hybooru",
     host: "localhost",
     database: "hybooru",
     password: "hybooru",
     port: 5432,
+  },
+  posts: {
+    services: null,
+    pageSize: 72,
+    cachePages: 5,
+    cacheRecords: 1024,
+    filesPathOverride: null,
+    thumbnailsPathOverride: null,
+    maxPreviewSize: 104857600,
   },
   tags: {
     services: null,
@@ -65,6 +79,7 @@ let configs: Configs = {
     whitelist: null,
     resolveRelations: true,
     reportLoops: false,
+    searchSummary: 39,
   },
   rating: {
     enabled: true,
@@ -73,10 +88,19 @@ let configs: Configs = {
   }
 };
 
+const movedPostsOptions = ["pageSize", "cachePages", "cacheRecords", "filesPathOverride", "thumbnailsPathOverride", "maxPreviewSize"] as const;
+
 try {
   // noinspection UnnecessaryLocalVariableJS
   const configsJson: typeof import("../../configs.json") = JSON.parse(fs.readFileSync("./configs.json").toString("utf-8"));
   configs = deepMerge(configs, configsJson);
+  
+  for(const movedOption of movedPostsOptions) {
+    if(configs[movedOption] !== undefined) {
+      console.error(`${chalk.bold.yellow("Warning!")} Config option ${movedOption} is deprecated and will be removed in future releases, use posts.${movedOption} instead!`);
+      (configs.posts as any)[movedOption] = configs[movedOption];
+    }
+  }
 } catch(e) {
   console.error("Failed to read configs.json");
   console.error(e);
@@ -99,7 +123,7 @@ function deepMerge<T extends Object>(base: T, object: T): T {
   for(const key in object) {
     if(!object.hasOwnProperty(key)) continue;
     
-    if(isPlainObject(base[key]) && isPlainObject(object[key])) ret[key] = deepMerge(base[key], object[key]);
+    if(isPlainObject(base[key]) && isPlainObject(object[key])) ret[key] = deepMerge(base[key] as any, object[key]);
   }
   
   return ret;

@@ -38,7 +38,7 @@ export default async function requestJSON<Res, Req extends Record<string, any> =
       cancelToken: cancelCb ? new CancelToken(cancelCb) : undefined,
     });
   } catch(err) {
-    if(!(err instanceof axios.Cancel)) toast.error(err.response?.data?._error?.message || err.message);
+    if(!(err instanceof axios.Cancel)) toast.error((err as any).response?.data?._error?.message || (err as any).message);
     throw err;
   }
   

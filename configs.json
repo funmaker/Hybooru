@@ -3,21 +3,24 @@
 	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
-	"adminPassword": "kek",
+	"adminPassword": null,
 	"isTTY": null,
 	"importBatchSize": 8192,
-	"pageSize": 72,
-	"cachePages": 5,
-	"cacheRecords": 1024,
-	"filesPathOverride": null,
-	"thumbnailsPathOverride": null,
-	"maxPreviewSize": 104857600,
 	"db": {
 		"user": "hybooru",
 		"host": "localhost",
 		"database": "hybooru",
 		"password": "hybooru",
 		"port": 5432
+	},
+	"posts": {
+		"services": null,
+		"filesPathOverride": null,
+		"thumbnailsPathOverride": null,
+		"pageSize": 72,
+		"cachePages": 5,
+		"cacheRecords": 1024,
+		"maxPreviewSize": 104857600
 	},
 	"tags": {
 		"services": null,
@@ -27,7 +30,8 @@
 		"blacklist": [],
 		"whitelist": null,
 		"resolveRelations": true,
-		"reportLoops": false
+		"reportLoops": false,
+		"searchSummary": 39
 	},
 	"rating": {
 		"enabled": false,

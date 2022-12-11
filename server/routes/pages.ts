@@ -33,13 +33,13 @@ router.get<{ id: string }>('/posts/:id', async (req, res) => {
   res.react<PostPageData>({ post }, options);
 });
 
-router.get<any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {
+router.get<any, any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {
   const results = await postsController.search({ ...req.query, includeTags: true });
   
   res.react<PostsSearchPageData>({ results }, { ogTitle: "Post Search", ogDescription: req.query.query });
 });
 
-router.get<any, any, any, TagsSearchPageRequest>('/tags', async (req, res) => {
+router.get<any, any, any, any, TagsSearchPageRequest>('/tags', async (req, res) => {
   const results = await tagsController.search(req.query);
   
   res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });

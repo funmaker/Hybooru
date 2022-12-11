@@ -14,10 +14,15 @@
 
 # Unreleased
 
+- Added support for choosing file services (https://github.com/funmaker/Hybooru/issues/18)
 - Added support for filtering services by ids
 - Added `tags.printLoops` config option to print tag relationships loops
+- Added `tags.searchSummary` config option to control how many tags appear on side menu when searching posts
+- Added `posts` config category and moved all posts related config options there
+- Added support for Node v19 (https://github.com/funmaker/Hybooru/issues/19)
+- Deprecated old config options
 - Fixed import getting suck in case of loops in parent tag relationships
-- Fixed siblings tag relationships not getting normalized in case of a sibling relationship loop
+- Fixed siblings tag relationships not getting normalized in case of a sibling relationship loop (Fixes https://github.com/funmaker/Hybooru/issues/17)
 - Fixed inaccuracies in API.md
 - Fixed web crawlers following tag links and indexing random search terms
 
