@@ -14,6 +14,9 @@
 
 # Unreleased
 
+
+# v1.6.0
+
 - Added support for choosing file services (https://github.com/funmaker/Hybooru/issues/18)
 - Added support for filtering services by ids
 - Added `tags.printLoops` config option to print tag relationships loops
