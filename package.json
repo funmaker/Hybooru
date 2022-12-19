@@ -1,7 +1,7 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.6.1-dev",
+	"version": "1.7.0-dev",
 	"engines": {
 		"node": ">=14.0.0",
 		"npm": ">=7.0.0"
@@ -21,6 +21,7 @@
 		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix"
 	},
 	"dependencies": {
+		"@octokit/core": "^4.1.0",
 		"axios": "^0.21.1",
 		"better-sqlite3": "^8.0.1",
 		"body-parser": "^1.19.0",

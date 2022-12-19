@@ -7,6 +7,7 @@ import { Options } from "../middlewares/reactMiddleware";
 import opensearch from "../views/opensearch.handlebars";
 import configs from "../helpers/configs";
 import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
+import * as githubController from "../controllers/github";
 import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
@@ -68,9 +69,18 @@ router.get('/', async (req, res) => {
   const motd = typeof motdTag === "string" && await postsController.random(motdTag) || null;
   const options: Options = { ogTitle: "Main Page" };
   
+  const releases = await githubController.getReleases();
+  let updateUrl: string | null = null;
+  if(releases.length > 0) {
+    const newest = releases[0];
+    if(`v${req.config.version}` !== newest.tag_name) {
+      updateUrl = newest.html_url;
+    }
+  }
+  
   if(motd) addOGMedia(options, motd);
   
-  res.react<IndexPageData>({ stats, motd }, options);
+  res.react<IndexPageData>({ stats, updateUrl, motd }, options);
 });
 
 router.get("/opensearch.xml", async (req, res) => {

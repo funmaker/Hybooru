@@ -84,6 +84,7 @@ export interface AnySSRPageData {
 
 export interface IndexPageData {
   stats: Stats;
+  updateUrl: string | null;
   motd: PostSummary | null;
 }
 

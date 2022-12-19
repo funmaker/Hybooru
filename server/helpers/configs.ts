@@ -44,6 +44,12 @@ interface Configs {
     stars: number,
     serviceName: string | null,
   } | null,
+  versionCheck: {
+    enabled: boolean,
+    owner: string,
+    repo: string,
+    cacheLifeMs: number
+  } | null,
 }
 
 let configs: Configs = {
@@ -85,6 +91,12 @@ let configs: Configs = {
     enabled: true,
     stars: 5,
     serviceName: null,
+  },
+  versionCheck: {
+    enabled: true,
+    owner: "funmaker",
+    repo: "hybooru",
+    cacheLifeMs: 3600000
   }
 };
 

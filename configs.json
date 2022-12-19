@@ -1,9 +1,9 @@
 {
 	"port": 3939,
-	"hydrusDbPath": "/home/funmaker/.local/share/hydrus/test",
+	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
-	"adminPassword": "kek",
+	"adminPassword": null,
 	"isTTY": null,
 	"importBatchSize": 8192,
 	"db": {
@@ -37,5 +37,11 @@
 		"enabled": false,
 		"stars": 5,
 		"serviceName": null
+	},
+	"versionCheck": {
+		"enabled": true,
+		"owner": "funmaker",
+		"repo": "hybooru",
+		"cacheLifeMs": 3600000
 	}
 }

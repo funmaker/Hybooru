@@ -60,7 +60,8 @@ export default function IndexPage() {
         </div>
       }
       <div className="footer">
-        Running <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">HyBooru</a> v{config.version}<br />
+        Running <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">HyBooru</a> v{config.version}
+        {pageData?.updateUrl && <a className="updateInfo" href={pageData.updateUrl} target="_blank" rel="noreferrer">(Update Avaliable)</a>} <br />
         Original concept by <a href="https://danbooru.donmai.us/" target="_blank" rel="noreferrer">Danbooru</a>
       </div>
     </div>

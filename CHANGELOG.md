@@ -14,6 +14,7 @@
 
 # Unreleased
 
+- Added version check
 - Added docs for `/api/regendb`
 - Removed CSRF tokens
 - Fixed import crashing on tag collisions
