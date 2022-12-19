@@ -36,7 +36,10 @@ export default class Mappings extends Import {
       
       this.resetTotal(total);
       this.service = service;
+      
       await this.start();
+      
+      this.useTemp = true;
     }
   }
 }

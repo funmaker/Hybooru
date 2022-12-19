@@ -14,8 +14,9 @@
 
 # Unreleased
 
-- Removed CSRF tokens
 - Added docs for `/api/regendb`
+- Removed CSRF tokens
+- Fixed import crashing on tag collisions
 
 
 # v1.6.0

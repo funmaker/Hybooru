@@ -53,7 +53,10 @@ export default class Posts extends Import {
       
       this.resetTotal(total);
       this.service = service;
+      
       await this.start();
+      
+      this.useTemp = true;
     }
   }
 }
