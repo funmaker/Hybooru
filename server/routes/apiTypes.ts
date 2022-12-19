@@ -77,7 +77,6 @@ export interface Config {
 
 export interface AnySSRPageData {
   _config: Config;
-  _csrf: string;
   _theme: Theme;
   _ssrError: boolean;
   [k: string]: any;
@@ -123,7 +122,6 @@ export interface ErrorPageData {
 
 export interface RegenDBRequest {
   password: string;
-  _csrf: string;
 }
 
 export interface RegenDBResponse {}
@@ -148,5 +146,4 @@ export type TagsSearchResponse = TagsSearchResults;
 export interface SetThemeRequest {
   theme: string;
   redirectUrl: string;
-  _csrf: string;
 }

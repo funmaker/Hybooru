@@ -3,7 +3,6 @@ import { anyRatingRegex } from "../../server/helpers/consts";
 import { RegenDBRequest } from "../../server/routes/apiTypes";
 import useLocalStorage from "../hooks/useLocalStorage";
 import requestJSON from "../helpers/requestJSON";
-import useCSRF from "../hooks/useCSRF";
 import useConfig from "../hooks/useConfig";
 import useQuery from "../hooks/useQuery";
 import "./SettingsMenu.scss";
@@ -16,7 +15,6 @@ type SettingsMenuProps = {
 export default function SettingsMenu({ open = false, simpleSettings = false, ...rest }: SettingsMenuProps) {
   const [, setQuery] = useQuery();
   const config = useConfig();
-  const csrf = useCSRF();
   
   const [pagination, setPagination] = useLocalStorage("pagination", false);
   const [popup, setPopup] = useLocalStorage("popup", false);
@@ -62,12 +60,12 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
       await requestJSON<null, RegenDBRequest>({
         pathname: "/api/regenDB",
         method: "POST",
-        data: { password, _csrf: csrf },
+        data: { password },
       });
       
       window.location.reload();
     }
-  }, [csrf]);
+  }, []);
   
   let extraSettings: React.ReactNode = null;
   if(!simpleSettings) {

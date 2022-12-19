@@ -1,9 +1,10 @@
 
 # Api Documentation
 
-Hybooru offers REST API for fetching posts and tags. All requests
-are done over HTTP. Requests should be url-encoded. Responses are
-serialized to JSON.
+Hybooru offers REST API for fetching data and managment. All requests
+are done over HTTP. GET requests should be url-encoded, POST requests
+should be sent as json inside http body. Responses are sent as jsons
+as well.
 
 
 ## GET /api/post
@@ -35,6 +36,7 @@ Searches posts by query.
 | extension | string         | File extension, eg: `".jpg"`, `".png"`, etc                                                                                                             |
 | mime      | number or null | Hydrus internal mime id. See [HydrusConstants.py](https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py) for more details. |
 | posted    | string         | ISO 8601 date time when original post was created.                                                                                                      |
+
 
 ## GET /api/post/:id
 
@@ -68,6 +70,7 @@ Same as [PostSummary](#PostSummary) with additional fields:
 |------|--------|-------------------------------------------------------------------------------------------------------------|
 | kind | string | `"DUPLICATE"`(duplicate), `"DUPLICATE_BEST"`(better quality duplicate), `"ALTERNATE"`(related alternative), |
 
+
 ## GET /api/tags
 
 Searches tags by query.
@@ -88,4 +91,28 @@ Searches tags by query.
 | tags     | object | Results(keys are the names, values are their global usage). |
 | total    | number | Total amount of matched tags.                               |
 | pageSize | number | Actual page size.                                           |
+
+
+## POST /api/regendb
+
+Triggers database rebuilt, just like when `Rebuild Database`
+button is pressed. Hybooru will clear it's database and fetch
+everything from scratch. If there is an error during import
+no data will be added or lost, nothing will change.
+
+If `adminPassword` was not set in `configs.json` this endpoint
+will return HTTP error 400.
+
+### Request
+
+| Name     | Type   | Comment                             |
+|----------|--------|-------------------------------------|
+| password | string | `adminPassword` from `configs.json` |
+
+### Response
+
+| Name     | Type   | Comment                       |
+|----------|--------|-------------------------------|
+| ok       | true   | ok                            |
+
 

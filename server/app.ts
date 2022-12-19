@@ -1,6 +1,5 @@
 import * as http from 'http';
 import express from 'express';
-import csrf from 'csurf';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -31,7 +30,6 @@ if(process.env.NODE_ENV === 'development') {
 
 app.use(configMiddleware);
 app.use(reactMiddleware);
-app.use(csrf({ cookie: true }));
 
 app.use('/', router);
 

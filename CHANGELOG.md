@@ -14,6 +14,9 @@
 
 # Unreleased
 
+- Removed CSRF tokens
+- Added docs for `/api/regendb`
+
 
 # v1.6.0
 

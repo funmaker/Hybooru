@@ -16,7 +16,9 @@ router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", async (req, r
   
   await db.initialize();
   
-  res.json({});
+  res.json({
+    ok: true,
+  });
 });
 
 router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {

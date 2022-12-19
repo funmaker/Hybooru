@@ -6,7 +6,6 @@ import { AnySSRPageData } from "../server/routes/apiTypes";
 import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContext } from "./hooks/useConfig";
-import { CSRFContext } from "./hooks/useCSRF";
 import { ThemeProvider } from "./hooks/useTheme";
 import { PostsCacheProvider } from "./hooks/usePostsCache";
 import { QueryProvider } from "./hooks/useQuery";
@@ -52,25 +51,23 @@ export default hot(module)(function App({ initialData }: Props) {
   return (
     <SSRProvider>
       <ThemeProvider init={initialData._theme}>
-        <CSRFContext.Provider value={initialData._csrf}>
-          <ConfigContext.Provider value={initialData._config}>
-            <QueryProvider>
-              <PageDataContext.Provider value={contextData}>
-                <PostsCacheProvider>
-                  <Switch>
-                    <Route path="/test" component={TestPage} />
-                    <Route path="/tags" component={TagsPage} />
-                    <Route path="/posts/:id" component={PostPage} />
-                    <Route path="/posts" component={SearchPage} />
-                    <Route path="/" exact component={IndexPage} />
-                    <NotFoundPage />
-                  </Switch>
-                  <ToastContainer />
-                </PostsCacheProvider>
-              </PageDataContext.Provider>
-            </QueryProvider>
-          </ConfigContext.Provider>
-        </CSRFContext.Provider>
+        <ConfigContext.Provider value={initialData._config}>
+          <QueryProvider>
+            <PageDataContext.Provider value={contextData}>
+              <PostsCacheProvider>
+                <Switch>
+                  <Route path="/test" component={TestPage} />
+                  <Route path="/tags" component={TagsPage} />
+                  <Route path="/posts/:id" component={PostPage} />
+                  <Route path="/posts" component={SearchPage} />
+                  <Route path="/" exact component={IndexPage} />
+                  <NotFoundPage />
+                </Switch>
+                <ToastContainer />
+              </PostsCacheProvider>
+            </PageDataContext.Provider>
+          </QueryProvider>
+        </ConfigContext.Provider>
       </ThemeProvider>
     </SSRProvider>
   );
