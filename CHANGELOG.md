@@ -12,7 +12,11 @@
 - Research if VACUUMing has any value
 - search md5/sha
 
+
 # Unreleased
+
+
+# v1.7.0
 
 - Added version check
 - Added docs for `/api/regendb`
