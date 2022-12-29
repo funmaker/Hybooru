@@ -15,6 +15,8 @@
 
 # Unreleased
 
+- Fixed import crashing on multi-service tag sibling conflict
+
 
 # v1.7.0
 

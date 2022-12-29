@@ -290,14 +290,20 @@ async function normalizeTagRelations(postgres: PoolClient) {
         FROM tag_siblings
         WHERE NOT EXISTS(SELECT 1 FROM tag_siblings ts2 WHERE ts2.tagid = tag_siblings.betterid)
       UNION ALL
-        SELECT tag_siblings.tagid, roots.rootid
+        SELECT DISTINCT tag_siblings.tagid, roots.rootid
         FROM roots
         INNER JOIN tag_siblings ON tag_siblings.betterid = roots.tagid
+    ),
+    bad_siblings AS (
+      DELETE FROM tag_siblings
+      USING roots
+      WHERE tag_siblings.tagid = roots.tagid
+        AND tag_siblings.betterid != roots.rootid
+      RETURNING tag_siblings.tagid, roots.rootid
     )
-    UPDATE tag_siblings
-    SET betterid = roots.rootid
-    FROM roots
-    WHERE roots.tagid = tag_siblings.tagid
+    INSERT INTO tag_siblings(tagid, betterid)
+    TABLE bad_siblings
+    ON CONFLICT DO NOTHING
   `);
   
   printProgress([2, 6], "Normalizing tags");
