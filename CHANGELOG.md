@@ -15,6 +15,9 @@
 
 # Unreleased
 
+
+# v1.7.1
+
 - Fixed import crashing on multi-service tag sibling conflict
 
 
