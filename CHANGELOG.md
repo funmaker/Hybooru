@@ -15,6 +15,8 @@
 
 # Unreleased
 
+- Updated Docker Node target to v18.12.0
+
 
 # v1.7.1
 

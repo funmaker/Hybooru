@@ -1,4 +1,4 @@
-FROM node:16.1.0-alpine AS builder
+FROM node:18.12.0-alpine AS builder
 
 WORKDIR /build
 COPY . .
@@ -13,7 +13,7 @@ RUN npm install && \
     mv node_modules /app
 
 
-FROM node:16.1.0-alpine
+FROM node:18.12.0-alpine
 
 ENV DOCKERIZED=1
 
