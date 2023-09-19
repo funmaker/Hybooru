@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { IndexPageData } from "../../../server/routes/apiTypes";
-import { fileUrl } from "../../../server/helpers/consts";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
 import TagInput from "../../components/TagInput";
 import ThemeSwitch from "../../components/ThemeSwitch";
+import File from "../post/File";
 import useTheme from "../../hooks/useTheme";
 import useChange from "../../hooks/useChange";
 import "./IndexPage.scss";
@@ -31,9 +31,7 @@ export default function IndexPage() {
       {config.expectMotd &&
         <div className="motdWrap">
           {showMotd && pageData?.motd &&
-            <a href={`/posts/${pageData.motd.id}`} className="motd">
-              <img src={fileUrl(pageData.motd)} alt={String(pageData.motd.id)} />
-            </a>
+            <File post={pageData.motd} link={`/posts/${pageData.motd.id}`} controls={false} muted />
           }
         </div>
       }
@@ -49,6 +47,7 @@ export default function IndexPage() {
       </div>
       <ReactForm className="search" action="/posts">
         <TagInput name="query" placeholder="Search: flower sky 1girl" />
+        <button formAction="/random">Random</button>
         <button>Search</button>
       </ReactForm>
       {pageData &&

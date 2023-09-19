@@ -3,6 +3,10 @@ DELETE FROM urls WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
 CREATE INDEX ON urls(postid);
 ALTER TABLE urls ADD CONSTRAINT urls_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE;
 
+DELETE FROM notes WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
+CREATE INDEX ON notes(postid);
+ALTER TABLE notes ADD CONSTRAINT notes_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE;
+
 DELETE FROM mappings WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
 DELETE FROM mappings WHERE NOT EXISTS (SELECT 1 FROM tags WHERE id = tagid);
 DELETE FROM tags WHERE NOT EXISTS (SELECT 1 FROM mappings WHERE mappings.tagid = tags.id)

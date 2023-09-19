@@ -4,18 +4,17 @@
 
   .motdWrap {
     height: 15em;
+    text-align: center;
+    display: inline-block;
     margin: 0.5em auto -5em;
-    width: min-content;
+    overflow: hidden;
 
-    .motd {
-      display: inline-block;
-
-      img {
-        width: 20em;
-        height: 15em;
-        object-fit: contain;
-        display: inline-block;
-      }
+    .File {
+      height: 100%;
+      max-width: 20em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 
@@ -38,8 +37,11 @@
     margin: 0.5em 1em;
 
     .TagInput {
-      margin-right: 0.5em;
-      flex: 0 1 20em;
+      flex: 0 1 15em;
+    }
+    
+    button {
+      margin-left: 0.5em;
     }
   }
 

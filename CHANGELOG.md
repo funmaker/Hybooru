@@ -2,7 +2,6 @@
 ### TODO:
 
 - DMCA page
-- Optimize tag relation resolving
 - Display tag relations in tag search page
 - IPFS integration
 - Fix `Error: Request aborted`
@@ -15,8 +14,10 @@
 
 # Unreleased
 
+- Added support for notes (https://github.com/funmaker/Hybooru/issues/31)
 - Updated Docker Node target to v18.12.0
 - Fixed Internal Server Error on invalid post id
+- Fixed Motd only working with images
 - Fixed handling of recently added content types from Hydrus (https://github.com/funmaker/Hybooru/issues/33)
 
 

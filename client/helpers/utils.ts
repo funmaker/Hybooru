@@ -28,3 +28,7 @@ export function parseDuration(duration: number) {
   
   return text;
 }
+
+export function classJoin(...classes: Array<string | null | undefined | false>) {
+  return classes.filter(x => x).join(" ") || undefined;
+}

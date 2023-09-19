@@ -1,6 +1,6 @@
 {
 	"port": 3939,
-	"hydrusDbPath": null,
+	"hydrusDbPath": "/home/funmaker/.local/share/hydrus/test",
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
 	"adminPassword": "kek",
@@ -24,7 +24,7 @@
 	},
 	"tags": {
 		"services": null,
-		"motd": null,
+		"motd": "test",
 		"untagged": "-*",
 		"ignore": [],
 		"blacklist": [],

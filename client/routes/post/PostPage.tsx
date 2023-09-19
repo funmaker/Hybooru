@@ -60,13 +60,15 @@ export default function PostPage() {
     }
   }
   
+  const staticNotes = pageData.post.notes.filter(note => !note.rect);
+  
   return (
     <Layout className={`PostPage${fullHeight ? " fullHeight" : ""}`}
             simpleSettings
             sidebar={<>
               {rating}
               <div className="namespace">
-                <b>Statistics:</b>
+                <b>Statistics</b>
                 <div>{pageData.post.size !== null && `Size: ${parseSize(pageData.post.size)}`}</div>
                 <div>{pageData.post.width !== null && pageData.post.height !== null && `Dimensions: ${pageData.post.width}x${pageData.post.height}`}</div>
                 <div>{pageData.post.mime !== null && MIME_STRING[pageData.post.mime] && `Mime: ${MIME_STRING[pageData.post.mime]}`}</div>
@@ -78,11 +80,17 @@ export default function PostPage() {
               </div>
               {pageData.post.sources.length > 0 &&
                 <div className="namespace">
-                  <b>Sources:</b>
+                  <b>Sources</b>
                   {pageData.post.sources.map(url => <SourceLink key={url} url={url} />)}
                 </div>
               }
               <Tags tags={pageData.post.tags} grouped />
+              {staticNotes.map((note, id) => (
+                <div className="namespace spaced note" key={id}>
+                  <b>{note.label}</b>
+                  <p>{note.note}</p>
+                </div>
+              ))}
             </>}> {/* eslint-disable-line react/jsx-closing-tag-location */}
       <div className="fileWrap">
         <File post={pageData.post} link={link} />

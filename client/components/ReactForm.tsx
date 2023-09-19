@@ -8,8 +8,10 @@ export default function ReactForm({ action, ...props }: React.FormHTMLAttributes
     ev.preventDefault();
     const formData = new FormData(ev.currentTarget);
     const search = new URLSearchParams(formData as any).toString();
+    const submitter = (ev.nativeEvent as SubmitEvent).submitter;
+    const formAction = submitter && submitter.getAttribute("formaction");
     
-    history.push(`${action}${search ? `?${search}` : ""}`);
+    history.push(`${formAction || action}${search ? `?${search}` : ""}`);
   }, [action, history]);
   
   return <form action={action} {...props} onSubmit={onSubmit} />;

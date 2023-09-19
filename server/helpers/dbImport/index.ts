@@ -17,6 +17,7 @@ import Posts from "./posts";
 import Tags from "./tags";
 import Mappings from "./mappings";
 import Urls from "./urls";
+import Notes from "./notes";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
 
@@ -60,6 +61,7 @@ export async function rebuild() {
     
     await new Posts(hydrus, postgres, ratingsService).startEach(filesServices);
     await new Urls(hydrus, postgres).start();
+    await new Notes(hydrus, postgres).start();
     await new Tags(hydrus, postgres).start();
     await new Mappings(hydrus, postgres).startEach(mappingsServices);
     

@@ -1,12 +1,14 @@
 import SQL, { SQLStatement } from "sql-template-strings";
 import objectHash from "node-object-hash";
 import { PoolClient } from "pg";
-import { Post, PostSearchResults, PostSummary } from "../routes/apiTypes";
+import { Post, PostNote, PostSearchResults, PostSummary } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
 import configs from "../helpers/configs";
+import { number } from "prop-types";
+import { to } from "pg-copy-streams";
 
 const MAX_PARTS = 40;
 const TAGS_SAMPLE_MAX = 256;
@@ -158,7 +160,7 @@ export async function random(tag: string | null = null): Promise<PostSummary | n
 }
 
 export async function get(id: number): Promise<Post | null> {
-  const post = await db.queryFirst(SQL`
+  const post: Post | null = await db.queryFirst(SQL`
     SELECT
       posts.id,
       encode(posts.hash, 'hex') AS hash,
@@ -191,7 +193,16 @@ export async function get(id: number): Promise<Post | null> {
         FROM relations
         INNER JOIN posts other ON other.id = relations.other_postid
         WHERE relations.postid = posts.id
-      ) AS relations
+      ) AS relations,
+      (
+        SELECT COALESCE(array_agg(json_build_object(
+          'label', notes.label,
+          'note', notes.note,
+          'rect', NULL
+        )) FILTER (WHERE notes.postid IS NOT NULL), '{}')
+        FROM notes
+        WHERE notes.postid = posts.id
+      ) AS notes
     FROM posts
     LEFT  JOIN mappings ON mappings.postid = posts.id
     LEFT  JOIN tags     ON mappings.tagid = tags.id
@@ -205,9 +216,50 @@ export async function get(id: number): Promise<Post | null> {
     for(const relation of post.relations) {
       relation.extension = MIME_EXT[relation.mime as keyof typeof MIME_EXT] || "";
     }
+    
+    post.notes = post.notes.flatMap(note => splitSubnotes(note) || [note]);
   }
   
   return post;
+}
+
+function splitSubnotes(note: PostNote) {
+  const subNotes: PostNote[] = [];
+  const subNoteRegex = /\n*(.*?)\n#! ([^\n]*)\n?/sg;
+  
+  try {
+    let match;
+    while((match = subNoteRegex.exec(note.note))) {
+      const data = JSON.parse(match[2]);
+      if(!Array.isArray(data)) throw new Error(`Expected array, got ${match[2]}`);
+      
+      let [left, top, width, height, postWidth, postHeight] = data;
+      
+      if(typeof left !== "number") left = 0;
+      if(typeof top !== "number") top = 0;
+      if(typeof width !== "number") width = 0;
+      if(typeof height !== "number") height = 0;
+      if(typeof postWidth !== "number") postWidth = 100;
+      if(typeof postHeight !== "number") postHeight = 100;
+      
+      subNotes.push({
+        label: null,
+        note: match[1],
+        rect: {
+          left: left / postWidth * 100,
+          top: top / postHeight * 100,
+          width: width / postWidth * 100,
+          height: height / postHeight * 100,
+        },
+      });
+    }
+  } catch(e) {
+    console.error("Unable to parse note position data data.");
+    console.error(e);
+    return null;
+  }
+  
+  return subNotes.length > 0 ? subNotes : null;
 }
 
 interface CacheKey {

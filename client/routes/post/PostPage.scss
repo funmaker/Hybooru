@@ -2,7 +2,7 @@
 .PostPage {
   height: 100%;
 
-  .sidebar {
+  .sidebar .sidebarContent {
     .rating {
       text-align: center;
       font-size: 2em;
@@ -16,9 +16,24 @@
       }
     }
 
-    .sidebarContent > .namespace {
+    > .namespace {
       margin-top: 0.5em;
       font-size: 75%;
+      
+      &.spaced {
+        margin-top: 1em;
+      }
+    }
+    
+    .note {
+      b {
+        text-transform: capitalize;
+      }
+      
+      p {
+        opacity: 0.75;
+        white-space: pre-line;
+      }
     }
   }
 
@@ -35,6 +50,8 @@
       align-self: stretch;
       padding: 1rem;
       display: flex;
+      align-items: center;
+      justify-content: center;
 
       a:not(.File) {
         display: flex;
@@ -47,13 +64,10 @@
       }
 
       .File {
-        max-height: 100%;
-        max-width: 100%;
         height: auto;
-        width: auto;
-        display: inline-block;
+        max-width: 100%;
+        max-height: 100%;
         pointer-events: all;
-        margin: auto;
       }
     }
 

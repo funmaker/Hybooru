@@ -88,6 +88,16 @@ CREATE TABLE urls (
   PRIMARY KEY(id, postid)
 );
 
+DROP TABLE IF EXISTS notes CASCADE;
+CREATE TABLE notes (
+  id INTEGER,
+  postid INTEGER NOT NULL,
+  label TEXT NOT NULL,
+  note TEXT NOT NULL,
+
+  PRIMARY KEY(id, postid)
+);
+
 DROP TABLE IF EXISTS tags CASCADE;
 CREATE TABLE tags (
   id INTEGER PRIMARY KEY,

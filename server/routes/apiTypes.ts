@@ -4,11 +4,6 @@
 import { Mime } from "../helpers/consts";
 import { Theme } from "../../client/hooks/useTheme";
 
-export enum Relation {
-  DUPLICATE = "DUPLICATE",
-  DUPLICATE_BEST = "DUPLICATE_BEST",
-  ALTERNATE = "ALTERNATE",
-}
 
 export interface PostSummary {
   id: number;
@@ -17,10 +12,6 @@ export interface PostSummary {
   mime: Mime | null;
   posted: string;
   size: number | null;
-}
-
-export interface PostRelation extends PostSummary {
-  kind: Relation;
 }
 
 export interface PostSearchResults {
@@ -34,6 +25,27 @@ export interface TagsSearchResults {
   tags: Record<string, number>;
   total: number;
   pageSize: number;
+}
+
+export enum Relation {
+  DUPLICATE = "DUPLICATE",
+  DUPLICATE_BEST = "DUPLICATE_BEST",
+  ALTERNATE = "ALTERNATE",
+}
+
+export interface PostRelation extends PostSummary {
+  kind: Relation;
+}
+
+export interface PostNote {
+  label: string | null;
+  note: string;
+  rect: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null;
 }
 
 export interface Post {
@@ -52,6 +64,7 @@ export interface Post {
   tags: Record<string, number>;
   sources: string[];
   relations: PostRelation[];
+  notes: PostNote[];
 }
 
 export interface Stats {

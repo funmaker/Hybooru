@@ -1,7 +1,7 @@
-import React, { useReducer } from "react";
-import { Post, PostSummary } from "../../../server/routes/apiTypes";
+import React, { useMemo, useReducer } from "react";
+import { Post, PostNote, PostSummary } from "../../../server/routes/apiTypes";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
-import { parseSize } from "../../helpers/utils";
+import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
 import "./File.scss";
 
@@ -28,22 +28,35 @@ export default function File({ post, link, className, controls = true, autoPlay 
     mime = Mime.GENERAL_APPLICATION;
   }
   
+  const notes = "notes" in post ? post.notes.filter(note => !!note.rect) : undefined;
+  
   switch(mime) {
     case Mime.IMAGE_JPEG:
     case Mime.IMAGE_PNG:
     case Mime.IMAGE_GIF:
     case Mime.IMAGE_BMP:
     case Mime.IMAGE_ICON:
-    case Mime.IMAGE_APNG:
+    case Mime.ANIMATION_GIF:
+    case Mime.ANIMATION_APNG:
     case Mime.UNDETERMINED_PNG:
     case Mime.IMAGE_WEBP:
     case Mime.IMAGE_TIFF:
+    case Mime.IMAGE_SVG:
+    case Mime.IMAGE_HEIF:
+    case Mime.IMAGE_HEIF_SEQUENCE:
+    case Mime.IMAGE_HEIC:
+    case Mime.IMAGE_HEIC_SEQUENCE:
+    case Mime.IMAGE_AVIF:
+    case Mime.IMAGE_AVIF_SEQUENCE:
+    case Mime.UNDETERMINED_GIF:
+    case Mime.IMAGE_QOI:
     case Mime.GENERAL_IMAGE: {
-      const img = <img className={`File image${className}`} src={fileUrl(post)} alt={String(post.id)}
-                       width={width} height={height} onError={setError} {...rest} />;
-      
-      if(link) return <a href={fileUrl(post)} target="_blank" rel="noreferrer">{img}</a>;
-      else return img;
+      return (
+        <FileWrap className={className} width={width} height={height} link={link} notes={notes}>
+          <img className="image" src={fileUrl(post)} alt={String(post.id)}
+               width={width} height={height} onError={setError} {...rest} />
+        </FileWrap>
+      );
     }
     case Mime.VIDEO_FLV:
     case Mime.VIDEO_MP4:
@@ -55,14 +68,18 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.VIDEO_MOV:
     case Mime.VIDEO_AVI:
     case Mime.VIDEO_REALMEDIA:
+    case Mime.VIDEO_OGV:
+    case Mime.UNDETERMINED_MP4:
     case Mime.GENERAL_VIDEO:
     case Mime.GENERAL_ANIMATION: {
       return (
-        <video className={`File video${className}`} controls={controls} autoPlay={autoPlay} loop muted={muted}
-               width={width} height={height} onError={setError} {...rest}>
-          <source src={fileUrl(post)} />
-          Your browser does not support this video.
-        </video>
+        <FileWrap className={className} width={width} height={height} link={controls ? undefined : link} notes={notes}>
+          <video className="video" controls={controls} autoPlay={autoPlay} loop muted={muted}
+                 width={width} height={height} onError={setError} {...rest}>
+            <source src={fileUrl(post)} />
+            Your browser does not support this video.
+          </video>
+        </FileWrap>
       );
     }
     case Mime.AUDIO_MP3:
@@ -72,8 +89,16 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.AUDIO_M4A:
     case Mime.AUDIO_REALMEDIA:
     case Mime.AUDIO_TRUEAUDIO:
+    case Mime.AUDIO_WAVE:
+    case Mime.AUDIO_MKV:
+    case Mime.AUDIO_MP4:
+    case Mime.AUDIO_WAVPACK:
     case Mime.GENERAL_AUDIO: {
-      return <audio className={`File audio${className}`} src={fileUrl(post)} autoPlay={autoPlay && !muted} loop controls onError={setError} {...rest} />;
+      return (
+        <FileWrap className={className} width={width} height={height} notes={notes}>
+          <audio className="audio" src={fileUrl(post)} autoPlay={autoPlay && !muted} loop controls onError={setError} {...rest} />
+        </FileWrap>
+      );
     }
     case Mime.TEXT_HTML:
     case Mime.TEXT_PLAIN:
@@ -92,21 +117,54 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.APPLICATION_RAR:
     case Mime.APPLICATION_7Z:
     case Mime.APPLICATION_PSD:
+    case Mime.APPLICATION_CBOR:
+    case Mime.APPLICATION_WINDOWS_EXE:
+    case Mime.APPLICATION_SAI2:
+    case Mime.APPLICATION_KRITA:
+    case Mime.APPLICATION_XCF:
+    case Mime.APPLICATION_GZIP:
+    case Mime.APPLICATION_PROCREATE:
+    case Mime.GENERAL_APPLICATION_ARCHIVE:
+    case Mime.GENERAL_IMAGE_PROJECT:
     case Mime.GENERAL_APPLICATION:
     default: {
-      if(link) {
-        return (
-          <a href={link} className={`File unknown${className}`} data-ext={post.extension.slice(1)} data-size={size}>
-            <img src="/static/file.svg" alt={String(post.id)} {...rest} />
-          </a>
-        );
-      } else {
-        return (
-          <div className={`File unknown${className}`} data-ext={post.extension.slice(1)} data-size={size}>
+      return (
+        <FileWrap className={className} width={width} height={height} link={link} notes={notes}>
+          <div className="unknown" data-ext={post.extension.slice(1)} data-size={size}>
             <img src="/static/file.svg" alt={String(post.id)} {...rest} />
           </div>
-        );
-      }
+        </FileWrap>
+      );
     }
   }
+}
+
+interface FileWrapProps {
+  className?: string;
+  width?: number;
+  height?: number;
+  link?: string;
+  notes?: PostNote[];
+  children?: React.ReactNode;
+}
+
+function FileWrap({ className, width, height, link, notes, children }: FileWrapProps) {
+  const style = (width !== undefined && height !== undefined) ? {
+    aspectRatio: `${width} / ${height}`,
+  } : undefined;
+  
+  const domNotes = notes?.map((note, id) => (
+    <div key={id}
+         className="note"
+         data-content={note.note}
+         style={{
+           left: `${note.rect?.left || 0}%`,
+           top: `${note.rect?.top || 0}%`,
+           width: `${note.rect?.width || 0}%`,
+           height: `${note.rect?.height || 0}%`,
+         }} />
+  ));
+  
+  if(link) return <a className={classJoin("File", className)} style={style} href={link}>{children}{domNotes}</a>;
+  else return <div className={classJoin("File", className)} style={style}>{children}{domNotes}</div>;
 }
