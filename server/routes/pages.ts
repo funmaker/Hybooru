@@ -14,7 +14,11 @@ export const router = PromiseRouter();
 
 
 router.get<{ id: string }>('/posts/:id', async (req, res) => {
-  const post = await postsController.get(parseInt(req.params.id));
+  const id = parseInt(req.params.id);
+  
+  let post;
+  if(!isNaN(id)) post = await postsController.get(parseInt(req.params.id));
+  else post = null;
   
   const options: Options = {
     ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,

@@ -16,6 +16,8 @@
 # Unreleased
 
 - Updated Docker Node target to v18.12.0
+- Fixed Internal Server Error on invalid post id
+- Fixed handling of recently added content types from Hydrus (https://github.com/funmaker/Hybooru/issues/33)
 
 
 # v1.7.1

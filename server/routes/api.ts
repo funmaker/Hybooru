@@ -22,7 +22,11 @@ router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", async (req, r
 });
 
 router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {
-  const result = await postsController.get(parseInt(req.params.id));
+  const id = parseInt(req.params.id);
+  
+  let result;
+  if(!isNaN(id)) result = await postsController.get(parseInt(req.params.id));
+  else result = null;
   
   res.json(result);
 });
