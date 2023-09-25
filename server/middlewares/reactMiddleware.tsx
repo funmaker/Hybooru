@@ -39,6 +39,7 @@ export interface OGAudio {
 
 export interface Options {
   title?: string;
+  htmlRedirect?: string;
   ogTitle?: string;
   ogDescription?: string;
   ogType?: string;
@@ -70,6 +71,11 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
     // noinspection JSUnreachableSwitchBranches
     switch(req.accepts(['html', 'json'])) {
       case "html": {
+        if(options?.htmlRedirect) {
+          res.redirect(options.htmlRedirect);
+          break;
+        }
+        
         const initialDataEx: AnySSRPageData = {
           ...initialData,
           _config: req.config,

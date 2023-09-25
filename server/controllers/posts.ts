@@ -7,8 +7,6 @@ import HTTPError from "../helpers/HTTPError";
 import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
 import configs from "../helpers/configs";
-import { number } from "prop-types";
-import { to } from "pg-copy-streams";
 
 const MAX_PARTS = 40;
 const TAGS_SAMPLE_MAX = 256;
@@ -28,56 +26,12 @@ interface SearchArgs {
   page?: number;
   includeTags?: boolean;
   pageSize?: number;
-  client?: PoolClient;
 }
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.posts.pageSize, client }: SearchArgs): Promise<PostSearchResults> {
+export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.posts.pageSize }: SearchArgs, client?: PoolClient): Promise<PostSearchResults> {
   if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
   
-  const parts = query.split(" ")
-                     .filter(p => !!p)
-                     .map(preparePattern);
-  
-  if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
-  
-  const whitelist = [];
-  const blacklist = [];
-  let sort = SORTS.date;
-  let order = "desc";
-  let rating: undefined | null | [number, number] = undefined;
-  let match: RegExpMatchArray | null = null;
-  
-  for(let part of parts) {
-    if(part.startsWith("-")) {
-      blacklist.push(part.slice(1));
-    } else if(part.startsWith("order:")) {
-      part = part.slice(6);
-      
-      if(part.endsWith("\\_asc")) {
-        order = "asc";
-        part = part.slice(0, -5);
-      }
-      if(part.endsWith("\\_desc")) {
-        order = "desc";
-        part = part.slice(0, -6);
-      }
-      
-      if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
-      sort = SORTS[part as keyof typeof SORTS];
-    } else if(part === "rating:none") {
-      rating = null;
-    } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
-      let min = parseInt(match[1]);
-      let max = parseInt(match[2]);
-      if(match[2] === undefined) max = min;
-      if(isNaN(min) || isNaN(max)) continue;
-      if(min > max) [min, max] = [max, min];
-      
-      rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
-    } else {
-      whitelist.push(part);
-    }
-  }
+  const key = getCacheKey(query);
   
   const cached = [];
   let start = page * pageSize;
@@ -88,7 +42,9 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   while(start < end) {
     const cacheStart = Math.floor(start / CACHE_SIZE) * CACHE_SIZE;
     const cacheEnd = cacheStart + CACHE_SIZE;
-    const cachePage = await getCachedPosts({ whitelist, blacklist, sort, order, rating, offset: cacheStart }, client);
+    
+    key.offset = cacheStart;
+    const cachePage = await getCachedPosts(key, client);
     
     tags = cachePage.tags;
     total = cachePage.total;
@@ -121,38 +77,34 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
   return result;
 }
 
-export async function random(tag: string | null = null): Promise<PostSummary | null> {
-  let sample: SQLStatement;
-  if(!tag) {
-    sample = SQL`(
+export async function random(query: string | null = null): Promise<PostSummary | null> {
+  let id: number | null;
+  
+  if(!query) {
+    const post: { id: number } | null = await db.queryFirst(SQL`
       SELECT id
       FROM posts
       OFFSET floor(random() * (SELECT posts FROM global))
       LIMIT 1
-    )`;
+    `);
+    
+    id = post?.id || null;
   } else {
-    const pattern = preparePattern(tag);
-    sample = SQL`(
-      SELECT filtered.ids[floor(random() * icount(filtered.ids)) + 1] as id
-      FROM (
-        SELECT union_agg(tag_postids.postids) AS ids
-        FROM tags
-        INNER JOIN tag_postids ON tag_postids.tagid = tags.id
-        WHERE tags.name LIKE ${pattern} OR tags.subtag LIKE ${pattern}
-      ) filtered
-    )`;
+    const key = getCacheKey(query);
+    const cachePage = await getCachedPosts(key);
+    
+    id = cachePage.posts[Math.floor(Math.random() * cachePage.posts.length)] || null;
   }
   
-  const post = await db.queryFirst(SQL`
-    WITH sample AS `.append(sample).append(SQL`
+  const post: PostSummary | null = await db.queryFirst(SQL`
     SELECT
-      posts.id,
+      id,
       encode(hash, 'hex') as hash,
       mime,
       format_date(posted) AS posted
-    FROM sample
-    INNER JOIN posts ON posts.id = sample.id
-  `));
+    FROM posts
+    WHERE id = ${id}
+  `);
   
   if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
   
@@ -269,6 +221,62 @@ interface CacheKey {
   order: string;
   rating: undefined | null | [number, number];
   offset: number;
+}
+
+function getCacheKey(query: string): CacheKey {
+  const parts = query.split(" ")
+                     .filter(p => !!p)
+                     .map(preparePattern);
+  
+  if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
+  
+  const whitelist = [];
+  const blacklist = [];
+  let sort = SORTS.date;
+  let order = "desc";
+  let rating: undefined | null | [number, number] = undefined;
+  let match: RegExpMatchArray | null = null;
+  
+  for(let part of parts) {
+    if(part.startsWith("-")) {
+      blacklist.push(part.slice(1));
+    } else if(part.startsWith("order:")) {
+      part = part.slice(6);
+      
+      if(part.endsWith("\\_asc")) {
+        order = "asc";
+        part = part.slice(0, -5);
+      }
+      if(part.endsWith("\\_desc")) {
+        order = "desc";
+        part = part.slice(0, -6);
+      }
+      
+      if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
+      sort = SORTS[part as keyof typeof SORTS];
+    } else if(part === "rating:none") {
+      rating = null;
+    } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
+      let min = parseInt(match[1]);
+      let max = parseInt(match[2]);
+      if(match[2] === undefined) max = min;
+      if(isNaN(min) || isNaN(max)) continue;
+      if(min > max) [min, max] = [max, min];
+      
+      rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
+    } else {
+      whitelist.push(part);
+    }
+  }
+  
+  return {
+    whitelist,
+    blacklist,
+    sort,
+    order,
+    rating,
+    offset: 0,
+  };
 }
 
 interface CacheValue {

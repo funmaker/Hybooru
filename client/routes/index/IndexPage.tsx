@@ -47,7 +47,6 @@ export default function IndexPage() {
       </div>
       <ReactForm className="search" action="/posts">
         <TagInput name="query" placeholder="Search: flower sky 1girl" />
-        <button formAction="/random">Random</button>
         <button>Search</button>
       </ReactForm>
       {pageData &&

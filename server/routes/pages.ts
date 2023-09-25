@@ -1,14 +1,15 @@
 import PromiseRouter from "express-promise-router";
 import { Theme } from "../../client/hooks/useTheme";
+import { qsStringify } from "../../client/helpers/utils";
+import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
+import { Options } from "../middlewares/reactMiddleware";
+import configs from "../helpers/configs";
+import opensearch from "../views/opensearch.handlebars";
+import * as githubController from "../controllers/github";
 import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
-import { Options } from "../middlewares/reactMiddleware";
-import opensearch from "../views/opensearch.handlebars";
-import configs from "../helpers/configs";
-import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
-import * as githubController from "../controllers/github";
-import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, RandomPageData, RandomPageRequest, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
 
@@ -50,10 +51,11 @@ router.get<any, any, any, any, TagsSearchPageRequest>('/tags', async (req, res) 
   res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });
 });
 
-router.get('/random', async (req, res) => {
-  const post = await postsController.random();
+router.get<any, any, any, any, RandomPageRequest>('/random', async (req, res) => {
+  const post = await postsController.random(req.query.query);
+  const redirect = post ? `/posts/${post.id}${qsStringify(req.query)}` : `/posts${qsStringify(req.query)}`;
   
-  res.redirect(post ? `/posts/${post.id}` : "/");
+  res.react<RandomPageData>({ redirect }, { ogTitle: "Random Post", ogDescription: req.query.query, htmlRedirect: redirect });
 });
 
 router.post<any, any, SetThemeRequest>('/setTheme', async (req, res) => {
@@ -66,11 +68,11 @@ router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
   const theme = req.cookies.theme as Theme || Theme.AUTO;
   
-  let motdTag: string | undefined;
-  if(configs.tags.motd && typeof configs.tags.motd === "object") motdTag = configs.tags.motd[theme];
-  else if(configs.tags.motd) motdTag = configs.tags.motd;
+  let motdQuery: string | undefined;
+  if(configs.tags.motd && typeof configs.tags.motd === "object") motdQuery = configs.tags.motd[theme];
+  else if(configs.tags.motd) motdQuery = configs.tags.motd;
   
-  const motd = typeof motdTag === "string" && await postsController.random(motdTag) || null;
+  const motd = typeof motdQuery === "string" && await postsController.random(motdQuery) || null;
   const options: Options = { ogTitle: "Main Page" };
   
   const releases = await githubController.getReleases();

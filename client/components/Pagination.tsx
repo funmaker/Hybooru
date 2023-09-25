@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import qs from 'query-string';
+import { qsParse, qsStringify } from "../helpers/utils";
 import "./Pagination.scss";
 
 interface PaginationProps {
@@ -12,14 +12,14 @@ const BUTTON_COUNT = 9;
 
 export default function Pagination({ count }: PaginationProps) {
   const location = useLocation();
-  const query = qs.parse(location.search);
+  const query = qsParse(location.search);
   const page = typeof query.page === "string" && parseInt(query.page) || 0;
   
   const buttons: React.ReactNode[] = [];
   const addButton = (target: number | null, text: React.ReactNode) => {
     let newSearch;
     if(target === null) newSearch = "#";
-    else newSearch = "?" + qs.stringify({ ...query, page: target });
+    else newSearch = qsStringify({ ...query, page: target });
     
     if(null === target) buttons.push(<span key={buttons.length} className="disabled">{text}</span>);
     else buttons.push(<Link key={buttons.length} to={newSearch} className={page === target ? "active" : undefined}>{text}</Link>);

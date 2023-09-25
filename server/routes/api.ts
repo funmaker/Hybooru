@@ -6,7 +6,7 @@ import HTTPError from "../helpers/HTTPError";
 import * as db from "../helpers/db";
 import * as postsController from "../controllers/posts";
 import * as tagsController from "../controllers/tags";
-import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResults } from "./apiTypes";
+import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResponse } from "./apiTypes";
 
 export const router = PromiseRouter();
 
@@ -37,7 +37,7 @@ router.get<any, PostsSearchResponse, any, Partial<PostsSearchRequest>>("/post", 
   res.json(result);
 });
 
-router.get<any, TagsSearchResults, any, Partial<TagsSearchRequest>>("/tags", async (req, res) => {
+router.get<any, TagsSearchResponse, any, Partial<TagsSearchRequest>>("/tags", async (req, res) => {
   const result = await tagsController.search(req.query);
   
   res.json(result);

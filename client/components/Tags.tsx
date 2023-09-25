@@ -121,7 +121,7 @@ function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   
   const onDel = useCallback<React.MouseEventHandler>(ev => {
     ev.preventDefault();
-    setQuery(query => addTag(query, tag));
+    setQuery(query => delTag(query, tag));
   }, [setQuery, tag]);
   
   return (

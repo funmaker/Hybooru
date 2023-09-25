@@ -1,7 +1,7 @@
 import isNode from 'detect-node';
 import axios, { Method, Canceler } from 'axios';
 import { toast } from "react-toastify";
-import qs from 'query-string';
+import { qsStringify } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const CancelToken = axios.CancelToken;
@@ -23,9 +23,9 @@ export default async function requestJSON<Res, Req extends Record<string, any> =
   host = host || location.host;
   pathname = pathname || location.pathname;
   if(search && typeof search !== "string") {
-    search = qs.stringify(search);
+    search = qsStringify(search);
   }
-  search = search ? "?" + search : location.search;
+  search = search || location.search;
   href = href || `//${host}${pathname}${search}`;
   method = method || "GET";
   

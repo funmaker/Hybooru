@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useMemo, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router";
-import qs from "query-string";
+import { qsParse, qsStringify } from "../helpers/utils";
 import useChange from "./useChange";
 
 type SetState = (newState: string | ((state: string) => string), silent?: boolean) => void;
@@ -22,7 +22,7 @@ export function useRTQuery() {
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const history = useHistory();
-  const search = qs.parse(useLocation().search);
+  const search = qsParse(useLocation().search);
   const urlQuery = typeof search.query === "string" ? search.query : "";
   const [query, setQuery] = useState(urlQuery);
   const queryRef = useRef(query);
@@ -37,12 +37,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     if(typeof update === "function") newVal = update(queryRef.current);
     else newVal = update;
     
-    const search = qs.parse(history.location.search);
+    const search = qsParse(history.location.search);
     search.query = newVal;
     if(!search.query) delete search.query;
-    const searchEncoded = qs.stringify(search);
     
-    return `${history.location.pathname}${searchEncoded ? `?${searchEncoded}` : ""}`;
+    return `${history.location.pathname}${qsStringify(search)}`;
   }, [history]);
   
   const onQueryChange = useCallback<SetState>((update, silent) => {

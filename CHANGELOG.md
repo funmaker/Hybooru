@@ -15,9 +15,12 @@
 # Unreleased
 
 - Added support for notes (https://github.com/funmaker/Hybooru/issues/31)
+- Added `Random` button to draw a random image from the search pool (https://github.com/funmaker/Hybooru/issues/24)
+- Added support for full queries in motd (https://github.com/funmaker/Hybooru/issues/3)
 - Updated Docker Node target to v18.12.0
 - Fixed Internal Server Error on invalid post id
 - Fixed Motd only working with images
+- Fixed tags not being negated when pressed `-` tag button with JS enabled
 - Fixed handling of recently added content types from Hydrus (https://github.com/funmaker/Hybooru/issues/33)
 
 

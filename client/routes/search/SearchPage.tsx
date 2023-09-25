@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useHistory } from "react-router";
-import qs from "query-string";
 import { PostSummary } from "../../../server/routes/apiTypes";
+import { qsParse, qsStringify } from "../../helpers/utils";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useSSR from "../../hooks/useSSR";
 import usePostsCache, { PostsCacheData } from "../../hooks/usePostsCache";
@@ -19,7 +19,7 @@ export default function SearchPage() {
   const [popupEnabled] = useLocalStorage("popup", false);
   const SSR = useSSR();
   const history = useHistory();
-  const search = qs.parse(history.location.search);
+  const search = qsParse(history.location.search);
   const lastPostsCache = useRef<null | PostsCacheData>(null);
   const popupPushed = useRef(false);
   const scrollRestore = useRef<null | number>(null);
@@ -105,7 +105,7 @@ export default function SearchPage() {
   
   useEffect(() => {
     if(!pagination && search.page !== undefined) {
-      history.replace(`?${qs.stringify({ ...search, page: undefined })}`);
+      history.replace(qsStringify({ ...search, page: undefined }));
     } else if(pagination && postsCache.page > 1) {
       reset();
     }

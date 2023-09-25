@@ -545,7 +545,7 @@ async function countUsage(postgres: PoolClient) {
 async function calculateStatistics(postgres: PoolClient, options: any, ratingsService: number | null) {
   printProgress(false, "Calculating statistics...");
   
-  const untagged = await postsController.search({ query: configs.tags.untagged, client: postgres });
+  const untagged = await postsController.search({ query: configs.tags.untagged }, postgres);
   
   let stars = configs.rating?.stars || null;
   if(ratingsService === null) stars = null;

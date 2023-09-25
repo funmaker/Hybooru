@@ -104,9 +104,10 @@
     .search {
       padding: 0 0.5em;
       display: flex;
+      gap: 0.25em;
 
       .settingsButton {
-        margin: 0.25em 0.25em 0.25em 0;
+        margin: 0.25em 0;
 
         img {
           height: 1.5em;
@@ -131,7 +132,6 @@
 
       .TagInput {
         flex: 1;
-        margin-right: 0.25em;
       }
     }
 

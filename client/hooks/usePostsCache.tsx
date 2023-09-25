@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import axios, { Canceler } from "axios";
-import qs from "query-string";
 import { PostsSearchPageData, PostsSearchRequest, PostsSearchResponse, PostSummary } from "../../server/routes/apiTypes";
+import { qsParse } from "../helpers/utils";
 import requestJSON from "../helpers/requestJSON";
 import usePageData from "./usePageData";
 
@@ -45,7 +45,7 @@ export default function usePostsCache() {
   const canceller = useRef<Canceler | null>(null);
   const [fetching, setFetching] = useState(false);
   const postsCache = useContext(PostsCacheContext);
-  const search = qs.parse(location.search);
+  const search = qsParse(location.search);
   const query = typeof search.query === "string" ? search.query : "";
   const key = JSON.stringify([search.page, query]);
   const [pageData, pageFetching] = usePageData<PostsSearchPageData>(!postsCache[key], false);

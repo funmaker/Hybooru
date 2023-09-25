@@ -13,6 +13,7 @@ import TestPage from "./routes/TestPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
+import RandomPage from "./routes/random/RandomPage";
 import TagsPage from "./routes/tags/TagsPage";
 import NotFoundPage from "./routes/error/NotFoundPage";
 import "./globals.scss";
@@ -60,6 +61,7 @@ export default hot(module)(function App({ initialData }: Props) {
                   <Route path="/tags" component={TagsPage} />
                   <Route path="/posts/:id" component={PostPage} />
                   <Route path="/posts" component={SearchPage} />
+                  <Route path="/random" component={RandomPage} />
                   <Route path="/" exact component={IndexPage} />
                   <NotFoundPage />
                 </Switch>

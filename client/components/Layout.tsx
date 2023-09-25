@@ -82,7 +82,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
           <Link to="/">Main Page</Link>
           <Link to="/posts">All Posts</Link>
           <Link to="/tags">Tags</Link>
-          <a href="/random">Random</a>
+          <Link to="/random">Random</Link>
           <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
           <ThemeSwitch />
           {extraLink}
@@ -90,6 +90,8 @@ export default function Layout({ className, sidebar, children, extraLink, search
         <ReactForm className="search" action={searchAction}>
           <TagInput name="query" placeholder="Search: flower sky 1girl" />
           <SSRCurtain><a className="settingsButton" href="#" onClick={onOptionsButtonClick}><img src="/static/cog.svg" alt="settings" /></a></SSRCurtain>
+          <button hidden /> {/* Capture enter-submit */}
+          <button formAction="/random">Random</button>
           <button>Search</button>
         </ReactForm>
         {fetching && <div className="progress" />}

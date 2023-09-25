@@ -124,6 +124,14 @@ export interface TagsSearchPageData {
   results: TagsSearchResults;
 }
 
+export interface RandomPageRequest {
+  query?: string;
+}
+
+export interface RandomPageData {
+  redirect: string;
+}
+
 export interface ErrorPageData {
   _error: {
     code: number;
