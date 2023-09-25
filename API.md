@@ -32,7 +32,8 @@ Searches posts by query.
 | Name      | Type           | Comment                                                                                                                                                 |
 |-----------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | id        | number         | Post's unique id.                                                                                                                                       |
-| hash      | string         | md5 hash of the file.                                                                                                                                   |
+| sha256    | string         | sha256 hash of the file.                                                                                                                                |
+| hash      | string         | _(deprecated)_ sha256 hash of the file. use sha256 field instead                                                                                        |
 | extension | string         | File extension, eg: `".jpg"`, `".png"`, etc                                                                                                             |
 | mime      | number or null | Hydrus internal mime id. See [HydrusConstants.py](https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py) for more details. |
 | posted    | string         | ISO 8601 date time when original post was created.                                                                                                      |
@@ -47,7 +48,9 @@ Fetches post details by given `id`.
 | Name      | Type                            | Comment                                                                                                                                                 |
 |-----------|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | id        | number                          | Post's unique id.                                                                                                                                       |
-| hash      | string                          | md5 hash of the file.                                                                                                                                   |
+| sha256    | string                          | sha256 hash of the file.                                                                                                                                |
+| hash      | string                          | _(deprecated)_ sha256 hash of the file. use sha256 field instead                                                                                        |
+| md5       | string                          | md5 hash of the file.                                                                                                                                   |
 | extension | string                          | File extension, eg: `".jpg"`, `".png"`, etc                                                                                                             |
 | size      | number or null                  | File size.                                                                                                                                              |
 | width     | number or null                  | Width of the image or video.                                                                                                                            |

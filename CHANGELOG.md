@@ -9,7 +9,6 @@
 - Investigate potential hour long going requests
 - Add zoom in to gallery
 - Research if VACUUMing has any value
-- search md5/sha
 
 
 # Unreleased
@@ -17,6 +16,7 @@
 - Added support for notes (https://github.com/funmaker/Hybooru/issues/31)
 - Added `Random` button to draw a random image from the search pool (https://github.com/funmaker/Hybooru/issues/24)
 - Added support for full queries in motd (https://github.com/funmaker/Hybooru/issues/3)
+- Added searching sha256/md5 hashes
 - Updated Docker Node target to v18.12.0
 - Fixed Internal Server Error on invalid post id
 - Fixed Motd only working with images

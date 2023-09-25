@@ -30,6 +30,8 @@ CREATE UNIQUE INDEX ON tag_postids(tagid);
 CREATE INDEX ON posts(posted, id);
 CREATE INDEX ON posts(rating, id);
 CREATE INDEX ON posts(size, id);
+CREATE UNIQUE INDEX ON posts(sha256);
+CREATE INDEX ON posts(md5);
 
 DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
 DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = other_postid);

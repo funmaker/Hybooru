@@ -57,7 +57,8 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     SELECT
       COALESCE(json_agg(json_build_object(
         'id', id,
-        'hash', encode(hash, 'hex'),
+        'sha256', encode(sha256, 'hex'),
+        'hash', encode(sha256, 'hex'),
         'mime', mime,
         'posted', format_date(posted),
         'size', size
@@ -99,7 +100,8 @@ export async function random(query: string | null = null): Promise<PostSummary |
   const post: PostSummary | null = await db.queryFirst(SQL`
     SELECT
       id,
-      encode(hash, 'hex') as hash,
+      encode(sha256, 'hex') as sha256,
+      encode(sha256, 'hex') as hash,
       mime,
       format_date(posted) AS posted
     FROM posts
@@ -115,7 +117,9 @@ export async function get(id: number): Promise<Post | null> {
   const post: Post | null = await db.queryFirst(SQL`
     SELECT
       posts.id,
-      encode(posts.hash, 'hex') AS hash,
+      encode(posts.sha256, 'hex') AS sha256,
+      encode(posts.sha256, 'hex') AS hash,
+      encode(posts.md5, 'hex') AS md5,
       posts.size,
       posts.width,
       posts.height,
@@ -137,7 +141,8 @@ export async function get(id: number): Promise<Post | null> {
       (
         SELECT COALESCE(array_agg(json_build_object(
           'id', other.id,
-          'hash', encode(other.hash, 'hex'),
+          'sha256', encode(other.sha256, 'hex'),
+          'hash', encode(other.sha256, 'hex'),
           'mime', other.mime,
           'posted', format_date(other.posted),
           'kind', relations.kind
@@ -217,6 +222,8 @@ function splitSubnotes(note: PostNote) {
 interface CacheKey {
   whitelist: string[];
   blacklist: string[];
+  md5: string[];
+  sha256: string[];
   sort: string;
   order: string;
   rating: undefined | null | [number, number];
@@ -232,6 +239,8 @@ function getCacheKey(query: string): CacheKey {
   
   const whitelist = [];
   const blacklist = [];
+  const sha256 = [];
+  const md5 = [];
   let sort = SORTS.date;
   let order = "desc";
   let rating: undefined | null | [number, number] = undefined;
@@ -256,6 +265,16 @@ function getCacheKey(query: string): CacheKey {
       sort = SORTS[part as keyof typeof SORTS];
     } else if(part === "rating:none") {
       rating = null;
+    } else if(part.startsWith("sha256:")) {
+      let hash = part.slice(7);
+      if(hash.startsWith("0x")) hash = hash.slice(2);
+      if(hash.length % 2 !== 0) hash += "0";
+      sha256.push(`\\x${hash}`);
+    } else if(part.startsWith("md5:")) {
+      let hash = part.slice(4);
+      if(hash.startsWith("0x")) hash = hash.slice(2);
+      if(hash.length % 2 !== 0) hash += "0";
+      md5.push(`\\x${hash}`);
     } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
       let min = parseInt(match[1]);
       let max = parseInt(match[2]);
@@ -272,6 +291,8 @@ function getCacheKey(query: string): CacheKey {
   return {
     whitelist,
     blacklist,
+    sha256,
+    md5,
     sort,
     order,
     rating,
@@ -297,7 +318,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     return postsCache[hashed];
   }
   
-  let { whitelist, blacklist, sort, order, offset, rating } = key;
+  let { whitelist, blacklist, sha256, md5, sort, order, offset, rating } = key;
   
   let ratingFilter = SQL``;
   let from = SQL`
@@ -311,6 +332,58 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   whitelist = whitelist.filter(pat => !blankPattern.test(pat));
   blacklist = blacklist.filter(pat => !blankPattern.test(pat));
   
+  const whitelistParts: SQLStatement[] = [];
+  if(whitelist.length > 0) {
+    whitelistParts.push(SQL`
+      SELECT union_agg(tag_postids.postids) AS ids
+      FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
+      LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+      INNER JOIN tag_postids ON tag_postids.tagid = tags.id
+      GROUP BY patid
+    `);
+  }
+  
+  if(sha256.length > 0) {
+    whitelistParts.push(SQL`
+      SELECT array_agg(id) AS ids
+      FROM posts
+      WHERE sha256 = ANY(${sha256}::bytea[])
+    `);
+  }
+  
+  if(md5.length > 0) {
+    whitelistParts.push(SQL`
+      SELECT array_agg(id) AS ids
+      FROM posts
+      WHERE md5 = ANY(${md5}::bytea[])
+    `);
+  }
+  
+  let whitelistCTE: SQLStatement | null;
+  if(whitelistParts.length > 0) {
+    const whitelistUnion = whitelistParts.reduce((acc, val) => acc.append(SQL`UNION ALL`).append(val));
+    
+    whitelistCTE = SQL`whitelist AS (
+      SELECT intersection_agg(ids) as ids FROM (
+        `.append(whitelistUnion).append(SQL`
+      ) ids
+    ),`);
+  } else {
+    whitelistCTE = null;
+  }
+  
+  let blacklistCTE: SQLStatement | null;
+  if(blacklist.length > 0) {
+    blacklistCTE = SQL`blacklist AS (
+      SELECT union_agg(tag_postids.postids) AS ids
+      FROM unnest(${blacklist}::TEXT[]) pat
+      LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+      INNER JOIN tag_postids ON tag_postids.tagid = tags.id
+    ),`;
+  } else {
+    blacklistCTE = null;
+  }
+  
   let filteredWhere;
   if(onlyTagged && onlyUntagged) {
     filteredWhere = `WHERE FALSE`;
@@ -322,26 +395,26 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     filteredWhere = ``;
   }
   
-  let filtered: SQLStatement;
+  let filteredCTE: SQLStatement;
   if(onlyTagged && onlyUntagged) {
-    filtered = SQL`(SELECT 0 AS id WHERE FALSE)`;
-  } else if(whitelist.length > 0 && blacklist.length > 0) {
-    filtered = SQL`(
+    filteredCTE = SQL`filtered AS (SELECT 0 AS id WHERE FALSE)`;
+  } else if(whitelistCTE && blacklistCTE) {
+    filteredCTE = SQL`filtered AS (
       SELECT id
       FROM whitelist
       CROSS JOIN blacklist
       CROSS JOIN LATERAL unnest(whitelist.ids - blacklist.ids) id
       `.append(filteredWhere).append(`
     )`);
-  } else if(whitelist.length > 0) {
-    filtered = SQL`(
+  } else if(whitelistCTE) {
+    filteredCTE = SQL`filtered AS (
       SELECT id
       FROM whitelist
       CROSS JOIN LATERAL unnest(whitelist.ids) id
       `.append(filteredWhere).append(`
     )`);
-  } else if(blacklist.length > 0) {
-    filtered = SQL`(
+  } else if(blacklistCTE) {
+    filteredCTE = SQL`filtered AS (
       SELECT id
       FROM posts
       CROSS JOIN blacklist
@@ -349,13 +422,13 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       `.append(filteredWhere).append(`
     )`);
   } else if(filteredWhere) {
-    filtered = SQL`(
+    filteredCTE = SQL`filtered AS (
       SELECT id
       FROM posts
       `.append(filteredWhere).append(`
     )`);
   } else {
-    filtered = SQL`(SELECT id FROM posts)`;
+    filteredCTE = SQL`filtered AS (SELECT id FROM posts)`;
     from = SQL`FROM posts`;
   }
   
@@ -367,22 +440,9 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   
   const result = await db.queryFirst(SQL`
     WITH
-      whitelist AS (
-        SELECT intersection_agg(ids) as ids FROM (
-          SELECT union_agg(tag_postids.postids) AS ids
-          FROM unnest(${whitelist}::TEXT[]) WITH ORDINALITY x(pat, patid)
-          LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-          INNER JOIN tag_postids ON tag_postids.tagid = tags.id
-          GROUP BY patid
-        ) ids
-      ),
-      blacklist AS (
-        SELECT union_agg(tag_postids.postids) AS ids
-        FROM unnest(${blacklist}::TEXT[]) pat
-        LEFT JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-        INNER JOIN tag_postids ON tag_postids.tagid = tags.id
-      ),
-      filtered AS `.append(filtered).append(SQL`
+      `.append(whitelistCTE || SQL``).append(SQL`
+      `).append(blacklistCTE || SQL``).append(SQL`
+      `).append(filteredCTE).append(SQL`
     SELECT
       COALESCE(json_agg(id), '[]') as posts,
       (SELECT count(1) FROM filtered) as total,

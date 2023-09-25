@@ -7,7 +7,11 @@ import { Theme } from "../../client/hooks/useTheme";
 
 export interface PostSummary {
   id: number;
+  /**
+   * @deprecated use `sha256` instead
+   */
   hash: string;
+  sha256: string;
   extension: string;
   mime: Mime | null;
   posted: string;
@@ -50,7 +54,12 @@ export interface PostNote {
 
 export interface Post {
   id: number;
+  /**
+   * @deprecated use `sha256` instead
+   */
   hash: string;
+  sha256: string;
+  md5: string;
   extension: string;
   size: number | null;
   width: number | null;
