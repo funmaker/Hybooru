@@ -31,6 +31,7 @@ possible)**
 - Ratings
 - Sorting (date imported, rating, size, etc)
 - Searching tags and autocomplete
+- Notes and translation overlays
 - tag and post relations (parents/siblings, duplicates/alternatives)
 - Colored tags
 - REST API
@@ -104,7 +105,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | posts.maxPreviewSize         | number                    | `104857600`                                       | Max size in bytes of post that can be previewed in post page/gallery. Default is 100MB.                                                                                                        |
 | tags                         | object                    | _see below_                                       | Options related to tags. All tags below support wildcards.                                                                                                                                     |
 | tags.services                | (string/number)[] or null | `null`                                            | List of names or ids of tag services to import. Use `null` to import from all services.                                                                                                        |
-| tags.motd                    | string or object or null  | `null`                                            | Tag used to for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)                        |
+| tags.motd                    | string or object or null  | `null`                                            | Query used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)               |
 | tags.untagged                | string                    | `"-*"`                                            | Overrides query used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.                                                                                  |
 | tags.ignore                  | string[]                  | `[]`                                              | List of tags that will not be imported from Hydrus (posts tagged by these tags will still be imported).                                                                                        |
 | tags.blacklist               | string[]                  | `[]`                                              | All posts and tags matching any of specified tags will not be imported from Hydrus.                                                                                                            |
@@ -122,11 +123,77 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | versionCheck.repo            | string                    | `"hybooru"`                                       | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                              |
 | versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                      |
 
+
+## Translation/overlay notes
+
+_This feature is meant for advanced users._
+
+Hydrus so far does not support overlay notes (https://github.com/hydrusnetwork/hydrus/issues/562). Hybooru implements it
+using a non-standard extension to the existing Hydrus note system and custom content parser. If you want to display
+overlay notes in Hybooru you will need to modify page parsers in Hydrus to create a note in special format that stores
+note position and size. I have prepared few content parser for popular boorus:
+
+<img src=".github/images/gelbooru.png" width="256"> <img src=".github/images/danbooru.png" width="256"> <img src=".github/images/sankaku.png" width="256">
+
+To import content parsers in Hydrus you need to go to network > downloader components > manage parsers > select target
+file page parser > edit > content parsers and drag and drop one of the above images into the content parser list.
+Hydrus will prevent you from dropping mismatched image into a different kind of list, but it will not prevent you from
+adding a content parser to wrong page parse, so make sure you are adding it to the right page parser for the right
+domain.
+
+After importing content parser, newly imported images should have `translation` containing all the overlays if they have
+any. However, Hydrus by default will not add translations to images that it already recognizes in the database. To
+fetch overlay notes for images recognized by Hydrus, you will have to create a new Url Import tab (download > urls)
+and go to import options > tags > set custom tag import options just for this importer > check both force fetch page
+even if url/hash recognized and file already in db. In this particular importer hydrus will update notes(and other file
+metadata I guess) even if it recognizes the image. You can also set it as the default, but it's not recommended.
+
+
+### Overlay note format
+
+[Content Parsers in Hydrus Documentation](https://hydrusnetwork.github.io/hydrus/downloader_parsers_content_parsers.html)
+
+If you want to fetch overlays from different website, you will need to write your own content parser. Overlay notes
+are stored in one or many regular hydrus notes and contain special commands that can be understood by Hybooru. One note
+can contain any number of overlay sub-notes. The label/title of the note is ignored. The format is as follows:
+
+```
+<note content>
+#! [<left>,<top>,<width>,<height>,<srcWidth>,<srcHeight>]
+
+<note content>
+#! [<left>,<top>,<width>,<height>,<srcWidth>,<srcHeight>]
+
+...
+```
+
+For example:
+
+```
+Note in upper left corner
+#! [50,50,100,100,500,500]
+
+Multi
+-line
+note on the bottom
+#! [0,400,500,100,500,500]
+```
+
+Sub-notes are divided using lines that begin with `#! `. On these lines Hybooru expects an JSON array with numbers
+representing its position on the image. `<srcWidth>` and `<srcHeight>` represent the size of the original image. They
+are necessary to keep overlays in the right in case an user copies notes to another version of the image, for example
+in case of merge during duplicates processing. You can also set these values to `100` each if you are dealing with
+positions in percents. It is strongly recommended you put all the subnotes into a single Hydrus note as the output
+of your content parser. Hydrus uses note names to handle note update/replacement and outputting multiple notes with
+generated names like `translation (###)` will make resolving conflicts much harder.
+
+
 ## Development
 
 Build scripts are written for Linux. Building on Windows is currently not supported.
 However, you can still look into `package.json` and change `scripts` to use Window's commands.
 Alternatively you can probably just use Docker or a virtual machine.
+
 
 ### Install Dependencies
 
@@ -134,11 +201,13 @@ Alternatively you can probably just use Docker or a virtual machine.
 npm install
 ```
 
+
 ### Run development
 
 ```bash
 npm run start
 ```
+
 
 ### Build production
 
@@ -147,6 +216,7 @@ npm run build:prod
 ```
 
 Output is saved to `dist/` folder in project's root directory. These are the files you will want to deploy.
+
 
 ### Start production
 

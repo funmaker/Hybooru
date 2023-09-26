@@ -24,6 +24,7 @@
 - Fixed Motd only working with images
 - Fixed tags not being negated when pressed `-` tag button with JS enabled
 - Fixed handling of recently added content types from Hydrus (https://github.com/funmaker/Hybooru/issues/33)
+- Deprecated `hash` field in `Post` and `PostSummary`
 
 
 # v1.7.1

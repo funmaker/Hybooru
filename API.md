@@ -1,7 +1,7 @@
 
 # Api Documentation
 
-Hybooru offers REST API for fetching data and managment. All requests
+Hybooru offers REST API for fetching data and management. All requests
 are done over HTTP. GET requests should be url-encoded, POST requests
 should be sent as json inside http body. Responses are sent as jsons
 as well.
@@ -9,7 +9,7 @@ as well.
 
 ## GET /api/post
 
-Searches posts by query.
+Searches posts by a text query.
 
 ### Request
 
@@ -76,24 +76,35 @@ Same as [PostSummary](#PostSummary) with additional fields:
 
 ## GET /api/tags
 
-Searches tags by query.
+Searches tags by a text query.
 
 ### Request
 
-| Name     | Type   | Comment                                                           |
-|----------|--------|-------------------------------------------------------------------|
-| query    | string | _(optional)_ Single search pattern. eg: `"red_*"`, `"?girl"`, etc |
-| sorting  | string | _(optional)_ `"used"`(default) or `"id"`.                         |
-| page     | number | _(optional)_ 0-indexed number of page to fetch.                   |
-| pageSize | number | _(optional)_ Ignored if larger than the default page size.        |
+| Name     | Type    | Comment                                                           |
+|----------|---------|-------------------------------------------------------------------|
+| query    | string  | _(optional)_ Single search pattern. eg: `"red_*"`, `"?girl"`, etc |
+| sorting  | string  | _(optional)_ `"used"`(default) or `"id"`.                         |
+| page     | number  | _(optional)_ 0-indexed number of page to fetch.                   |
+| pageSize | number  | _(optional)_ Ignored if larger than the default page size.        |
+| full     | boolean | _(optional)_ Includes tag siblings and parents in results.        |
 
 ### Response
 
-| Name     | Type   | Comment                                                     |
-|----------|--------|-------------------------------------------------------------|
-| tags     | object | Results(keys are the names, values are their global usage). |
-| total    | number | Total amount of matched tags.                               |
-| pageSize | number | Actual page size.                                           |
+| Name     | Type                        | Comment                                                                 |
+|----------|-----------------------------|-------------------------------------------------------------------------|
+| tags     | object                      | _(`!full`)_ Results(keys are the names, values are their global usage). |
+| tags     | [TagSummary](#TagSummary)[] | _(`full === true`)_ Results                                             |
+| total    | number                      | Total amount of matched tags.                                           |
+| pageSize | number                      | Actual page size.                                                       |                                                                            |
+
+### TagSummary
+
+| Name     | Type     | Comment                              |
+|----------|----------|--------------------------------------|
+| name     | string   | Name of the tag, namespace included. |
+| parents  | string[] | Parent list of the tag.              |
+| siblings | string[] | Sibling list of the tag.             |
+| posts    | number   | Total number of posts with this tag. |
 
 
 ## POST /api/regendb
