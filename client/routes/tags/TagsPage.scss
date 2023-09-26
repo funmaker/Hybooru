@@ -3,12 +3,13 @@
   .content > .tags {
     margin: 2em auto 3em;
     width: calc(100% - 2em);
-    max-width: 40em;
+    max-width: 70em;
     text-align: center;
     border-collapse: collapse;
 
     td, th {
       border: 1px solid rgba(127, 127, 127, 0.2);
+      vertical-align: top;
     }
 
     thead {

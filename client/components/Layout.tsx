@@ -18,11 +18,12 @@ export interface LayoutProps {
   children?: React.ReactNode;
   extraLink?: React.ReactNode;
   searchAction?: string;
+  random?: boolean;
   simpleSettings?: boolean;
   dimmed?: boolean;
 }
 
-export default function Layout({ className, sidebar, children, extraLink, searchAction = "/posts", simpleSettings, dimmed }: LayoutProps) {
+export default function Layout({ className, sidebar, children, extraLink, searchAction = "/posts", random = true, simpleSettings, dimmed }: LayoutProps) {
   const config = useConfig();
   const { ref, rect } = useMeasure();
   const [, fetching] = usePageData(false);
@@ -91,7 +92,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
           <TagInput name="query" placeholder="Search: flower sky 1girl" />
           <SSRCurtain><a className="settingsButton" href="#" onClick={onOptionsButtonClick}><img src="/static/cog.svg" alt="settings" /></a></SSRCurtain>
           <button hidden /> {/* Capture enter-submit */}
-          <button formAction="/random">Random</button>
+          {random && <button formAction="/random">Random</button>}
           <button>Search</button>
         </ReactForm>
         {fetching && <div className="progress" />}

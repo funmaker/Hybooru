@@ -1,5 +1,5 @@
 import SQL from "sql-template-strings";
-import { TagsSearchResponse } from "../routes/apiTypes";
+import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResponse, TagsSearchResults } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { preparePattern } from "../helpers/utils";
@@ -11,7 +11,11 @@ const SORTS = {
   posts: "used",
 };
 
-export async function search({ query = "", sorting = "", page = 0, pageSize = PAGE_SIZE }): Promise<TagsSearchResponse> {
+
+export async function search(options: TagsSearchRequest & { full: false }): Promise<TagsSearchResults>;
+export async function search(options: TagsSearchRequest & { full: true }): Promise<TagsSearchFullResults>;
+export async function search(options: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults>;
+export async function search({ query = "", sorting, page = 0, pageSize = PAGE_SIZE, full = false }: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults> {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
   let pattern = preparePattern(query.trim());
@@ -34,22 +38,58 @@ export async function search({ query = "", sorting = "", page = 0, pageSize = PA
   
   if(pattern === "") pattern = "%";
   
-  return await db.queryFirst(SQL`
+  const results: TagsSearchFullResults = await db.queryFirst(SQL`
     WITH filtered AS (
-          SELECT *
+          SELECT DISTINCT ON (id)
+            COALESCE(better.id, tags.id) AS id,
+            COALESCE(better.name, tags.name) AS name,
+            COALESCE(better.subtag, tags.subtag) AS subtag,
+            COALESCE(better.used, tags.used) AS used
           FROM tags
-          WHERE name LIKE ${pattern} OR subtag LIKE ${pattern}
+          LEFT JOIN tag_siblings ON tag_siblings.tagid = tags.id
+          LEFT JOIN tags better ON tag_siblings.betterid = better.id
+          WHERE tags.name LIKE ${pattern} OR tags.subtag LIKE ${pattern}
         )
     SELECT
-      COALESCE(json_object_agg(name, used), '{}') AS tags,
+      COALESCE(json_agg(json_build_object(
+        'name', name,
+        'posts', used,
+        'siblings', siblings,
+        'parents', parents
+      )), '[]') AS tags,
       (SELECT count(1) FROM filtered)::INTEGER as total,
       ${pageSize}::INTEGER as "pageSize"
     FROM (
-      SELECT *
+      SELECT
+        filtered.id,
+        filtered.name,
+        filtered.subtag,
+        filtered.used,
+        (
+          SELECT COALESCE(json_agg(siblings.name), '[]')
+          FROM tag_siblings
+          LEFT JOIN tags siblings ON tagid = siblings.id
+          WHERE betterid = filtered.id
+        ) siblings,
+        (
+          SELECT COALESCE(json_agg(parents.name), '[]')
+          FROM tag_parents
+          LEFT JOIN tags parents ON parentid = parents.id
+          WHERE tagid = filtered.id
+        ) parents
       FROM filtered
       ORDER BY `.append(`filtered."${sort}" ${order}, filtered.id ${order}`).append(SQL`
       LIMIT ${pageSize}
       OFFSET ${page * pageSize}
     ) x
   `));
+  
+  if(full) {
+    return results;
+  } else {
+    return {
+      ...results,
+      tags: Object.fromEntries(results.tags.map(tag => [tag.name, tag.posts])),
+    };
+  }
 }

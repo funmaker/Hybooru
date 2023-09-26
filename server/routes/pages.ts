@@ -46,7 +46,10 @@ router.get<any, any, any, any, PostsSearchPageRequest>('/posts', async (req, res
 });
 
 router.get<any, any, any, any, TagsSearchPageRequest>('/tags', async (req, res) => {
-  const results = await tagsController.search(req.query);
+  const results = await tagsController.search({
+    ...req.query,
+    full: true,
+  });
   
   res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });
 });

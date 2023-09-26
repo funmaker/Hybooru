@@ -1,6 +1,6 @@
 import React, { InputHTMLAttributes, useCallback, useRef, useState } from "react";
 import { Canceler } from "axios";
-import { TagsSearchRequest, TagsSearchResponse } from "../../server/routes/apiTypes";
+import { TagsSearchRequest, TagsSearchResponse, TagsSearchResults } from "../../server/routes/apiTypes";
 import { namespaceRegex } from "../../server/helpers/consts";
 import useConfig from "../hooks/useConfig";
 import requestJSON from "../helpers/requestJSON";
@@ -46,7 +46,7 @@ export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputEleme
       if(query.startsWith("-")) query = query.slice(1);
       query = `*${query}*`;
       
-      const result = await requestJSON<TagsSearchResponse, TagsSearchRequest>({
+      const result = await requestJSON<TagsSearchResults, TagsSearchRequest>({
         pathname: "/api/tags",
         search: {
           pageSize: TAGS_COUNT,

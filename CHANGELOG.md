@@ -2,7 +2,6 @@
 ### TODO:
 
 - DMCA page
-- Display tag relations in tag search page
 - IPFS integration
 - Fix `Error: Request aborted`
 - Scroll bug when clicking on tag name while being scrolled down in search(needs confirmation)
@@ -17,6 +16,9 @@
 - Added `Random` button to draw a random image from the search pool (https://github.com/funmaker/Hybooru/issues/24)
 - Added support for full queries in motd (https://github.com/funmaker/Hybooru/issues/3)
 - Added searching sha256/md5 hashes
+- Added tag siblings and parents on tags search page and api. Tag siblings will no longer appear as "primary" results, 
+  but only as associated records. They can still be searched but will return the preferred sibling instead.
+- Added `full` flag for `/api/tags` endpoint, allowing to query tags siblings and parents as well.
 - Updated Docker Node target to v18.12.0
 - Fixed Internal Server Error on invalid post id
 - Fixed Motd only working with images

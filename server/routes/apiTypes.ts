@@ -31,6 +31,19 @@ export interface TagsSearchResults {
   pageSize: number;
 }
 
+export interface TagSummary {
+  name: string;
+  siblings: string[];
+  parents: string[];
+  posts: number;
+}
+
+export interface TagsSearchFullResults {
+  tags: TagSummary[];
+  total: number;
+  pageSize: number;
+}
+
 export enum Relation {
   DUPLICATE = "DUPLICATE",
   DUPLICATE_BEST = "DUPLICATE_BEST",
@@ -130,7 +143,7 @@ export interface TagsSearchPageRequest {
 }
 
 export interface TagsSearchPageData {
-  results: TagsSearchResults;
+  results: TagsSearchFullResults;
 }
 
 export interface RandomPageRequest {
@@ -171,8 +184,9 @@ export interface TagsSearchRequest {
   sorting?: string;
   page?: number;
   pageSize?: number;
+  full?: boolean;
 }
-export type TagsSearchResponse = TagsSearchResults;
+export type TagsSearchResponse = TagsSearchResults | TagsSearchFullResults;
 
 export interface SetThemeRequest {
   theme: string;

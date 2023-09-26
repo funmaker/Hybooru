@@ -1,7 +1,6 @@
 import { Writable } from "stream";
 import { Database, Statement } from "better-sqlite3";
 import { PoolClient } from "pg";
-import SQL from "sql-template-strings";
 import copy from "pg-copy-streams";
 import configs from "../configs";
 import { printProgress } from "./pretty";
