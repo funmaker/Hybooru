@@ -64,6 +64,7 @@ Fetches post details by given `id`.
 | tags      | object                          | Post's tags(keys are the names, values are their global usage).                                                                                         |
 | sources   | string[]                        | List of source urls.                                                                                                                                    |
 | relations | [PostRelation](#PostRelation)[] | List of post relations.                                                                                                                                 |
+| notes     | [PostNote](#PostNote)[]         | List of post notes.                                                                                                                                     |
 
 ### PostRelation
 
@@ -72,6 +73,18 @@ Same as [PostSummary](#PostSummary) with additional fields:
 | Name | Type   | Comment                                                                                                     |
 |------|--------|-------------------------------------------------------------------------------------------------------------|
 | kind | string | `"DUPLICATE"`(duplicate), `"DUPLICATE_BEST"`(better quality duplicate), `"ALTERNATE"`(related alternative), |
+
+### PostNote
+
+| Name        | Type           | Comment                                                                                             |
+|-------------|----------------|-----------------------------------------------------------------------------------------------------|
+| label       | string or null | Title of the note.                                                                                  |
+| note        | string         | Text content of the note.                                                                           |
+| rect        | object or null | Optional positional information about the note. [Learn More](README.md#translationoverlay-notes)    |
+| rect.top    | object or null | Vertical offset of the note from the top of the image, in percents relative to image height.        |
+| rect.left   | object or null | Horizontal offset of the note from the left side of the image, in percents relative to image width. |
+| rect.width  | object or null | Width of the note from the top of the image, in percents relative to image width.                   |
+| rect.height | object or null | Height of the note from the top of the image, in percents relative to image height.                 |
 
 
 ## GET /api/tags
