@@ -95,7 +95,7 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.AUDIO_WAVPACK:
     case Mime.GENERAL_AUDIO: {
       return (
-        <FileWrap className={className} width={width} height={height} notes={notes}>
+        <FileWrap className={className} notes={notes}>
           <audio className="audio" src={fileUrl(post)} autoPlay={autoPlay && !muted} loop controls onError={setError} {...rest} />
         </FileWrap>
       );
@@ -129,7 +129,7 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.GENERAL_APPLICATION:
     default: {
       return (
-        <FileWrap className={className} width={width} height={height} link={link} notes={notes}>
+        <FileWrap className={className} link={link} notes={notes}>
           <div className="unknown" data-ext={post.extension.slice(1)} data-size={size}>
             <img src="/static/file.svg" alt={String(post.id)} {...rest} />
           </div>

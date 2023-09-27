@@ -28,8 +28,8 @@ export default class Posts extends Import {
       COALESCE(files_info.mime, '') || ',' ||
       datetime(current_files.timestamp, 'unixepoch', 'utc') || '\n'
     FROM ${this.inputTable()} current_files
+      INNER JOIN hashes ON hashes.hash_id = current_files.hash_id
       LEFT JOIN files_info ON files_info.hash_id = current_files.hash_id
-      LEFT JOIN hashes ON hashes.hash_id = current_files.hash_id
       LEFT JOIN local_hashes ON local_hashes.hash_id = current_files.hash_id
       LEFT JOIN local_ratings ON local_ratings.service_id = ${this.ratingService} AND local_ratings.hash_id = current_files.hash_id
     WHERE current_files.hash_id > ?
