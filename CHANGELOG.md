@@ -12,6 +12,9 @@
 
 # Unreleased
 
+
+# v1.8.0
+
 - Added support for notes (https://github.com/funmaker/Hybooru/issues/31)
 - Added `Random` button to draw a random image from the search pool (https://github.com/funmaker/Hybooru/issues/24)
 - Added support for full queries in motd (https://github.com/funmaker/Hybooru/issues/3)
