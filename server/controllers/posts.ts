@@ -24,11 +24,13 @@ const SORTS = {
 interface SearchArgs {
   query?: string;
   page?: number;
-  includeTags?: boolean;
+  tags?: boolean;
   pageSize?: number;
+  hashes?: boolean;
+  blurhash?: boolean;
 }
 
-export async function search({ query = "", page = 0, includeTags = false, pageSize = configs.posts.pageSize }: SearchArgs, client?: PoolClient): Promise<PostSearchResults> {
+export async function search({ query = "", page = 0, tags: includeTags = false, hashes, blurhash, pageSize = configs.posts.pageSize }: SearchArgs, client?: PoolClient): Promise<PostSearchResults> {
   if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
   
   const key = getCacheKey(query);
@@ -53,22 +55,39 @@ export async function search({ query = "", page = 0, includeTags = false, pageSi
     start = cacheEnd;
   }
   
+  let hashesSql = SQL``;
+  
+  if(hashes) {
+    hashesSql = hashesSql.append(SQL`
+      'md5', encode(md5, 'hex'),
+    `);
+  }
+  
+  if(blurhash) {
+    hashesSql = SQL`
+      'blurhash', blurhash,
+      'width', width,
+      'height', height,
+    `;
+  }
+  
   const result = await db.queryFirst(SQL`
     SELECT
       COALESCE(json_agg(json_build_object(
         'id', id,
         'sha256', encode(sha256, 'hex'),
         'hash', encode(sha256, 'hex'),
+        `.append(hashesSql).append(SQL`
         'mime', mime,
         'posted', format_date(posted),
         'size', size
       ) ORDER BY rn), '[]') as posts
     FROM unnest(${cached}::INTEGER[]) WITH ORDINALITY x(cached, rn)
     INNER JOIN posts ON id = cached
-  `, client);
+  `), client);
   
   result.pageSize = pageSize;
-  result.tags = tags;
+  if(includeTags) result.tags = tags;
   result.total = total;
   
   for(const post of result.posts) {

@@ -10,8 +10,12 @@ export interface PostSummary {
   /**
    * @deprecated use `sha256` instead
    */
-  hash: string;
+  hash?: string;
   sha256: string;
+  md5?: string | null;
+  blurhash?: string | null;
+  width?: number | null;
+  height?: number | null;
   extension: string;
   mime: Mime | null;
   posted: string;
@@ -72,7 +76,8 @@ export interface Post {
    */
   hash: string;
   sha256: string;
-  md5: string;
+  md5: string | null;
+  blurhash: string | null;
   extension: string;
   size: number | null;
   width: number | null;
@@ -174,6 +179,8 @@ export interface PostsSearchRequest {
   query?: string;
   page?: number;
   pageSize?: number;
+  hashes?: boolean;
+  blurhash?: boolean;
 }
 export type PostsSearchResponse = PostSearchResults;
 

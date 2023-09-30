@@ -40,7 +40,7 @@ router.get<{ id: string }>('/posts/:id', async (req, res) => {
 });
 
 router.get<any, any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {
-  const results = await postsController.search({ ...req.query, includeTags: true });
+  const results = await postsController.search({ ...req.query, tags: true, blurhash: true });
   
   res.react<PostsSearchPageData>({ results }, { ogTitle: "Post Search", ogDescription: req.query.query });
 });

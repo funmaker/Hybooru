@@ -13,11 +13,13 @@ Searches posts by a text query.
 
 ### Request
 
-| Name     | Type   | Comment                                                     |
-|----------|--------|-------------------------------------------------------------|
-| query    | string | _(optional)_ Search query. eg: `"1girl blue_sky striped_*"` |
-| page     | number | _(optional)_ 0-indexed number of page to fetch.             |
-| pageSize | number | _(optional)_ Ignored if larger than the default page size.  |
+| Name     | Type    | Comment                                                     |
+|----------|---------|-------------------------------------------------------------|
+| query    | string  | _(optional)_ Search query. eg: `"1girl blue_sky striped_*"` |
+| page     | number  | _(optional)_ 0-indexed number of page to fetch.             |
+| pageSize | number  | _(optional)_ Ignored if larger than the default page size.  |
+| hashes   | boolean | _(optional)_ Includes md5 in results.                       |
+| blurhash | boolean | _(optional)_ Includes blurhash and dimensions in results.   |
 
 ### Response
 
@@ -33,7 +35,11 @@ Searches posts by a text query.
 |-----------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | id        | number         | Post's unique id.                                                                                                                                       |
 | sha256    | string         | sha256 hash of the file.                                                                                                                                |
-| hash      | string         | _(deprecated)_ sha256 hash of the file. use sha256 field instead                                                                                        |
+| hash      | string         | _(deprecated)_ sha256 hash of the file. use sha256 field instead.                                                                                       |
+| md5       | string         | _(optional)_ md5 hash of the file. Present iff `hash` parameter is true.                                                                                |
+| blurhash  | string or null | _(optional)_ Blurhash of the file. Present iff `blurhash` parameter is true. [Learn more](https://blurha.sh/)                                           |
+| width     | number         | _(optional)_ Width of the file. Present iff `blurhash` parameter is true. [Learn more](https://blurha.sh/)                                              |
+| height    | number         | _(optional)_ Height of the file. Present iff `blurhash` parameter is true. [Learn more](https://blurha.sh/)                                             |
 | extension | string         | File extension, eg: `".jpg"`, `".png"`, etc                                                                                                             |
 | mime      | number or null | Hydrus internal mime id. See [HydrusConstants.py](https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py) for more details. |
 | posted    | string         | ISO 8601 date time when original post was created.                                                                                                      |

@@ -21,6 +21,8 @@ import Notes from "./notes";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
 
+const MIN_HYDRUS_VER = 545;
+
 // https://stackoverflow.com/a/7616484
 function hashCode(s: string) {
   let hash = 0;
@@ -54,6 +56,9 @@ export async function rebuild() {
     const hydrus = new SqliteDatabase(path.resolve(dbPath, "client.db"), { readonly: true });
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
     await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
+    
+    const { version } = hydrus.prepare('SELECT version FROM version;').get();
+    if(version < MIN_HYDRUS_VER) throw new Error(`Unsupported Hydrus version(min: v${MIN_HYDRUS_VER}, current: v${version}), Update Hydrus to the newest version.`);
     
     const filesServices = findFilesServices(hydrus);
     const ratingsService = findRatingsService(hydrus);

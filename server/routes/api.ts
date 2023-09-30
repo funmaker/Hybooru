@@ -31,13 +31,13 @@ router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, 
   res.json(result);
 });
 
-router.get<any, PostsSearchResponse, any, Partial<PostsSearchRequest>>("/post", async (req, res) => {
-  const result = await postsController.search({ ...req.query, includeTags: false });
+router.get<any, PostsSearchResponse, any, PostsSearchRequest>("/post", async (req, res) => {
+  const result = await postsController.search({ ...req.query, tags: false });
   
   res.json(result);
 });
 
-router.get<any, TagsSearchResponse, any, Partial<TagsSearchRequest>>("/tags", async (req, res) => {
+router.get<any, TagsSearchResponse, any, TagsSearchRequest>("/tags", async (req, res) => {
   const result = await tagsController.search(req.query);
   
   res.json(result);

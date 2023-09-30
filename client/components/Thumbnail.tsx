@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useReducer, useRef } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { BlurhashCanvas } from "react-blurhash-async";
 import { PostSummary } from "../../server/routes/apiTypes";
 import { thumbnailUrl } from "../../server/helpers/consts";
-import { EM_SIZE } from "../App";
+import { classJoin } from "../helpers/utils";
 import useSSR from "../hooks/useSSR";
 import useConfig from "../hooks/useConfig";
 import useQuery from "../hooks/useQuery";
+import { EM_SIZE } from "../App";
 import "./Thumbnail.scss";
 
 export interface ThumbnailProps {
@@ -21,7 +23,8 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
   const SSR = useSSR();
   const config = useConfig();
   const ref = useRef<HTMLImageElement>(null);
-  const [dynamic, setLoaded] = useReducer(() => false, !SSR && !noFade);
+  const [fade] = useState(!noFade && !SSR);
+  const [loaded, setLoaded] = useReducer(() => true, false);
   const [unknown, setUnknown] = useReducer(() => true, false);
   let [query] = useQuery();
   query = query && `?query=${encodeURIComponent(query)}`;
@@ -37,8 +40,18 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
   let url = thumbnailUrl(post);
   if(unknown) url = "/static/file.svg";
   
+  let aspectRatio;
+  if(post.width && post.height) aspectRatio = post.width / post.height;
+  else aspectRatio = 1;
+  
   return (
-    <Link className={`Thumbnail${dynamic ? " dynamic" : ""}${unknown ? " unknown" : ""}`} to={`/posts/${post.id}${query}`} onClick={onClickLink} data-ext={post.extension.slice(1)}>
+    <Link className={classJoin("Thumbnail", fade && "fade", loaded && "loaded", unknown && "unknown")} to={`/posts/${post.id}${query}`} onClick={onClickLink} data-ext={post.extension.slice(1)}>
+      {!SSR && post.blurhash && <BlurhashCanvas className="Blurhash"
+                                                imageRef={ref}
+                                                hash={post.blurhash}
+                                                loading="eager"
+                                                width={32}
+                                                height={Math.ceil(32 / aspectRatio)} />}
       <img src={url} alt={String(post.id)}
            id={useId ? post.id.toString() : undefined}
            style={{

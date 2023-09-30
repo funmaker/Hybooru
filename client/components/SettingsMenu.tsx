@@ -72,7 +72,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     extraSettings = <>
       <div>
         <select value="label" onChange={onSort}>
-          <option value="label" disabled selected hidden>Sorting</option>
+          <option value="label" disabled hidden>Sorting</option>
           <option value="date">Date Imported (Newest First)</option>
           <option value="date_asc">Date Imported (Oldest First)</option>
           <option value="score">Score (Descending)</option>

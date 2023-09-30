@@ -1,13 +1,25 @@
 
 .Thumbnail {
   display: inline-block;
+  position: relative;
   margin: 0.5em;
   opacity: 1;
-  transition: 0.3s opacity;
   text-align: center;
+  
+  .Blurhash {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: 0.15s 0.15s opacity;
+    z-index: -1;
+  }
 
   img {
     object-fit: contain;
+    transition: 0.3s opacity;
   }
 
   label {
@@ -15,8 +27,18 @@
     color: var(--text-color);
   }
 
-  &.dynamic {
+  &.fade img {
     opacity: 0;
+  }
+  
+  &.loaded {
+    img {
+      opacity: 1.0;
+    }
+    
+    canvas {
+      opacity: 0;
+    }
   }
 
   &.unknown {

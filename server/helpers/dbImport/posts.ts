@@ -11,13 +11,14 @@ export default class Posts extends Import {
   batchSizeMul = 1 / 2;
   outputTable = "posts";
   totalQuery = () => `SELECT count(1) FROM ${this.inputTable()}`;
-  outputQuery = (table: string) => `COPY ${table}(id, sha256, md5, size, width, height, duration, num_frames, has_audio, rating, mime, posted) FROM STDIN (FORMAT CSV)`;
+  outputQuery = (table: string) => `COPY ${table}(id, sha256, md5, blurhash, size, width, height, duration, num_frames, has_audio, rating, mime, posted) FROM STDIN (FORMAT CSV)`;
   inputQuery = () => `
     SELECT
       current_files.hash_id,
       current_files.hash_id || ',' ||
       '\\x' || hex(hashes.hash) || ',' ||
-      '\\x' || hex(local_hashes.md5) || ',' ||
+      COALESCE('\\x' || NULLIF(hex(local_hashes.md5), ''), '') || ',' ||
+      COALESCE('"' || blurhashes.blurhash || '"', '') || ',' ||
       COALESCE(files_info.size, '') || ',' ||
       COALESCE(files_info.width, '') || ',' ||
       COALESCE(files_info.height, '') || ',' ||
@@ -31,6 +32,7 @@ export default class Posts extends Import {
       INNER JOIN hashes ON hashes.hash_id = current_files.hash_id
       LEFT JOIN files_info ON files_info.hash_id = current_files.hash_id
       LEFT JOIN local_hashes ON local_hashes.hash_id = current_files.hash_id
+      LEFT JOIN blurhashes ON blurhashes.hash_id = current_files.hash_id
       LEFT JOIN local_ratings ON local_ratings.service_id = ${this.ratingService} AND local_ratings.hash_id = current_files.hash_id
     WHERE current_files.hash_id > ?
     ORDER BY current_files.hash_id ASC

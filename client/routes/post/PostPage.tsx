@@ -97,7 +97,11 @@ export default function PostPage() {
       </div>
       {pageData.post.relations.length > 0 &&
         <div className="relations">
-          {sortedRelations.map(relation => <Thumbnail key={relation.id} id={relation.id} post={relation} label={"kind" in relation ? RELATION_STRING[relation.kind] : <b>This Post</b>} />)}
+          {sortedRelations.map(relation => <Thumbnail key={relation.id}
+                                                      id={relation.id}
+                                                      post={relation}
+                                                      label={"kind" in relation ? RELATION_STRING[relation.kind] : <b>This Post</b>}
+                                                      noFade />)}
         </div>
       }
     </Layout>

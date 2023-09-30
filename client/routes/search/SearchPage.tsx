@@ -20,10 +20,10 @@ export default function SearchPage() {
   const SSR = useSSR();
   const history = useHistory();
   const search = qsParse(history.location.search);
-  const lastPostsCache = useRef<null | PostsCacheData>(null);
+  const lastPostsCache = useRef<PostsCacheData>(postsCache);
   const popupPushed = useRef(false);
   const scrollRestore = useRef<null | number>(null);
-  const imageFade = postsCache === lastPostsCache.current;
+  const noFade = !!lastPostsCache.current?.key && lastPostsCache.current.key !== postsCache.key && !postsCache.fresh;
   lastPostsCache.current = postsCache;
   
   const usePagination = pagination || SSR || search.page !== undefined;
@@ -120,7 +120,7 @@ export default function SearchPage() {
             extraLink={postsCache.total !== null && <div className="total">Results: {postsCache.total}</div>}
             sidebar={<Tags tags={postsCache.tags} searchMod />}>
       <div className="posts">
-        <Thumbnails posts={postsCache.posts} noFade={!imageFade} onClick={onThumbnailClick} />
+        <Thumbnails posts={postsCache.posts} noFade={noFade} onClick={onThumbnailClick} />
         {new Array(16).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
       </div>
       {footer}

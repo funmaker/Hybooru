@@ -12,6 +12,9 @@
 
 # Unreleased
 
+- Added blurhash support
+- Added Hydrus version check
+- Fixed thumbnail fading
 
 # v1.8.0
 

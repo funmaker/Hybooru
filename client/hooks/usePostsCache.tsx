@@ -7,19 +7,23 @@ import requestJSON from "../helpers/requestJSON";
 import usePageData from "./usePageData";
 
 export interface PostsCacheData {
+  key: string | null;
   posts: PostSummary[];
   page: number;
   pageSize: number;
   total: number | null;
   tags: Record<string, number>;
+  fresh: boolean;
 }
 
 const emptyPage: PostsCacheData = {
+  key: null,
   posts: [],
   page: 0,
   pageSize: 1,
   total: null,
   tags: {},
+  fresh: true,
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -55,8 +59,10 @@ export default function usePostsCache() {
     postsCacheDefault = postsCache[key];
   } else if(pageData) {
     postsCacheDefault = postsCache[key] = {
+      key,
       page: 1,
       tags: {},
+      fresh: true,
       ...pageData.results,
     };
   }
@@ -65,6 +71,9 @@ export default function usePostsCache() {
   
   useEffect(() => {
     if(postsCache[key] && currentCache !== postsCache[key]) {
+      if(currentCache.key) {
+        postsCache[currentCache.key].fresh = false;
+      }
       setCurrentCache(postsCache[key]);
     }
   }, [currentCache, pageData, postsCache, key]);
@@ -88,6 +97,7 @@ export default function usePostsCache() {
         search: {
           query,
           page: postsCache[key].page,
+          blurhash: true,
         },
         cancelCb: cancel => canceller.current = cancel,
       });
@@ -97,6 +107,7 @@ export default function usePostsCache() {
         page: postsCache[key].page + 1,
         posts: [...postsCache[key].posts, ...result.posts],
         total: result.posts.length === 0 ? postsCache[key].posts.length : postsCache[key].total,
+        fresh: false,
       };
       
       setCurrentCache(postsCache[key]);
@@ -111,8 +122,10 @@ export default function usePostsCache() {
   const reset = useCallback(() => {
     if(pageData) {
       postsCache[key] = {
+        key,
         page: 1,
         tags: {},
+        fresh: false,
         ...pageData.results,
       };
     } else {

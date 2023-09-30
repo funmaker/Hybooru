@@ -34,12 +34,13 @@ possible)**
 - Notes and translation overlays
 - tag and post relations (parents/siblings, duplicates/alternatives)
 - Colored tags
+- Blurhash
 - REST API
 - Mobile support
 - OpenGraph and OpenSearch
 - Supports browsers without JS
 
-Minimum Hydrus Version: **v447**
+Minimum Hydrus Version: **v545**
 
 Keep in mind this project is not a standalone, fully-fledged booru, but rather a read-only interface to your Hydrus database.
 It does not provide any way to manage your posts or tags. The only way to add/modify your data is to do these

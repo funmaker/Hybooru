@@ -59,7 +59,8 @@ DROP TABLE IF EXISTS posts CASCADE;
 CREATE TABLE posts (
   id INTEGER PRIMARY KEY,
   sha256 BYTEA NOT NULL,
-  md5 BYTEA NOT NULL,
+  md5 BYTEA,
+  blurhash TEXT,
   size BIGINT,
   width INTEGER,
   height INTEGER,
