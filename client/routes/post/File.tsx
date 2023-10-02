@@ -3,7 +3,9 @@ import { Post, PostNote, PostSummary } from "../../../server/routes/apiTypes";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
+import useSSR from "../../hooks/useSSR";
 import "./File.scss";
+import Ruffle from "../../components/Ruffle";
 
 interface FileProps {
   post: Post | PostSummary;
@@ -16,6 +18,7 @@ interface FileProps {
 
 export default function File({ post, link, className, controls = true, autoPlay = true, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
   const config = useConfig();
+  const SSR = useSSR();
   const [error, setError] = useReducer(() => true, false);
   
   const width = "width" in post && post.width || undefined;
@@ -24,7 +27,9 @@ export default function File({ post, link, className, controls = true, autoPlay 
   className = className ? ` ${className}` : "";
   
   let mime = post.mime;
-  if(error || (post.size && post.size > config.maxPreviewSize)) {
+  if(error
+  || (post.size && post.size > config.maxPreviewSize)
+  || (post.mime === Mime.APPLICATION_FLASH && SSR)) {
     mime = Mime.GENERAL_APPLICATION;
   }
   
@@ -100,6 +105,13 @@ export default function File({ post, link, className, controls = true, autoPlay 
         </FileWrap>
       );
     }
+    case Mime.APPLICATION_FLASH: {
+      return (
+        <FileWrap className={className} width={width} height={height}>
+          <Ruffle url={fileUrl(post)} width={width} height={height} />
+        </FileWrap>
+      );
+    }
     case Mime.TEXT_HTML:
     case Mime.TEXT_PLAIN:
     case Mime.APPLICATION_JSON:
@@ -108,7 +120,6 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.APPLICATION_CLIP:
     case Mime.APPLICATION_OCTET_STREAM:
     case Mime.APPLICATION_UNKNOWN:
-    case Mime.APPLICATION_FLASH:
     case Mime.APPLICATION_PDF:
     case Mime.APPLICATION_ZIP:
     case Mime.APPLICATION_HYDRUS_ENCRYPTED_ZIP:

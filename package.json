@@ -22,6 +22,7 @@
 	},
 	"dependencies": {
 		"@octokit/core": "^4.1.0",
+		"@ruffle-rs/ruffle": "^0.1.0-nightly.2023.10.2",
 		"axios": "^0.21.1",
 		"better-sqlite3": "^8.0.1",
 		"body-parser": "^1.19.0",
