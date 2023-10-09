@@ -163,6 +163,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
           <File post={leftPost} draggable={false} controls={false} muted />
         </div>
       }
+      {/* eslint-disable-next-line react/no-unknown-property */} { /* TODO: WHY? */ }
       <div key={post.id} className="wrap" onClick={onBackgroundClick} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerMove={onPointerMove} >
         <File post={post} draggable={false} controls={false} onClickCapture={onClick} autoPlay />
       </div>

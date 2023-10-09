@@ -55,7 +55,7 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
              loaded && "loaded",
              unknown && "unknown",
              config.thumbnailsMode === ThumbnailsMode.FILL && "fill",
-             config.thumbnailsMode === ThumbnailsMode.FIT && "fit"
+             config.thumbnailsMode === ThumbnailsMode.FIT && "fit",
            )}
            data-ext={post.extension.slice(1)}
            style={{

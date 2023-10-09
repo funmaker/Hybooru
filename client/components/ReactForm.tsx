@@ -1,7 +1,11 @@
 import React, { useCallback } from "react";
 import { useHistory } from "react-router";
 
-export default function ReactForm({ action, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
+export interface ReactFormProps extends React.ComponentProps<"form"> {
+  action?: string;
+}
+
+export default function ReactForm({ action, ...props }: ReactFormProps) {
   const history = useHistory();
   
   const onSubmit = useCallback<React.FormEventHandler<HTMLFormElement>>(ev => {

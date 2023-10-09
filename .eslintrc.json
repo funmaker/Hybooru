@@ -12,6 +12,7 @@
   "globals": {
     "__": false
   },
+  "ignorePatterns": ["static/**"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {

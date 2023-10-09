@@ -4,8 +4,8 @@ import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
 import useSSR from "../../hooks/useSSR";
-import "./File.scss";
 import Ruffle from "../../components/Ruffle";
+import "./File.scss";
 
 interface FileProps {
   post: Post | PostSummary;
