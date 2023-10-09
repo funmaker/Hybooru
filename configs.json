@@ -17,6 +17,7 @@
 		"services": null,
 		"filesPathOverride": null,
 		"thumbnailsPathOverride": null,
+		"thumbnailsMode": "fit",
 		"pageSize": 72,
 		"cachePages": 5,
 		"cacheRecords": 1024,

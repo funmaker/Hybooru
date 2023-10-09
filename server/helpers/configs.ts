@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import pg from "pg";
 import { Theme } from "../../client/hooks/useTheme";
 import chalk from "chalk";
+import { ThumbnailsMode } from "../routes/apiTypes";
 
 interface Configs {
   port: number,
@@ -21,11 +22,12 @@ interface Configs {
   db: pg.PoolConfig,
   posts: {
     services: Array<string | number> | null,
+    filesPathOverride: string | null,
+    thumbnailsPathOverride: string | null,
+    thumbnailsMode: string,
     pageSize: number,
     cachePages: number,
     cacheRecords: number,
-    filesPathOverride: string | null,
-    thumbnailsPathOverride: string | null,
     maxPreviewSize: number,
   },
   tags: {
@@ -69,11 +71,12 @@ let configs: Configs = {
   },
   posts: {
     services: null,
+    filesPathOverride: null,
+    thumbnailsPathOverride: null,
+    thumbnailsMode: ThumbnailsMode.FIT,
     pageSize: 72,
     cachePages: 5,
     cacheRecords: 1024,
-    filesPathOverride: null,
-    thumbnailsPathOverride: null,
     maxPreviewSize: 104857600,
   },
   tags: {
@@ -100,6 +103,25 @@ let configs: Configs = {
   }
 };
 
+function isPlainObject(obj: any) {
+  return typeof obj === 'object'
+         && obj !== null
+         && obj.constructor === Object
+         && Object.prototype.toString.call(obj) === '[object Object]';
+}
+
+function deepMerge<T extends Object>(base: T, object: T): T {
+  const ret = { ...base, ...object };
+  
+  for(const key in object) {
+    if(!object.hasOwnProperty(key)) continue;
+    
+    if(isPlainObject(base[key]) && isPlainObject(object[key])) ret[key] = deepMerge(base[key] as any, object[key]);
+  }
+  
+  return ret;
+}
+
 const movedPostsOptions = ["pageSize", "cachePages", "cacheRecords", "filesPathOverride", "thumbnailsPathOverride", "maxPreviewSize"] as const;
 
 try {
@@ -120,23 +142,13 @@ try {
   throw e;
 }
 
+if(process.env.HYDRUS_ADMIN_PASSWORD) {
+  configs.adminPassword = process.env.HYDRUS_ADMIN_PASSWORD;
+}
+
+if(configs.posts.thumbnailsMode !== ThumbnailsMode.FIT && configs.posts.thumbnailsMode !== ThumbnailsMode.FILL) {
+  console.error(`${chalk.bold.yellow("Warning!")} Config option posts.thumbnailsMode should be "fit" or "fill", got ${JSON.stringify(configs.posts.thumbnailsMode)}!`);
+  configs.posts.thumbnailsMode = "fit";
+}
+
 export default configs;
-
-function isPlainObject(obj: any) {
-  return typeof obj === 'object'
-      && obj !== null
-      && obj.constructor === Object
-      && Object.prototype.toString.call(obj) === '[object Object]';
-}
-
-function deepMerge<T extends Object>(base: T, object: T): T {
-  const ret = { ...base, ...object };
-  
-  for(const key in object) {
-    if(!object.hasOwnProperty(key)) continue;
-    
-    if(isPlainObject(base[key]) && isPlainObject(object[key])) ret[key] = deepMerge(base[key] as any, object[key]);
-  }
-  
-  return ret;
-}

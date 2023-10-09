@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { BlurhashCanvas } from "react-blurhash-async";
-import { PostSummary } from "../../server/routes/apiTypes";
+import { PostSummary, ThumbnailsMode } from "../../server/routes/apiTypes";
 import { thumbnailUrl } from "../../server/helpers/consts";
 import { classJoin } from "../helpers/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -44,26 +44,36 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
   if(unknown) url = "/static/file.svg";
   
   let aspectRatio;
-  if(post.width && post.height) aspectRatio = post.width / post.height;
-  else aspectRatio = 1;
+  if(config.thumbnailsMode === ThumbnailsMode.FIT && post.width && post.height) aspectRatio = post.width / post.height;
+  else aspectRatio = config.thumbnailSize[0] / config.thumbnailSize[1];
   
   return (
-    <Link className={classJoin("Thumbnail", fade && "fade", loaded && "loaded", unknown && "unknown")} to={`/posts/${post.id}${query}`} onClick={onClickLink} data-ext={post.extension.slice(1)}>
-      {!SSR && blurhash && post.blurhash && (
-        <BlurhashCanvas className="Blurhash"
-                        imageRef={ref}
-                        hash={post.blurhash}
-                        loading="eager"
-                        width={32}
-                        height={Math.ceil(32 / aspectRatio)} />
-      )}
-      <img src={url} alt={String(post.id)}
-           id={useId ? post.id.toString() : undefined}
+    <Link className="Thumbnail" to={`/posts/${post.id}${query}`} onClick={onClickLink}>
+      <div className={classJoin(
+             "imgWrap",
+             fade && "fade",
+             loaded && "loaded",
+             unknown && "unknown",
+             config.thumbnailsMode === ThumbnailsMode.FILL && "fill",
+             config.thumbnailsMode === ThumbnailsMode.FIT && "fit"
+           )}
+           data-ext={post.extension.slice(1)}
            style={{
              width: config.thumbnailSize[0] / EM_SIZE + "em",
              height: config.thumbnailSize[1] / EM_SIZE + "em",
-           }}
-           onLoad={setLoaded} onError={setUnknown} ref={ref} />
+           }}>
+        {!SSR && blurhash && post.blurhash && (
+          <BlurhashCanvas className="Blurhash"
+                          imageRef={ref}
+                          hash={post.blurhash}
+                          loading="eager"
+                          width={32}
+                          height={Math.ceil(32 / aspectRatio)} />
+        )}
+        <img src={url} alt={String(post.id)}
+             id={useId ? post.id.toString() : undefined}
+             onLoad={setLoaded} onError={setUnknown} ref={ref} />
+      </div>
       {label && <label>{label}</label>}
     </Link>
   );

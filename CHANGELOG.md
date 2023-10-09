@@ -15,7 +15,11 @@
 - Added Flash support via Ruffle (https://github.com/funmaker/Hybooru/issues/34)
 - Added blurhash support
 - Added Hydrus version check
+- Added support to override admin password using `HYDRUS_ADMIN_PASSWORD` environmental variable (https://github.com/funmaker/Hybooru/issues/35)
+- Added setting to control thumbnail fading
+- Added config option to control thumbnail scaling
 - Fixed thumbnail fading
+
 
 # v1.8.0
 

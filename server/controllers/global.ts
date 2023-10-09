@@ -25,6 +25,7 @@ export async function getConfig(): Promise<Config> {
     untaggedQuery: configs.tags.untagged,
     maxPreviewSize: configs.posts.maxPreviewSize,
     passwordSet: !!configs.adminPassword,
+    thumbnailsMode: configs.posts.thumbnailsMode,
   };
 }
 

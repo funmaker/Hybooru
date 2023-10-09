@@ -101,6 +101,11 @@ export interface Stats {
   needsTags: number;
 }
 
+export enum ThumbnailsMode {
+  FILL = "fill",
+  FIT = "fit",
+}
+
 export interface Config {
   thumbnailSize: [number, number];
   ratingStars: number | null;
@@ -111,6 +116,7 @@ export interface Config {
   untaggedQuery: string;
   maxPreviewSize: number;
   passwordSet: boolean;
+  thumbnailsMode: ThumbnailsMode;
 }
 
 // PAGES //
