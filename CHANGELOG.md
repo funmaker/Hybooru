@@ -12,6 +12,9 @@
 
 # Unreleased
 
+
+# v1.9.0
+
 - Added Flash support via Ruffle (https://github.com/funmaker/Hybooru/issues/34)
 - Added blurhash support
 - Added Hydrus version check

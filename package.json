@@ -1,7 +1,7 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.9.0-dev",
+	"version": "1.9.0",
 	"engines": {
 		"node": ">=14.0.0",
 		"npm": ">=7.0.0"
@@ -84,6 +84,7 @@
 		"@typescript-eslint/eslint-plugin": "^4.20.0",
 		"@typescript-eslint/parser": "^4.20.0",
 		"babel-loader": "^8.2.2",
+		"blurhash": "^1.1.1",
 		"css-loader": "^5.2.0",
 		"css-minimizer-webpack-plugin": "^4.2.2",
 		"eslint": "^7.23.0",
