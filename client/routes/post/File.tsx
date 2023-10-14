@@ -1,10 +1,11 @@
-import React, { useMemo, useReducer } from "react";
+import React, { useReducer } from "react";
 import { Post, PostNote, PostSummary } from "../../../server/routes/apiTypes";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
 import useSSR from "../../hooks/useSSR";
 import Ruffle from "../../components/Ruffle";
+import OgvPlayer from "../../components/OgvPlayer";
 import "./File.scss";
 
 interface FileProps {
@@ -77,13 +78,19 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.UNDETERMINED_MP4:
     case Mime.GENERAL_VIDEO:
     case Mime.GENERAL_ANIMATION: {
+      const ogvSupportsFile = mime === Mime.VIDEO_WEBM || mime === Mime.VIDEO_OGV;
+      const useOgv = ogvSupportsFile && document.createElement("video").canPlayType('video/webm') === "";
+      const player = useOgv ?
+        <OgvPlayer src={fileUrl(post)} controls={controls} autoplay={autoPlay} muted={muted}
+                   width={width} height={height} /> :
+        <video className="video" controls={controls} autoPlay={autoPlay} loop muted={muted}
+               width={width} height={height} onError={setError} {...rest}>
+          <source src={fileUrl(post)} />
+          Your browser does not support this video.
+        </video>;
       return (
         <FileWrap className={className} width={width} height={height} link={controls ? undefined : link} notes={notes}>
-          <video className="video" controls={controls} autoPlay={autoPlay} loop muted={muted}
-                 width={width} height={height} onError={setError} {...rest}>
-            <source src={fileUrl(post)} />
-            Your browser does not support this video.
-          </video>
+          {player}
         </FileWrap>
       );
     }
