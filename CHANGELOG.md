@@ -14,6 +14,9 @@
 
 # Unreleased
 
+
+# v1.10.0
+
 - Added support for `system:inbox`, `system:archive` and `system:trash` (https://github.com/funmaker/Hybooru/issues/25)
 - Added `host` config option (https://github.com/funmaker/Hybooru/issues/38)
 - Added support for PORT and HOST envvar override
