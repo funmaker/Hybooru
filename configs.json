@@ -1,5 +1,6 @@
 {
 	"port": 3939,
+	"host": null,
 	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",

@@ -14,7 +14,8 @@
 
 # Unreleased
 
-- Added support for PORT envvar override
+- Added `host` config option (https://github.com/funmaker/Hybooru/issues/38)
+- Added support for PORT and HOST envvar override
 - Removed DOCKERIZED envvar, Dockerfile now uses PORT (https://github.com/funmaker/Hybooru/issues/36)
 
 

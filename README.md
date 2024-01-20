@@ -88,7 +88,8 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 
 | Name                         | Type                      | Default                                           | Comment                                                                                                                                                                                                          |
 |------------------------------|---------------------------|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| port                         | number                    | `3939`                                            | HTTP server port.                                                                                                                                                                                                |
+| port                         | number                    | `3939`                                            | HTTP server port. You can use `PORT` envvar to override this.                                                                                                                                                    |
+| host                         | string or null            | `null`                                            | HTTP server host. `null` will listen on all interfaces. Set to `"localhost"` if you are not going to connect to it directly over network. You can use `HOST` envvar to override this.                            |
 | hydrusDbPath                 | string or null            | `null`                                            | Hydrus db or backup location. If null, default platform-dependent locaton is used: `%appdata%/hydrus/db`(Windows), `~/.local/share/hydrus/db`(Linux), `~/Library/Preferences/hydrus/db`(MacOS)                   |
 | appName                      | string                    | `"Hybooru"`                                       | Specify name of your booru (appears as logo).                                                                                                                                                                    |
 | appDescription               | string                    | `"Hydrus-based booru-styled imageboard in React"` | Booru's description used in OpenGraph.                                                                                                                                                                           |
@@ -125,7 +126,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | versionCheck.repo            | string                    | `"hybooru"`                                       | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                                                |
 | versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                                        |
 
-You can also use `PORT` environmental variable to override `port` config value.
+You can also use `PORT` and `HOST` environmental variables to override `port` and `host` config values.
 
 ## Translation/overlay notes
 

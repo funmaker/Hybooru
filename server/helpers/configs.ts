@@ -7,6 +7,7 @@ import { ThumbnailsMode } from "../routes/apiTypes";
 
 interface Configs {
   port: number,
+  host: string | null,
   hydrusDbPath: string | null,
   appName: string,
   appDescription: string,
@@ -56,6 +57,7 @@ interface Configs {
 
 let configs: Configs = {
   port: 3939,
+  host: null,
   hydrusDbPath: null,
   appName: "HyBooru",
   appDescription: "Hydrus-based booru-styled imageboard in React",

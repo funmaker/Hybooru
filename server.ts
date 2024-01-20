@@ -10,12 +10,15 @@ if(typeof configs.isTTY === "boolean") {
 }
 
 let port = configs.port || 3000;
-if(process.env.PORT) port ||= parseInt(process.env.PORT);
+if(process.env.PORT) port = parseInt(process.env.PORT) || port;
+
+let host = configs.host || "0.0.0.0";
+if(process.env.HOST) host = process.env.HOST;
 
 const server = http.createServer(app);
 const origApp = app;
 let currentApp = app;
-server.listen(port);
+server.listen({ port, host });
 
 console.log(`\n${chalk.bold("HyBooru")} started on port ${chalk.yellow.bold("" + port)}`);
 console.log(`Environment: ${chalk.yellow.bold("" + process.env.NODE_ENV)}.`);
