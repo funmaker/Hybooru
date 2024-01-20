@@ -36,7 +36,7 @@ interface Configs {
     motd: string | Partial<Record<Theme, string>> | null,
     untagged: string,
     ignore: string[],
-    blacklist: string[],
+    blacklist: string[] | null,
     whitelist: string[] | null,
     resolveRelations: boolean,
     reportLoops: boolean,

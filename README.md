@@ -79,6 +79,10 @@ If you use a numeric rating service and successfully imported the ratings, you c
 using `rating:` namespace. You can search posts with specific rating(`rating:3`), range(`rating:2-4`) or query posts
 that have not been rated(`rating:none`).
 
+`system:` tags from Hydrus are not real tags and are not fully supported. Hybooru only supports `system:inbox`,
+`system:archive` and a non-standard `system:trash` for filtering posts that are respectively in inbox, are not in inbox
+and are in trash. You can use them in the blacklist/whitelist and you can also negate them using `-` prefix in searches.
+
 Eg: `1girl blue_* -outdoors rating:3-5 order:rating_desc`
 
 
@@ -111,7 +115,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | tags.motd                    | string or object or null  | `null`                                            | Query used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)                                 |
 | tags.untagged                | string                    | `"-*"`                                            | Overrides query used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.                                                                                                    |
 | tags.ignore                  | string[]                  | `[]`                                              | List of tags that will not be imported from Hydrus (posts tagged by these tags will still be imported).                                                                                                          |
-| tags.blacklist               | string[]                  | `[]`                                              | All posts and tags matching any of specified tags will not be imported from Hydrus.                                                                                                                              |
+| tags.blacklist               | string[] or null          | `null`                                            | All posts and tags matching any of specified tags will not be imported from Hydrus. Use `null` or empty array to ignore blacklist.                                                                               |
 | tags.whitelist               | string[] or null          | `null`                                            | Only posts matching specified tags will be imported from Hydrus. Use `null` or empty array to ignore whitelist.                                                                                                  |
 | tags.resolveRelations        | boolean                   | `true`                                            | Resolve tag siblings and parents. Can be slow in large databases.                                                                                                                                                |
 | tags.reportLoops             | boolean                   | `false`                                           | Print out all loops detected in tag relationships.                                                                                                                                                               |
@@ -137,7 +141,7 @@ using a non-standard extension to the existing Hydrus note system and custom con
 overlay notes in Hybooru you will need to modify page parsers in Hydrus to create a note in special format that stores
 note position and size. I have prepared few content parser for popular boorus:
 
-<img src=".github/images/gelbooru.png" width="256"> <img src=".github/images/danbooru.png" width="256"> <img src=".github/images/sankaku.png" width="256">
+<img src=".github/images/gelbooru.png" width="256"> <img src=".github/images/danbooru.png" width="256">
 
 To import content parsers in Hydrus you need to go to network > downloader components > manage parsers > select target
 file page parser > edit > content parsers and drag and drop one of the above images into the content parser list.

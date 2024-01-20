@@ -29,7 +29,7 @@
 		"motd": null,
 		"untagged": "-*",
 		"ignore": [],
-		"blacklist": [],
+		"blacklist": null,
 		"whitelist": null,
 		"resolveRelations": true,
 		"reportLoops": false,

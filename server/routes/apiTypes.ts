@@ -87,6 +87,8 @@ export interface Post {
   hasAudio: boolean | null;
   rating: number | null;
   mime: Mime | null;
+  inbox: boolean;
+  trash: boolean;
   posted: string;
   tags: Record<string, number>;
   sources: string[];

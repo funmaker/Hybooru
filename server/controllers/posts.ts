@@ -147,6 +147,8 @@ export async function get(id: number): Promise<Post | null> {
       posts.has_audio AS "hasAudio",
       posts.rating,
       posts.mime,
+      posts.inbox,
+      posts.trash,
       format_date(posted) AS posted,
       COALESCE(json_object_agg(
         tags.name, tags.used
@@ -246,6 +248,8 @@ interface CacheKey {
   sort: string;
   order: string;
   rating: undefined | null | [number, number];
+  inbox: undefined | boolean;
+  trash: undefined | boolean;
   offset: number;
 }
 
@@ -263,10 +267,17 @@ function getCacheKey(query: string): CacheKey {
   let sort = SORTS.date;
   let order = "desc";
   let rating: undefined | null | [number, number] = undefined;
+  let inbox: undefined | boolean;
+  let trash: undefined | boolean;
   let match: RegExpMatchArray | null = null;
   
   for(let part of parts) {
-    if(part.startsWith("-")) {
+    if(part.startsWith("system:") || part.startsWith("-system:")) {
+      if(part === "system:archive" || part === "-system:inbox") inbox = false;
+      else if(part === "system:inbox" || part === "-system:archive") inbox = true;
+      else if(part === "-system:trash") trash = false;
+      else if(part === "system:trash") trash = true;
+    } else if(part.startsWith("-")) {
       blacklist.push(part.slice(1));
     } else if(part.startsWith("order:")) {
       part = part.slice(6);
@@ -315,6 +326,8 @@ function getCacheKey(query: string): CacheKey {
     sort,
     order,
     rating,
+    inbox,
+    trash,
     offset: 0,
   };
 }
@@ -337,9 +350,9 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     return postsCache[hashed];
   }
   
-  let { whitelist, blacklist, sha256, md5, sort, order, offset, rating } = key;
+  let { whitelist, blacklist, sha256, md5, sort, order, offset, rating, inbox, trash } = key;
   
-  let ratingFilter = SQL``;
+  let extraWhere = SQL``;
   let from = SQL`
     FROM filtered
     INNER JOIN posts ON posts.id = filtered.id
@@ -451,11 +464,11 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     from = SQL`FROM posts`;
   }
   
-  if(rating === null) {
-    ratingFilter = SQL`AND posts.rating IS NULL`;
-  } else if(Array.isArray(rating)) {
-    ratingFilter = SQL`AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`;
-  }
+  if(rating === null) extraWhere = extraWhere.append(SQL` AND posts.rating IS NULL`);
+  else if(Array.isArray(rating)) extraWhere = extraWhere.append(SQL` AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
+  
+  if(inbox !== undefined) extraWhere = extraWhere.append(SQL` AND posts.inbox = ${inbox}`);
+  if(trash !== undefined) extraWhere = extraWhere.append(SQL` AND posts.trash = ${trash}`);
   
   const result = await db.queryFirst(SQL`
     WITH
@@ -490,7 +503,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       SELECT posts.*
       `).append(from).append(`
       WHERE posts."${sort}" IS NOT NULL
-      `).append(ratingFilter).append(`
+      `).append(extraWhere).append(`
       ORDER BY posts."${sort}" ${order}, posts.id ${order}
       `).append(SQL`
       LIMIT ${CACHE_SIZE}

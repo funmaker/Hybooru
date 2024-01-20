@@ -2,7 +2,7 @@ import path from "path";
 import chalk from "chalk";
 import SqliteDatabase, { Database } from "better-sqlite3";
 import YAML from "yaml";
-import SQL from "sql-template-strings";
+import SQL, { SQLStatement } from "sql-template-strings";
 import { PoolClient } from "pg";
 import * as postsController from "../../controllers/posts";
 import { Relation } from "../../routes/apiTypes";
@@ -78,7 +78,7 @@ export async function rebuild() {
     await resolveFileRelations(hydrus, postgres);
     if(resolveRelations) await normalizeTagRelations(postgres);
     
-    if(configs.tags.blacklist.length > 0) await applyBlacklist(postgres);
+    if(configs.tags.blacklist && configs.tags.blacklist.length > 0) await applyBlacklist(postgres);
     if(configs.tags.whitelist && configs.tags.whitelist.length > 0) await applyWhitelist(postgres);
     if(configs.tags.ignore.length > 0) await removeIgnored(postgres);
     
@@ -103,13 +103,23 @@ export async function rebuild() {
   }
 }
 
-interface Service {
+export interface Service {
   id: number;
   name: string;
+  trash: boolean;
 }
 
 function findFilesServices(hydrus: Database) {
-  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN} OR service_type = ${ServiceID.FILE_REPOSITORY}`).all();
+  let services: Service[] = hydrus.prepare(`
+    SELECT
+      service_id AS id,
+      name,
+      service_type = ${ServiceID.LOCAL_FILE_TRASH_DOMAIN} AS trash
+    FROM services
+    WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN}
+       OR service_type = ${ServiceID.FILE_REPOSITORY}
+       OR service_type = ${ServiceID.LOCAL_FILE_TRASH_DOMAIN}
+   `).all();
   if(services.length === 0) throw new Error("Unable to locate any file services!");
   
   if(configs.posts.services) {
@@ -124,7 +134,7 @@ function findFilesServices(hydrus: Database) {
     services = services.filter(s => configs.posts.services?.includes(s.name) || configs.posts.services?.includes(s.id));
   }
   
-  return services.map(service => service.id);
+  return services;
 }
 
 function findRatingsService(hydrus: Database) {
@@ -424,15 +434,31 @@ async function normalizeTagRelations(postgres: PoolClient) {
 async function applyBlacklist(postgres: PoolClient) {
   printProgress(false, "Applying blacklist...");
   
-  const blacklist = configs.tags.blacklist.map(pat => preparePattern(pat));
+  const blacklist = configs.tags.blacklist?.map(pat => preparePattern(pat)) || [];
+  const tags = blacklist.filter(pattern => !pattern.startsWith("system:"));
+  const system = blacklist.filter(pattern => pattern.startsWith("system:"));
   
-  await postgres.query(SQL`
+  if(tags.length > 0) {
+    await postgres.query(SQL`
+      DELETE FROM posts
+      USING unnest(${tags}::TEXT[]) pat
+      INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+      INNER JOIN mappings ON mappings.tagid = tags.id
+      WHERE mappings.postid = posts.id
+    `);
+  }
+  
+  const systemFlags: SQLStatement[] = [];
+  if(system.includes("system:inbox")) systemFlags.push(SQL`posts.inbox`);
+  if(system.includes("system:archive")) systemFlags.push(SQL`NOT posts.inbox`);
+  if(system.includes("system:trash")) systemFlags.push(SQL`posts.trash`);
+  const systemWhere = systemFlags.reduce((acc: null | SQLStatement, val) => (acc ? acc.append(" OR ") : SQL`WHERE `).append(val), null);
+  
+  if(systemWhere) {
+    await postgres.query(SQL`
     DELETE FROM posts
-    USING unnest(${blacklist}::TEXT[]) pat
-    INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-    INNER JOIN mappings ON mappings.tagid = tags.id
-    WHERE mappings.postid = posts.id
-  `);
+    `.append(systemWhere));
+  }
   
   printProgress(true, "Applying blacklist...");
 }
@@ -441,17 +467,34 @@ async function applyWhitelist(postgres: PoolClient) {
   printProgress(false, "Applying whitelist...");
   
   const whitelist = configs.tags.whitelist?.map(pat => preparePattern(pat)) || [];
+  const tags = whitelist.filter(pattern => !pattern.startsWith("system:"));
+  const system = whitelist.filter(pattern => pattern.startsWith("system:"));
   
-  await postgres.query(SQL`
+  if(tags.length > 0) {
+    await postgres.query(SQL`
+      DELETE FROM posts
+      WHERE NOT EXISTS(
+        SELECT 1
+        FROM unnest(${tags}::TEXT[]) pat
+        INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
+        INNER JOIN mappings ON mappings.tagid = tags.id
+        WHERE mappings.postid = posts.id
+      )
+    `);
+  }
+  
+  const systemFlags: SQLStatement[] = [];
+  if(system.includes("system:inbox")) systemFlags.push(SQL`NOT posts.inbox`);
+  if(system.includes("system:archive")) systemFlags.push(SQL`posts.inbox`);
+  if(system.includes("system:trash")) systemFlags.push(SQL`NOT posts.trash`);
+  const systemWhere = systemFlags.reduce((acc: null | SQLStatement, val) => (acc ? acc.append(" OR ") : SQL`WHERE `).append(val), null);
+  
+  if(systemWhere) {
+    await postgres.query(SQL`
     DELETE FROM posts
-    WHERE NOT EXISTS(
-      SELECT 1
-      FROM unnest(${whitelist}::TEXT[]) pat
-      INNER JOIN tags ON tags.name LIKE pat OR tags.subtag LIKE pat
-      INNER JOIN mappings ON mappings.tagid = tags.id
-      WHERE mappings.postid = posts.id
-    )
-  `);
+    `.append(systemWhere));
+  }
+  
   
   printProgress(true, "Applying whitelist...");
 }

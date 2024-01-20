@@ -76,10 +76,12 @@ export default function PostPage() {
                 <div>{pageData.post.nunFrames !== null && `Frames: ${pageData.post.nunFrames}`}</div>
                 <div>{pageData.post.hasAudio !== null && `Audio: ${pageData.post.hasAudio ? "Yes" : "No"}`}</div>
                 <div>Posted: {new Date(pageData.post.posted).toLocaleString()}</div>
+                {pageData.post.inbox && <div>In inbox</div>}
+                {pageData.post.trash && <div>In trash</div>}
                 <div><b><a href={link} target="_blank" rel="noreferrer" download>Download This File</a></b></div>
               </div>
               {pageData.post.sources.length > 0 &&
-                <div className="namespace">
+               <div className="namespace">
                   <b>Sources</b>
                   {pageData.post.sources.map(url => <SourceLink key={url} url={url} />)}
                 </div>

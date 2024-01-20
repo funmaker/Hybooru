@@ -69,6 +69,8 @@ CREATE TABLE posts (
   has_audio BOOLEAN,
   rating FLOAT,
   mime INTEGER,
+  inbox BOOLEAN NOT NULL,
+  trash BOOLEAN NOT NULL,
   posted TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
