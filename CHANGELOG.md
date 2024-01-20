@@ -18,6 +18,7 @@
 - Added `host` config option (https://github.com/funmaker/Hybooru/issues/38)
 - Added support for PORT and HOST envvar override
 - Removed DOCKERIZED envvar, Dockerfile now uses PORT (https://github.com/funmaker/Hybooru/issues/36)
+- Fixed faulty tag loop detection (https://github.com/funmaker/Hybooru/issues/39)
 
 
 # v1.9.0

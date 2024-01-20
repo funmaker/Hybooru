@@ -287,16 +287,16 @@ async function normalizeTagRelations(postgres: PoolClient) {
         FROM paths
         INNER JOIN tag_siblings ON tag_siblings.tagid = paths.tagid
         WHERE paths.tagid != ALL(paths.visited)
-    ), loops(tagid, visited) AS (
-      SELECT *
+    ), loops(tagid, path) AS (
+      SELECT tagid, visited || tagid
       FROM paths
       WHERE tagid = visited[1] AND tagid <= ALL(visited)
       ORDER BY tagid
     )
     DELETE FROM tag_siblings
     USING loops
-    WHERE tag_siblings.tagid = loops.tagid AND tag_siblings.betterid = loops.visited[array_upper(loops.visited, 1)]
-    RETURNING loops.visited || loops.tagid AS path
+    WHERE tag_siblings.tagid = loops.tagid AND tag_siblings.betterid = loops.path[2]
+    RETURNING path
   `);
   
   printProgress([1, 6], "Normalizing tags");
@@ -376,16 +376,16 @@ async function normalizeTagRelations(postgres: PoolClient) {
         FROM paths
         INNER JOIN tag_parents ON tag_parents.tagid = paths.tagid
         WHERE paths.tagid != ALL(paths.visited)
-    ), loops(tagid, visited) AS (
-      SELECT *
+    ), loops(tagid, path) AS (
+      SELECT tagid, visited || tagid
       FROM paths
       WHERE tagid = visited[1] AND tagid <= ALL(visited)
       ORDER BY tagid
     )
     DELETE FROM tag_parents
     USING loops
-    WHERE tag_parents.tagid = loops.tagid AND tag_parents.parentid = loops.visited[array_upper(loops.visited, 1)]
-    RETURNING loops.visited || loops.tagid AS path
+    WHERE tag_parents.tagid = loops.tagid AND tag_parents.parentid = loops.path[2]
+    RETURNING path
   `);
   
   printProgress([6, 6], "Normalizing tags");
