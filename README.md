@@ -125,6 +125,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | versionCheck.repo            | string                    | `"hybooru"`                                       | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                                                |
 | versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                                        |
 
+You can also use `PORT` environmental variable to override `port` config value.
 
 ## Translation/overlay notes
 

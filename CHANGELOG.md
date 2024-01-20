@@ -8,9 +8,14 @@
 - Investigate potential hour long going requests
 - Add zoom in to gallery
 - Research if VACUUMing has any value
+- Invalid sequence during import
+- Option to disable notes/urls/etc
 
 
 # Unreleased
+
+- Added support for PORT envvar override
+- Removed DOCKERIZED envvar, Dockerfile now uses PORT (https://github.com/funmaker/Hybooru/issues/36)
 
 
 # v1.9.0

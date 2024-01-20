@@ -10,7 +10,7 @@ if(typeof configs.isTTY === "boolean") {
 }
 
 let port = configs.port || 3000;
-if(process.env.DOCKERIZED) port = 80;
+if(process.env.PORT) port ||= parseInt(process.env.PORT);
 
 const server = http.createServer(app);
 const origApp = app;
