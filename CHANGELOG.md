@@ -14,6 +14,8 @@
 
 # Unreleased
 
+- Updated for Hydrus v559
+
 
 # v1.10.0
 

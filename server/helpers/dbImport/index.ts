@@ -21,7 +21,7 @@ import Notes from "./notes";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
 
-const MIN_HYDRUS_VER = 545;
+const MIN_HYDRUS_VER = 559;
 
 // https://stackoverflow.com/a/7616484
 function hashCode(s: string) {
@@ -106,7 +106,7 @@ export async function rebuild() {
 export interface Service {
   id: number;
   name: string;
-  trash: boolean;
+  trash: 0 | 1;
 }
 
 function findFilesServices(hydrus: Database) {

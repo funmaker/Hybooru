@@ -29,8 +29,8 @@ export default class Posts extends Import {
       COALESCE(local_ratings.rating, '') || ',' ||
       COALESCE(files_info.mime, '') || ',' ||
       (file_inbox.hash_id IS NOT NULL) || ',' ||
-      ${this.service?.trash || false} || ',' ||
-      datetime(current_files.timestamp, 'unixepoch', 'utc') || '\n'
+      ${!!this.service?.trash} || ',' ||
+      datetime(current_files.timestamp_ms / 1000, 'unixepoch', 'utc') || '\n'
     FROM ${this.inputTable()} current_files
       INNER JOIN hashes ON hashes.hash_id = current_files.hash_id
       LEFT JOIN files_info ON files_info.hash_id = current_files.hash_id
