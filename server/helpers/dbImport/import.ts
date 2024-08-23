@@ -4,11 +4,13 @@ import { PoolClient } from "pg";
 import copy from "pg-copy-streams";
 import configs from "../configs";
 import { printProgress } from "./pretty";
+import { Service } from "./index";
 
-export abstract class Import {
+export abstract class Import<S = Service> {
   constructor(protected hydrus: Database, protected postgres: PoolClient) {}
   
   abstract display: string;
+  service?: S;
   batchSizeMul = 1;
   initialKey: any[] = [-1];
   useTemp = false;
@@ -83,6 +85,27 @@ export abstract class Import {
     await this.afterImport();
     
     printProgress([total, total], this.display);
+  }
+  
+  async startEach(services: S[]) {
+    const sizes = services.map(service => {
+      this.resetTotal();
+      this.service = service;
+      return { service, total: this.total() };
+    });
+    
+    sizes.sort((a, b) => b.total - a.total);
+    
+    for(const { service, total } of sizes) {
+      if(total === 0) continue;
+      
+      this.resetTotal(total);
+      this.service = service;
+      
+      await this.start();
+      
+      this.useTemp = true;
+    }
   }
   
   async beforeImport() {

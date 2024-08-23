@@ -44,8 +44,10 @@ interface Configs {
   },
   rating: {
     enabled: boolean,
+    service: string | number | null,
     stars: number,
-    serviceName: string | null,
+    /** @deprecated */
+    serviceName?: string | null,
   } | null,
   versionCheck: {
     enabled: boolean,
@@ -95,7 +97,7 @@ let configs: Configs = {
   rating: {
     enabled: true,
     stars: 5,
-    serviceName: null,
+    service: null,
   },
   versionCheck: {
     enabled: true,
@@ -124,18 +126,23 @@ function deepMerge<T extends Object>(base: T, object: T): T {
   return ret;
 }
 
-const movedPostsOptions = ["pageSize", "cachePages", "cacheRecords", "filesPathOverride", "thumbnailsPathOverride", "maxPreviewSize"] as const;
+const movedOptions = ["pageSize", "cachePages", "cacheRecords", "filesPathOverride", "thumbnailsPathOverride", "maxPreviewSize"] as const;
 
 try {
   // noinspection UnnecessaryLocalVariableJS
   const configsJson: typeof import("../../configs.json") = JSON.parse(fs.readFileSync("./configs.json").toString("utf-8"));
   configs = deepMerge(configs, configsJson);
   
-  for(const movedOption of movedPostsOptions) {
+  for(const movedOption of movedOptions) {
     if(configs[movedOption] !== undefined) {
       console.error(`${chalk.bold.yellow("Warning!")} Config option ${movedOption} is deprecated and will be removed in future releases, use posts.${movedOption} instead!`);
-      (configs.posts as any)[movedOption] = configs[movedOption];
+      (configs.posts as any)[movedOption] ??= configs[movedOption];
     }
+  }
+  
+  if(configs.rating?.serviceName !== undefined) {
+    console.error(`${chalk.bold.yellow("Warning!")} Config option rating.serviceName is deprecated and will be removed in future releases, use rating.service instead!`);
+    configs.rating.service ??= configs.rating.serviceName;
   }
 } catch(e) {
   console.error("Failed to read configs.json");

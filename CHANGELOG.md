@@ -14,6 +14,12 @@
 
 # Unreleased
 
+- Updated for Hydrus v586 (https://github.com/funmaker/Hybooru/issues/45)
+- Added rating.service config that can accept either id number or string name of the rating service
+- Deprecated rating.serviceName in favor of rating.service
+- Fixed error while importing tags with multiple independent preferred siblings
+- Fixed deprecated config options overriding properly named options on conflict 
+
 
 # v1.11.0
 

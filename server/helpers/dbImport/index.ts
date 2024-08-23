@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import path from "path";
 import chalk from "chalk";
 import SqliteDatabase, { Database } from "better-sqlite3";
@@ -21,7 +22,7 @@ import Notes from "./notes";
 import TagParents from "./tagParents";
 import TagSiblings from "./tagSiblings";
 
-const MIN_HYDRUS_VER = 559;
+const MIN_HYDRUS_VER = 586;
 
 // https://stackoverflow.com/a/7616484
 function hashCode(s: string) {
@@ -60,9 +61,16 @@ export async function rebuild() {
     const { version } = hydrus.prepare('SELECT version FROM version;').get();
     if(version < MIN_HYDRUS_VER) throw new Error(`Unsupported Hydrus version(min: v${MIN_HYDRUS_VER}, current: v${version}), Update Hydrus to the newest version.`);
     
-    const filesServices = findFilesServices(hydrus);
-    const ratingsService = findRatingsService(hydrus);
-    const mappingsServices = findMappingsServices(hydrus);
+    const services = getServices(hydrus);
+    const filesServices = findServices(services, [ServiceID.LOCAL_FILE_DOMAIN, ServiceID.FILE_REPOSITORY, ServiceID.LOCAL_FILE_TRASH_DOMAIN], configs.posts.services, true);
+    const mappingsServices = findServices(services, [ServiceID.LOCAL_TAG, ServiceID.TAG_REPOSITORY], configs.tags.services, true);
+    
+    const ratingsServiceFilter = typeof configs.rating?.service === "string" || typeof configs.rating?.service === "number" ? [configs.rating.service] : null;
+    const ratingsService = configs.rating && findServices(services, [ServiceID.LOCAL_RATING_NUMERICAL], ratingsServiceFilter)[0] || null;
+    if(configs.rating && !ratingsService) {
+      console.error(chalk.yellow("Unable to locate any numerical rating service! Rating disabled."));
+      configs.rating = null;
+    }
     
     await new Posts(hydrus, postgres, ratingsService).startEach(filesServices);
     await new Urls(hydrus, postgres).start();
@@ -70,8 +78,8 @@ export async function rebuild() {
     await new Tags(hydrus, postgres).start();
     await new Mappings(hydrus, postgres).startEach(mappingsServices);
     
-    if(resolveRelations) await new TagParents(hydrus, postgres, mappingsServices).start();
-    if(resolveRelations) await new TagSiblings(hydrus, postgres, mappingsServices).start();
+    if(resolveRelations) await new TagParents(hydrus, postgres).startEach(mappingsServices);
+    if(resolveRelations) await new TagSiblings(hydrus, postgres).startEach(mappingsServices);
     
     const options = await importOptions(hydrus, postgres);
     
@@ -86,7 +94,7 @@ export async function rebuild() {
     await createIndexes(postgres);
     if(resolveRelations) await applyTagSiblings(postgres);
     await countUsage(postgres);
-    await calculateStatistics(postgres, options, ratingsService);
+    await calculateStatistics(postgres, options);
     
     printProgress(false, "Finalizing...");
     hydrus.close();
@@ -106,77 +114,45 @@ export async function rebuild() {
 export interface Service {
   id: number;
   name: string;
-  trash: 0 | 1;
+  type: ServiceID;
 }
 
-function findFilesServices(hydrus: Database) {
-  let services: Service[] = hydrus.prepare(`
+function getServices(hydrus: Database) {
+  return hydrus.prepare(`
     SELECT
       service_id AS id,
       name,
-      service_type = ${ServiceID.LOCAL_FILE_TRASH_DOMAIN} AS trash
+      service_type AS type
     FROM services
-    WHERE service_type = ${ServiceID.LOCAL_FILE_DOMAIN}
-       OR service_type = ${ServiceID.FILE_REPOSITORY}
-       OR service_type = ${ServiceID.LOCAL_FILE_TRASH_DOMAIN}
-   `).all();
-  if(services.length === 0) throw new Error("Unable to locate any file services!");
-  
-  if(configs.posts.services) {
-    for(const desired of configs.posts.services) {
-      if(typeof desired === "string") {
-        if(services.every(s => s.name !== desired)) throw new Error(`Unable to locate file service with name '${desired}'`);
-      } else {
-        if(services.every(s => s.id !== desired)) throw new Error(`Unable to locate file service with id '${desired}'`);
-      }
-    }
-    
-    services = services.filter(s => configs.posts.services?.includes(s.name) || configs.posts.services?.includes(s.id));
-  }
-  
-  return services;
+  `).all();
 }
 
-function findRatingsService(hydrus: Database) {
-  if(configs.rating && configs.rating.enabled) {
-    if(configs.rating.serviceName !== null) {
-      const service: { id: number; type: number } | undefined = hydrus.prepare(`SELECT service_id AS id, service_type AS type FROM services WHERE name = ?`).get(configs.rating.serviceName);
+function findServices(allServices: Service[], types: ServiceID[], filter: Array<string | number> | null | undefined = null, required = false) {
+  const services = allServices.filter(service => types.includes(service.type));
+  
+  const errorTail = services.length === 0
+    ? `No services found with type: ${types.map(type => ServiceID[type]).join(", ")}`
+    : `Services avaliable with type: ${types.map(type => ServiceID[type]).join(", ")}\n${services.map(service => `${service.id}) ${service.name}`)}`;
+  
+  if(!filter || filter.length === 0) {
+    if(required && services.length === 0) throw new Error(errorTail);
+    else return services;
+  }
+  
+  return filter.map(desired => {
+    if(typeof desired === "string") {
+      const service = services.find(service => service.name === desired);
+      if(!service) throw new Error(`Unable to locate service with name '${desired}'.\n${errorTail}`);
       
-      if(!service) throw new Error(`There is no rating service ${configs.rating.serviceName}!`);
-      else if(service.type !== ServiceID.LOCAL_RATING_NUMERICAL) throw new Error(`Service ${configs.rating.serviceName} is not a numerical rating service!`);
-      else return service.id;
+      return service;
     } else {
-      const service: { id: number } | undefined = hydrus.prepare(`SELECT service_id AS id FROM services WHERE service_type = ?`).get(ServiceID.LOCAL_RATING_NUMERICAL);
+      const service = allServices.find(service => service.id === desired);
+      if(!service) throw new Error(`Unable to locate service with id '${desired}'.\n${errorTail}`);
+      if(!types.includes(service.type)) throw new Error(`Service with id '${desired}' is of wrong type: ${ServiceID[service.id]}.\n${errorTail}`);
       
-      if(!service) {
-        console.error(chalk.yellow("Unable to locate any numerical rating service! Rating disabled."));
-        configs.rating = null;
-      } else {
-        return service.id;
-      }
+      return service;
     }
-  }
-  
-  return null;
-}
-
-function findMappingsServices(hydrus: Database) {
-  let services: Service[] = hydrus.prepare(`SELECT service_id AS id, name FROM services WHERE service_type = ${ServiceID.LOCAL_TAG} OR service_type = ${ServiceID.TAG_REPOSITORY}`).all();
-  if(services.length === 0) throw new Error("Unable to locate any tag services!");
-  
-  if(configs.tags.services) {
-    for(const desired of configs.tags.services) {
-      if(typeof desired === "string") {
-        if(services.every(s => s.name !== desired)) throw new Error(`Unable to locate tag service with name '${desired}'`);
-      } else {
-        if(services.every(s => s.id !== desired)) throw new Error(`Unable to locate tag service with id '${desired}'`);
-      }
-    }
-    
-    services = services.filter(s => configs.tags.services?.includes(s.name) || configs.tags.services?.includes(s.id));
-  }
-  
-  return services.map(service => service.id);
+  });
 }
 
 async function importOptions(hydrus: Database, postgres: PoolClient) {
@@ -316,10 +292,12 @@ async function normalizeTagRelations(postgres: PoolClient) {
       USING roots
       WHERE tag_siblings.tagid = roots.tagid
         AND tag_siblings.betterid != roots.rootid
-      RETURNING tag_siblings.tagid, roots.rootid
+      RETURNING tag_siblings.tagid
     )
     INSERT INTO tag_siblings(tagid, betterid)
-    TABLE bad_siblings
+    SELECT roots.tagid, roots.rootid
+    FROM bad_siblings
+    INNER JOIN roots ON roots.tagid = bad_siblings.tagid
     ON CONFLICT DO NOTHING
   `);
   
@@ -568,10 +546,11 @@ async function applyTagSiblings(postgres: PoolClient) {
   printProgress(false, "Resolving tag siblings...");
   
   await postgres.query(SQL`
-    INSERT INTO tag_postids
-    SELECT tag_siblings.tagid, tag_postids.postids
+    INSERT INTO tag_postids(tagid, postids)
+    SELECT tag_siblings.tagid, union_agg(tag_postids.postids)
     FROM tag_siblings
     INNER JOIN tag_postids ON tag_postids.tagid = tag_siblings.betterid
+    GROUP BY tag_siblings.tagid
   `);
   
   printProgress(true, "Resolving tag siblings...");
@@ -590,13 +569,11 @@ async function countUsage(postgres: PoolClient) {
   printProgress(true, "Counting tags usage...");
 }
 
-async function calculateStatistics(postgres: PoolClient, options: any, ratingsService: number | null) {
+async function calculateStatistics(postgres: PoolClient, options: any) {
   printProgress(false, "Calculating statistics...");
   
   const untagged = await postsController.search({ query: configs.tags.untagged }, postgres);
-  
-  let stars = configs.rating?.stars || null;
-  if(ratingsService === null) stars = null;
+  const stars = configs.rating?.stars ?? null;
   
   await postgres.query(SQL`
     INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags, rating_stars)
@@ -611,4 +588,34 @@ async function calculateStatistics(postgres: PoolClient, options: any, ratingsSe
   `);
   
   printProgress(true, "Calculating statistics...");
+}
+
+async function dumpEdgeGraph(postgres: PoolClient, tagId: number, path: string) {
+  const edges = await postgres.query<{ start: number; end: number; kind: string }>(SQL`
+    WITH RECURSIVE
+      edges(starttag, endtag, kind) AS (
+          SELECT tagid, parentid, 'parent'
+          FROM tag_parents
+        UNION ALL
+          SELECT tagid, betterid, 'sibling'
+          FROM tag_siblings
+      ),
+      graph(starttag, endtag, kind) AS (
+          VALUES (${tagId}::INTEGER, ${tagId}::INTEGER, 'self')
+        UNION
+          SELECT edges.starttag, edges.endtag, edges.kind
+          FROM graph
+          INNER JOIN edges ON edges.starttag = graph.starttag
+                           OR edges.endtag   = graph.starttag
+                           OR edges.starttag = graph.endtag
+                           OR edges.endtag   = graph.endtag
+      )
+    SELECT graph.starttag as "start", graph.endtag as "end", graph.kind
+    FROM graph
+    WHERE kind != 'self'
+  `);
+  
+  const text = edges.rows.map(({ start, end, kind }) => `${start}-(${kind === 'parent' ? 88 : 1})>${end}`).join("\n");
+  
+  await fs.promises.writeFile(path, text);
 }
