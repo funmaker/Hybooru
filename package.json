@@ -1,7 +1,7 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.12.1-dev",
+	"version": "1.12.1",
 	"engines": {
 		"node": ">=14.0.0",
 		"npm": ">=7.0.0"

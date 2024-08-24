@@ -14,6 +14,9 @@
 
 # Unreleased
 
+
+# v1.12.1
+
 - Removed leftover adminPassword
 
 
