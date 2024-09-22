@@ -160,7 +160,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       </div>
       {leftPost &&
         <div key={leftPost.id} className="wrap left">
-          <File post={leftPost} draggable={false} controls={false} muted />
+          <File post={leftPost} draggable={false} controls={false} paused />
         </div>
       }
       {/* eslint-disable-next-line react/no-unknown-property */} { /* TODO: WHY? */ }
@@ -169,7 +169,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       </div>
       {rightPost &&
         <div key={rightPost.id} className="wrap right">
-          <File post={rightPost} draggable={false} controls={false} muted />
+          <File post={rightPost} draggable={false} controls={false} paused />
         </div>
       }
     </div>

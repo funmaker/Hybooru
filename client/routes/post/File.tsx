@@ -1,9 +1,10 @@
-import React, { useMemo, useReducer } from "react";
+import React, { useReducer, useRef } from "react";
 import { Post, PostNote, PostSummary } from "../../../server/routes/apiTypes";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
 import useSSR from "../../hooks/useSSR";
+import useChange from "../../hooks/useChange";
 import Ruffle from "../../components/Ruffle";
 import "./File.scss";
 
@@ -11,15 +12,18 @@ interface FileProps {
   post: Post | PostSummary;
   link?: string;
   className?: string;
+  paused?: boolean;
   controls?: boolean;
   autoPlay?: boolean;
   muted?: boolean;
 }
 
-export default function File({ post, link, className, controls = true, autoPlay = true, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
+export default function File({ post, link, className, paused, controls = true, autoPlay = !paused, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
   const config = useConfig();
   const SSR = useSSR();
   const [error, setError] = useReducer(() => true, false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const width = "width" in post && post.width || undefined;
   const height = "height" in post && post.height || undefined;
@@ -34,6 +38,14 @@ export default function File({ post, link, className, controls = true, autoPlay 
   }
   
   const notes = "notes" in post ? post.notes.filter(note => !!note.rect) : undefined;
+  
+  useChange(post.id, () => videoRef.current && videoRef.current.load());
+  useChange(paused, () => {
+    const media = videoRef.current || audioRef.current;
+    if(!media) return;
+    else if(paused && !media.paused) media.pause();
+    else if(!paused && media.paused) media.play();
+  });
   
   switch(mime) {
     case Mime.IMAGE_JPEG:
@@ -80,7 +92,7 @@ export default function File({ post, link, className, controls = true, autoPlay 
       return (
         <FileWrap className={className} width={width} height={height} link={controls ? undefined : link} notes={notes}>
           <video className="video" controls={controls} autoPlay={autoPlay} loop muted={muted}
-                 width={width} height={height} onError={setError} {...rest}>
+                 width={width} height={height} onError={setError} ref={videoRef} {...rest}>
             <source src={fileUrl(post)} />
             Your browser does not support this video.
           </video>
@@ -101,7 +113,7 @@ export default function File({ post, link, className, controls = true, autoPlay 
     case Mime.GENERAL_AUDIO: {
       return (
         <FileWrap className={className} notes={notes}>
-          <audio className="audio" src={fileUrl(post)} autoPlay={autoPlay && !muted} loop controls onError={setError} {...rest} />
+          <audio className="audio" src={fileUrl(post)} autoPlay={autoPlay && !muted} loop controls onError={setError} ref={audioRef} {...rest} />
         </FileWrap>
       );
     }
