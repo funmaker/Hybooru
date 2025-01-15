@@ -20,7 +20,7 @@ const origApp = app;
 let currentApp = app;
 server.listen({ port, host });
 
-console.log(`\n${chalk.bold("HyBooru")} started on port ${chalk.yellow.bold("" + port)}`);
+console.log(`\n${chalk.bold("HyBooru")} started on port ${chalk.yellow.bold(`http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${port}`)}`);
 console.log(`Environment: ${chalk.yellow.bold("" + process.env.NODE_ENV)}.`);
 console.log(chalk.dim.white(`Press Ctrl-C to terminate.\n`));
 

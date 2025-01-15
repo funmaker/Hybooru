@@ -1,25 +1,20 @@
-FROM node:18.12.0-alpine AS builder
-
+FROM node:20-alpine AS builder
 WORKDIR /build
-COPY . .
-
-RUN apk add --update --no-cache python3 make g++ && \
+RUN apk add --update --no-cache \
+    # Gyp build dependencies
+    python3 make g++ py-setuptools; \
     rm -rf /var/cache/apk/*
-
+COPY . .
 RUN npm install && \
     npm run build:prod && \
-    mv dist /app && \
     npm prune --production && \
-    mv node_modules /app
+    mv dist /app && \
+    mv node_modules /app/node_modules
 
-
-FROM node:18.12.0-alpine
-
-ENV PORT=80
-
+FROM node:20-alpine AS runtime
 WORKDIR /app
-
-COPY --from=builder /app .
-
+ENV PORT=80
 EXPOSE 80
+HEALTHCHECK --interval=60s --timeout=5s --retries=2 CMD wget --no-verbose --tries=1 --spider "http://127.0.0.1:$PORT/" || exit 1
+COPY --from=builder /app .
 CMD ["npm", "start"]

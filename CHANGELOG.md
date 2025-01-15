@@ -15,6 +15,8 @@
 
 # Unreleased
 
+- Added healthcheck to Dockerfile
+
 
 # v1.12.2
 
