@@ -1,6 +1,7 @@
 
 ### TODO:
 
+- fix very long tags fetch on last pages with a lot of tags
 - DMCA page
 - IPFS integration
 - Fix `Error: Request aborted`
@@ -14,6 +15,9 @@
 
 
 # Unreleased
+
+- Fixed github api being spammed on long imports
+- Fixed importer failing when a post has multiple identical notes
 
 
 # v1.12.3
