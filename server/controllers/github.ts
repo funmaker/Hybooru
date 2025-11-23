@@ -11,22 +11,24 @@ interface ReleasesCache {
   created: number;
 }
 
-let cache: ReleasesCache | null = null;
+let cache: ReleasesCache | Promise<Releases> | null = null;
 
 export async function getReleases() {
   if(!configs.versionCheck || !configs.versionCheck.enabled) return [];
+  if(cache instanceof Promise) return await cache;
   if(cache && Date.now() - cache.created < configs.versionCheck.cacheLifeMs) return cache.releases;
   
   try {
-    console.log("Fetching resources");
-    const response = await octokit.request('GET /repos/{owner}/{repo}/releases', {
+    console.log("Fetching GitHub releases...");
+    
+    cache = octokit.request('GET /repos/{owner}/{repo}/releases', {
       owner: configs.versionCheck.owner,
       repo: configs.versionCheck.repo,
       per_page: 100, // eslint-disable-line @typescript-eslint/naming-convention
-    });
+    }).then(response => response.data);
     
     cache = {
-      releases: response.data,
+      releases: await cache,
       created: Date.now(),
     };
     

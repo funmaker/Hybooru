@@ -15,7 +15,7 @@ export default class Notes extends Import {
   inputQuery = () => `
     SELECT
       file_notes.note_id,
-      file_notes.note_id || ',' ||
+      file_notes.name_id || ',' ||
       file_notes.hash_id || ',"' ||
       REPLACE(labels.label, '"', '""') || '","' ||
       REPLACE(notes.note, '"', '""') || '"\n'
