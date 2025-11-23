@@ -16,6 +16,9 @@
 
 # Unreleased
 
+
+# v1.12.4
+
 - Fixed github api being spammed on long imports
 - Fixed importer failing when a post has multiple identical notes
 
