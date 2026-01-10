@@ -155,6 +155,27 @@ if(process.env.HYDRUS_ADMIN_PASSWORD) {
   configs.adminPassword = process.env.HYDRUS_ADMIN_PASSWORD;
 }
 
+if(process.env.DB_HOST) {
+  configs.db.host = process.env.DB_HOST;
+}
+if(process.env.DB_PORT) {
+  const port = parseInt(process.env.DB_PORT, 10);
+  if(isNaN(port)) {
+    console.error(`${chalk.bold.yellow("Warning!")} DB_PORT environment variable is not a valid number: ${JSON.stringify(process.env.DB_PORT)}, ignoring.`);
+  } else {
+    configs.db.port = port;
+  }
+}
+if(process.env.DB_USER) {
+  configs.db.user = process.env.DB_USER;
+}
+if(process.env.DB_PASSWORD) {
+  configs.db.password = process.env.DB_PASSWORD;
+}
+if(process.env.DB_NAME) {
+  configs.db.database = process.env.DB_NAME;
+}
+
 if(configs.posts.thumbnailsMode !== ThumbnailsMode.FIT && configs.posts.thumbnailsMode !== ThumbnailsMode.FILL) {
   console.error(`${chalk.bold.yellow("Warning!")} Config option posts.thumbnailsMode should be "fit" or "fill", got ${JSON.stringify(configs.posts.thumbnailsMode)}!`);
   configs.posts.thumbnailsMode = "fit";

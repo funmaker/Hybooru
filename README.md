@@ -100,7 +100,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | adminPassword                | string or null            | `null`                                            | Password used to regenerate database (can be accessed from the cog button). Null disables manual database regeneration. You can also use environmental variable `HYDRUS_ADMIN_PASSWORD` to override the password |
 | isTTY                        | boolean or null           | `null`                                            | Overrides colorful/fancy output. `true` forces, `false` disables, `null` automatically determines. Useful when piping output.                                                                                    |
 | importBatchSize              | number                    | `8192`                                            | Base batch size used during importing. Decrease it if hybooru crashes during import.                                                                                                                             |
-| db                           | PoolConfig                | _local database_                                  | node-postgres config object. See https://node-postgres.com/apis/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password.                    |
+| db                           | PoolConfig                | _local database_                                  | node-postgres config object. See https://node-postgres.com/apis/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password. Can be overridden with `DB_*` environment variables (see below). |
 | posts                        | object                    | _see below_                                       | Options related to posts and files.                                                                                                                                                                              |
 | posts.services               | (string/number)[] or null | `null`                                            | List of names or ids of file services to import. Use `null` to import from all services.                                                                                                                         |
 | posts.filesPathOverride      | string or null            | `null`                                            | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.                                                                                                                 |
@@ -130,7 +130,22 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | versionCheck.repo            | string                    | `"hybooru"`                                       | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                                                |
 | versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                                        |
 
-You can also use `PORT` and `HOST` environmental variables to override `port` and `host` config values.
+### Environment Variables
+
+The following environment variables can be used to override config values:
+
+| Variable               | Overrides         | Description                          |
+|------------------------|-------------------|--------------------------------------|
+| `PORT`                 | `port`            | HTTP server port                     |
+| `HOST`                 | `host`            | HTTP server host                     |
+| `HYDRUS_ADMIN_PASSWORD`| `adminPassword`   | Password for database regeneration   |
+| `DB_HOST`              | `db.host`         | Database hostname                    |
+| `DB_PORT`              | `db.port`         | Database port                        |
+| `DB_USER`              | `db.user`         | Database username                    |
+| `DB_PASSWORD`          | `db.password`     | Database password                    |
+| `DB_NAME`              | `db.database`     | Database name                        |
+
+Environment variables take precedence over `configs.json` values.
 
 ## Translation/overlay notes
 
