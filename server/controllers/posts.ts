@@ -534,6 +534,12 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     whereNotNull = SQL`WHERE TRUE`;
   }
 
+  // Build total count query that includes the same filters as the main query
+  let totalCountQuery = SQL`SELECT count(1) FROM filtered INNER JOIN posts ON posts.id = filtered.id`;
+  if(whereNotNull.text !== '' || extraWhere.text !== '') {
+    totalCountQuery = totalCountQuery.append(SQL` `).append(whereNotNull).append(extraWhere);
+  }
+
   const result = await db.queryFirst(SQL`
     WITH
       `.append(whitelistCTE || SQL``).append(SQL`
@@ -541,7 +547,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       `).append(filteredCTE).append(SQL`
     SELECT
       COALESCE(json_agg(id), '[]') as posts,
-      (SELECT count(1) FROM filtered) as total,
+      (`).append(totalCountQuery).append(SQL`) as total,
       (
         SELECT
           COALESCE(json_object_agg(name, used), '{}')
