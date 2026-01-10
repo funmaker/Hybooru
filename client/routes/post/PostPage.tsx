@@ -11,6 +11,7 @@ import Tags from "../../components/Tags";
 import NotFoundPage from "../error/NotFoundPage";
 import File from "./File";
 import SourceLink from "./SourceLink";
+import PostNavigation from "./PostNavigation";
 import "./PostPage.scss";
 
 const RELATION_STRING: Record<Relation, string> = {
@@ -66,6 +67,7 @@ export default function PostPage() {
     <Layout className={`PostPage${fullHeight ? " fullHeight" : ""}`}
             simpleSettings
             sidebar={<>
+              {pageData.navigation && <PostNavigation navigation={pageData.navigation} />}
               {rating}
               <div className="namespace">
                 <b>Statistics</b>
