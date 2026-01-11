@@ -104,6 +104,7 @@ export async function random(query: string | null = null): Promise<PostSummary |
     const post: { id: number } | null = await db.queryFirst(SQL`
       SELECT id
       FROM posts
+      ORDER BY id
       OFFSET floor(random() * (SELECT posts FROM global))
       LIMIT 1
     `);
