@@ -16,6 +16,8 @@
 
 # Unreleased
 
+- Added DB_* config override env variables (#53)
+
 
 # v1.12.4
 

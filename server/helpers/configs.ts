@@ -154,7 +154,6 @@ try {
 if(process.env.HYDRUS_ADMIN_PASSWORD) {
   configs.adminPassword = process.env.HYDRUS_ADMIN_PASSWORD;
 }
-
 if(process.env.DB_HOST) {
   configs.db.host = process.env.DB_HOST;
 }
@@ -177,8 +176,8 @@ if(process.env.DB_NAME) {
 }
 
 if(configs.posts.thumbnailsMode !== ThumbnailsMode.FIT && configs.posts.thumbnailsMode !== ThumbnailsMode.FILL) {
-  console.error(`${chalk.bold.yellow("Warning!")} Config option posts.thumbnailsMode should be "fit" or "fill", got ${JSON.stringify(configs.posts.thumbnailsMode)}!`);
-  configs.posts.thumbnailsMode = "fit";
+  console.error(`${chalk.bold.yellow("Warning!")} Config option posts.thumbnailsMode should be either "${ThumbnailsMode.FIT}" or "${ThumbnailsMode.FILL}", got ${JSON.stringify(configs.posts.thumbnailsMode)}!`);
+  configs.posts.thumbnailsMode = ThumbnailsMode.FIT;
 }
 
 export default configs;
