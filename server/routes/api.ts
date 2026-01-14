@@ -48,8 +48,12 @@ router.use((_req, _res) => {
 });
 
 router.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if((err as any).code === 'ECONNABORTED') return;
+
   console.error(err);
-  
+
+  if(res.headersSent) return;
+
   const code = err.HTTPcode || 500;
   const error = {
     code,
