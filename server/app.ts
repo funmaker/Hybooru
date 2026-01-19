@@ -38,9 +38,13 @@ app.use((req, res, next) => {
 });
 
 app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if((err as any).code === 'ECONNABORTED') return;
+
   if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(403, "Bad CSRF Token");
   if(err.HTTPcode !== 404) console.error(err);
-  
+
+  if(res.headersSent) return;
+
   const code = err.HTTPcode || 500;
   const error = {
     code,

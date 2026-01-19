@@ -16,6 +16,7 @@ router.get<{ filename: string }>("/:filename", async (req, res, next) => {
   
   res.sendFile(filename, { root }, err => {
     if(err && (err as any).code === 'ENOENT') next(new HTTPError(404));
+    else if(err && (err as any).code === 'ECONNABORTED') return;
     else if(err) next(err);
   });
 });
