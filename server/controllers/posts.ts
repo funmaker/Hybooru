@@ -111,9 +111,26 @@ export async function random(query: string | null = null): Promise<PostSummary |
     id = post?.id || null;
   } else {
     const key = getCacheKey(query);
-    const cachePage = await getCachedPosts(key);
-    
-    id = cachePage.posts[Math.floor(Math.random() * cachePage.posts.length)] || null;
+
+    key.offset = 0;
+    const firstPage = await getCachedPosts(key);
+    const total = firstPage.total;
+
+    if(total === 0) {
+      id = null;
+    } else {
+      // Pick a random position across the entire result set
+      const randomPosition = Math.floor(Math.random() * total);
+
+      // Calculate which cache page contains this position
+      const cacheStart = Math.floor(randomPosition / CACHE_SIZE) * CACHE_SIZE;
+      key.offset = cacheStart;
+      const cachePage = await getCachedPosts(key);
+
+      // Get the post at the random position within this page
+      const indexInPage = randomPosition - cacheStart;
+      id = cachePage.posts[indexInPage] || null;
+    }
   }
   
   const post: PostSummary | null = await db.queryFirst(SQL`
