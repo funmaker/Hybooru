@@ -126,7 +126,7 @@ export async function random(query: string | null = null): Promise<PostSummary |
       const cacheStart = Math.floor(randomPosition / CACHE_SIZE) * CACHE_SIZE;
       key.offset = cacheStart;
       const cachePage = await getCachedPosts(key);
-      
+
       // Get the post at the random position within this page
       const indexInPage = randomPosition - cacheStart;
       id = cachePage.posts[indexInPage] || null;

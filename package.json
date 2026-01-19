@@ -18,7 +18,8 @@
 		"build:prod-static": "cp -rL static dist/",
 		"build:prod-package": "babel-node webpack/package.babel.js",
 		"lint": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --max-warnings 0 --ignore-path .gitignore .",
-		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix"
+		"lint-fix": "eslint --ext .js --ext .jsx --ext .ts --ext .tsx --ignore-path .gitignore . --fix",
+		"prepare": "husky || true"
 	},
 	"dependencies": {
 		"@octokit/core": "^4.1.0",
@@ -94,6 +95,7 @@
 		"eslint-plugin-react-hooks": "^4.2.0",
 		"handlebars": "^4.7.7",
 		"handlebars-loader": "^1.7.1",
+		"husky": "^9.1.7",
 		"ignore-loader": "^0.1.2",
 		"less": "^4.1.1",
 		"less-loader": "^8.0.0",
