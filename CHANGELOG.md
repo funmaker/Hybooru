@@ -19,6 +19,7 @@
 - Added DB_* config override env variables (#53)
 - Fixed filtered Random Post being limited to the first cache page (#55)
 - Fixed github version check getting stuck on request error
+- Removed error messages on ECONNABORTED connections (#56)
 
 
 # v1.12.4

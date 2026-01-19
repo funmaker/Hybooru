@@ -62,7 +62,7 @@ declare global {
 export default function reactMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
   res.react = (initialData, options) => {
     if(res.headersSent) return res;
-
+    
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');

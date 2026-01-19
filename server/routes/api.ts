@@ -49,15 +49,14 @@ router.use((_req, _res) => {
 
 router.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if((err as any).code === 'ECONNABORTED') return;
-
-  console.error(err);
-
+  if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(403, "Bad CSRF Token");
+  if(err.HTTPcode !== 404) console.error(err);
   if(res.headersSent) return;
-
+  
   const code = err.HTTPcode || 500;
   const error = {
     code,
-    message: err.publicMessage || http.STATUS_CODES[code],
+    message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
   res.status(code).json({ _error: error });
