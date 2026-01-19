@@ -17,6 +17,7 @@
 # Unreleased
 
 - Added DB_* config override env variables (#53)
+- Fixed github version check getting stuck on request error
 
 
 # v1.12.4

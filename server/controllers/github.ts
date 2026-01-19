@@ -37,6 +37,8 @@ export async function getReleases() {
     console.error("Failed to fetch releases from GitHub.");
     console.error(e);
     
+    cache = null;
+    
     return [];
   }
 }
