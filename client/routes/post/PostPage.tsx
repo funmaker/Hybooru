@@ -81,7 +81,7 @@ export default function PostPage() {
                 <div><b><a href={link} target="_blank" rel="noreferrer" download>Download This File</a></b></div>
               </div>
               {pageData.post.sources.length > 0 &&
-               <div className="namespace">
+                <div className="namespace">
                   <b>Sources</b>
                   {pageData.post.sources.map(url => <SourceLink key={url} url={url} />)}
                 </div>
