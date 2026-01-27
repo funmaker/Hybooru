@@ -16,6 +16,9 @@
 
 # Unreleased
 
+
+# v1.13.0
+
 - Added DB_* config override env variables (#53)
 - Fixed filtered Random Post being limited to the first cache page (#55)
 - Fixed github version check getting stuck on request error
