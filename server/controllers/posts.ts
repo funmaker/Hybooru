@@ -14,12 +14,18 @@ const CACHE_SIZE = configs.posts.pageSize * configs.posts.cachePages;
 
 const blankPattern = /^[_%]*%[_%]*$/;
 
-const SORTS = {
+const COLUMN_SORTS: Record<string, string> = {
   date: "posted",
   id: "id",
   score: "rating",
   size: "size",
 };
+
+interface SortSpec {
+  type: 'column' | 'tag';
+  field: string;
+  order: 'asc' | 'desc';
+}
 
 interface SearchArgs {
   query?: string;
@@ -262,8 +268,7 @@ interface CacheKey {
   blacklist: string[];
   md5: string[];
   sha256: string[];
-  sort: string;
-  order: string;
+  sorts: SortSpec[];
   rating: undefined | null | [number, number];
   inbox: undefined | boolean;
   trash: undefined | boolean;
@@ -274,20 +279,19 @@ function getCacheKey(query: string): CacheKey {
   const parts = query.split(" ")
                      .filter(p => !!p)
                      .map(preparePattern);
-  
+
   if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
-  
-  const whitelist = [];
-  const blacklist = [];
-  const sha256 = [];
-  const md5 = [];
-  let sort = SORTS.date;
-  let order = "desc";
+
+  const whitelist: string[] = [];
+  const blacklist: string[] = [];
+  const sha256: string[] = [];
+  const md5: string[] = [];
+  const sorts: SortSpec[] = [];
   let rating: undefined | null | [number, number] = undefined;
   let inbox: undefined | boolean;
   let trash: undefined | boolean;
   let match: RegExpMatchArray | null = null;
-  
+
   for(let part of parts) {
     if(part.startsWith("system:") || part.startsWith("-system:")) {
       if(part === "system:archive" || part === "-system:inbox") inbox = false;
@@ -298,7 +302,8 @@ function getCacheKey(query: string): CacheKey {
       blacklist.push(part.slice(1));
     } else if(part.startsWith("order:")) {
       part = part.slice(6);
-      
+      let order: 'asc' | 'desc' = "desc";
+
       if(part.endsWith("\\_asc")) {
         order = "asc";
         part = part.slice(0, -5);
@@ -307,9 +312,15 @@ function getCacheKey(query: string): CacheKey {
         order = "desc";
         part = part.slice(0, -6);
       }
-      
-      if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
-      sort = SORTS[part as keyof typeof SORTS];
+
+      if(part in COLUMN_SORTS) {
+        sorts.push({ type: 'column', field: COLUMN_SORTS[part], order });
+      } else if(configs.posts.tagSorts.includes(part)) {
+        sorts.push({ type: 'tag', field: part, order });
+      } else {
+        const validSorts = [...Object.keys(COLUMN_SORTS), ...configs.posts.tagSorts];
+        throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${validSorts.join(", ")}`);
+      }
     } else if(part === "rating:none") {
       rating = null;
     } else if(part.startsWith("sha256:")) {
@@ -334,14 +345,18 @@ function getCacheKey(query: string): CacheKey {
       whitelist.push(part);
     }
   }
-  
+
+  // Default sort if none specified
+  if(sorts.length === 0) {
+    sorts.push({ type: 'column', field: 'posted', order: 'desc' });
+  }
+
   return {
     whitelist,
     blacklist,
     sha256,
     md5,
-    sort,
-    order,
+    sorts,
     rating,
     inbox,
     trash,
@@ -361,13 +376,13 @@ let postsCache: Record<string, CacheValue> = {};
 
 async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<CacheValue> {
   const hashed = keyHasher.hash(key);
-  
+
   if(postsCache[hashed]) {
     postsCache[hashed].lastUsed = Date.now();
     return postsCache[hashed];
   }
-  
-  let { whitelist, blacklist, sha256, md5, sort, order, offset, rating, inbox, trash } = key;
+
+  let { whitelist, blacklist, sha256, md5, sorts, offset, rating, inbox, trash } = key;
   
   let extraWhere = SQL``;
   let from = SQL`
@@ -483,10 +498,65 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   
   if(rating === null) extraWhere = extraWhere.append(SQL` AND posts.rating IS NULL`);
   else if(Array.isArray(rating)) extraWhere = extraWhere.append(SQL` AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
-  
+
   if(inbox !== undefined) extraWhere = extraWhere.append(SQL` AND posts.inbox = ${inbox}`);
   if(trash !== undefined) extraWhere = extraWhere.append(SQL` AND posts.trash = ${trash}`);
-  
+
+  // Build tag sort lateral joins and ORDER BY clause
+  const tagSortJoins: SQLStatement[] = [];
+  const orderByParts: string[] = [];
+  let whereNotNull = SQL``;
+  let selectTagSorts = SQL``;
+
+  for(const sort of sorts) {
+    if(sort.type === 'column') {
+      // Column-based sort - require NOT NULL for first column sort
+      if(whereNotNull.text === '') {
+        whereNotNull = SQL`WHERE posts."`.append(sort.field).append(`" IS NOT NULL`);
+      }
+      orderByParts.push(`posts."${sort.field}" ${sort.order}`);
+    } else {
+      // Tag-based sort - add lateral join
+      const alias = `sort_${sort.field}`;
+      const nulls = sort.order === 'asc' ? 'NULLS LAST' : 'NULLS FIRST';
+
+      tagSortJoins.push(SQL`
+        LEFT JOIN LATERAL (
+          SELECT MIN(
+            CASE
+              WHEN tags.subtag ~ '^\\d+$' THEN tags.subtag::INTEGER
+              ELSE NULL
+            END
+          ) as val
+          FROM mappings
+          INNER JOIN tags ON tags.id = mappings.tagid
+          WHERE mappings.postid = posts.id
+            AND tags.name LIKE ${sort.field + ':%'}
+        ) `.append(alias).append(SQL` ON TRUE`));
+
+      selectTagSorts = selectTagSorts.append(SQL`, `).append(alias).append(`.val AS `).append(alias);
+      orderByParts.push(`${alias}.val ${sort.order} ${nulls}`);
+    }
+  }
+
+  // Add id as tiebreaker using the last sort's order direction
+  const lastOrder = sorts[sorts.length - 1]?.order || 'desc';
+  orderByParts.push(`posts.id ${lastOrder}`);
+
+  const orderByClause = orderByParts.join(', ');
+  const tagJoinsSql = tagSortJoins.reduce((acc, join) => acc.append(join), SQL``);
+
+  // Ensure WHERE clause is properly formed (extraWhere always starts with AND)
+  if(whereNotNull.text === '' && extraWhere.text !== '') {
+    whereNotNull = SQL`WHERE TRUE`;
+  }
+
+  // Build total count query that includes the same filters as the main query
+  let totalCountQuery = SQL`SELECT count(1) FROM filtered INNER JOIN posts ON posts.id = filtered.id`;
+  if(whereNotNull.text !== '' || extraWhere.text !== '') {
+    totalCountQuery = totalCountQuery.append(SQL` `).append(whereNotNull).append(extraWhere);
+  }
+
   const result = await db.queryFirst(SQL`
     WITH
       `.append(whitelistCTE || SQL``).append(SQL`
@@ -494,7 +564,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       `).append(filteredCTE).append(SQL`
     SELECT
       COALESCE(json_agg(id), '[]') as posts,
-      (SELECT count(1) FROM filtered) as total,
+      (`).append(totalCountQuery).append(SQL`) as total,
       (
         SELECT
           COALESCE(json_object_agg(name, used), '{}')
@@ -517,12 +587,10 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
         ) x
       ) AS tags
     FROM (
-      SELECT posts.*
-      `).append(from).append(`
-      WHERE posts."${sort}" IS NOT NULL
-      `).append(extraWhere).append(`
-      ORDER BY posts."${sort}" ${order}, posts.id ${order}
-      `).append(SQL`
+      SELECT posts.*`).append(selectTagSorts).append(SQL`
+      `).append(from).append(tagJoinsSql).append(SQL`
+      `).append(whereNotNull).append(extraWhere).append(SQL`
+      ORDER BY `).append(orderByClause).append(SQL`
       LIMIT ${CACHE_SIZE}
       OFFSET ${offset}
     ) x
@@ -546,6 +614,71 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     ...result,
     lastUsed: Date.now(),
   };
+}
+
+export interface PostNavigation {
+  prev: number | null;
+  next: number | null;
+  position: number;
+  total: number;
+}
+
+export async function getNavigation(postId: number, query: string): Promise<PostNavigation> {
+  const key = getCacheKey(query);
+
+  let position = -1;
+  let total = 0;
+  let prev: number | null = null;
+  let next: number | null = null;
+
+  // Search through cache pages to find the post
+  let currentOffset = 0;
+  const maxIterations = 1000; // Safety limit
+  let iterations = 0;
+
+  while(position === -1 && iterations < maxIterations) {
+    iterations++;
+    key.offset = currentOffset;
+    const cached = await getCachedPosts(key);
+    total = cached.total;
+
+    const indexInPage = cached.posts.indexOf(postId);
+    if(indexInPage !== -1) {
+      position = currentOffset + indexInPage;
+
+      // Get prev from current page or previous page
+      if(indexInPage > 0) {
+        prev = cached.posts[indexInPage - 1];
+      } else if(currentOffset > 0) {
+        // Need to fetch previous page
+        key.offset = currentOffset - CACHE_SIZE;
+        const prevPage = await getCachedPosts(key);
+        prev = prevPage.posts[prevPage.posts.length - 1] || null;
+      }
+
+      // Get next from current page or next page
+      if(indexInPage < cached.posts.length - 1) {
+        next = cached.posts[indexInPage + 1];
+      } else if(position < total - 1) {
+        // Need to fetch next page
+        key.offset = currentOffset + CACHE_SIZE;
+        const nextPage = await getCachedPosts(key);
+        next = nextPage.posts[0] || null;
+      }
+
+      break;
+    }
+
+    // Post not in this page, check next
+    if(cached.posts.length < CACHE_SIZE || currentOffset + CACHE_SIZE >= total) {
+      // No more pages or reached the end
+      break;
+    }
+
+    currentOffset += CACHE_SIZE;
+  }
+
+  return { prev, next, position, total };
 }
 
 export function clearCache() {

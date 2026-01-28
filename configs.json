@@ -22,7 +22,8 @@
 		"pageSize": 72,
 		"cachePages": 5,
 		"cacheRecords": 1024,
-		"maxPreviewSize": 104857600
+		"maxPreviewSize": 104857600,
+		"tagSorts": ["page", "volume", "chapter", "part"]
 	},
 	"tags": {
 		"services": null,
