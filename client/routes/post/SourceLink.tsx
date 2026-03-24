@@ -54,6 +54,7 @@ const DOMAINS = {
   "nitter.eu": "nitter",
   "nitter.net": "nitter",
   "nitter.nixnet.services": "nitter",
+  "patreon.com": "Patreon",
   "pixiv.net": "pixiv",
   "prolikewoah.com": "ProLikeWoah",
   "realbooru.com": "Realbooru",
