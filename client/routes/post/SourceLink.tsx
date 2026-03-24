@@ -41,6 +41,7 @@ const DOMAINS = {
   "furry.booru.org": "FurryBooru",
   "gelbooru.com": "Gelbooru",
   "gfycat.com": "Gfycat",
+  "gumroad.com": "Gumroad",
   "i.4cdn.org": "4chan",
   "i.imgur.com": "Imgur",
   "i.warosu.org": "Warosu",
