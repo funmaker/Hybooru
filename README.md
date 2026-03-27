@@ -71,8 +71,8 @@ You can also use `?` to match for single character(eg: `?girl`) and `*` to match
 Patterns prefixed with `-` will be excluded from results. Patterns are matched against tag's name, but
 Hydrus's `namespace:subtag` syntax is also supported.
 
-Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:posted`(date),
-`order:id`, `order:rating`, `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:posted_asc`).
+Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:date`,
+`order:id`, `order:rating`, `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:date_asc`).
 If not specified, post are sorted by date descending.
 
 If you use a numeric rating service and successfully imported the ratings, you can also filter posts by their ratings
