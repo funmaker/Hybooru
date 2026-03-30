@@ -67,6 +67,9 @@ export default function File({ post, link, className, paused, controls = true, a
     case Mime.IMAGE_AVIF_SEQUENCE:
     case Mime.UNDETERMINED_GIF:
     case Mime.IMAGE_QOI:
+    case Mime.IMAGE_JXL:
+    case Mime.ANIMATION_JXL:
+    case Mime.UNDETERMINED_JXL:
     case Mime.GENERAL_IMAGE: {
       return (
         <FileWrap className={className} width={width} height={height} link={link} notes={notes}>
