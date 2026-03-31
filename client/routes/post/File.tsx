@@ -57,6 +57,8 @@ export default function File({ post, link, className, paused, controls = true, a
     case Mime.ANIMATION_APNG:
     case Mime.UNDETERMINED_PNG:
     case Mime.IMAGE_WEBP:
+    case Mime.ANIMATION_WEBP:
+    case Mime.UNDETERMINED_WEBP:
     case Mime.IMAGE_TIFF:
     case Mime.IMAGE_SVG:
     case Mime.IMAGE_HEIF:
