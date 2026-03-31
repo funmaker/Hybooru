@@ -16,6 +16,9 @@
 
 # Unreleased
 
+
+# v1.14.0
+
 - Added support for JPEG XL/.JXL (#58)
 
 
