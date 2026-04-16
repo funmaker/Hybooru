@@ -54,9 +54,10 @@ export async function rebuild() {
     const dbPath = findHydrusDB();
     const resolveRelations = configs.tags.resolveRelations;
     
-    const hydrus = new SqliteDatabase(path.resolve(dbPath, "client.db"), { readonly: true });
-    await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.mappings.db")}' AS mappings`);
-    await hydrus.exec(`ATTACH '${path.resolve(dbPath, "client.master.db")}' AS master`);
+    process.env.SQLITE_USE_URI = '1'; // Hack for https://github.com/WiseLibs/better-sqlite3/issues/1354
+    const hydrus = new SqliteDatabase(`file:${path.resolve(dbPath, "client.db")}?immutable=1`, { readonly: true });
+    await hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.mappings.db")}?immutable=1' AS mappings`);
+    await hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.master.db")}?immutable=1' AS master`);
     
     const { version } = hydrus.prepare('SELECT version FROM version;').get();
     if(version < MIN_HYDRUS_VER) throw new Error(`Unsupported Hydrus version(min: v${MIN_HYDRUS_VER}, current: v${version}), Update Hydrus to the newest version.`);
@@ -107,6 +108,7 @@ export async function rebuild() {
     await postgres.query("ROLLBACK");
     throw e;
   } finally {
+    delete process.env.SQLITE_USE_URI;
     postgres.release();
   }
 }

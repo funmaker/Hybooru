@@ -16,6 +16,9 @@
 
 # Unreleased
 
+- Fixed errors on importing from read-only filesystem
+- Bump required NodeJS version to 20
+
 
 # v1.14.0
 

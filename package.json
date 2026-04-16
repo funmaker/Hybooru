@@ -1,10 +1,10 @@
 {
 	"name": "hybooru",
 	"description": "Hydrus-based booru-styled imageboard in React",
-	"version": "1.14.0",
+	"version": "1.14.1-dev",
 	"engines": {
-		"node": ">=14.0.0",
-		"npm": ">=7.0.0"
+		"node": ">=20.0.0",
+		"npm": ">=10.0.0"
 	},
 	"main": "server.ts",
 	"author": "Fun Maker",
@@ -25,7 +25,7 @@
 		"@octokit/core": "^4.1.0",
 		"@ruffle-rs/ruffle": "^0.1.0-nightly.2023.10.2",
 		"axios": "^0.21.1",
-		"better-sqlite3": "^8.0.1",
+		"better-sqlite3": "^12.9.0",
 		"body-parser": "^1.19.0",
 		"chalk": "^4.1.0",
 		"compression": "^1.7.4",
