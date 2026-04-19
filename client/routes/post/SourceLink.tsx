@@ -21,6 +21,7 @@ export default function SourceLink({ url }: SourceProps) {
 
 
 // From Hydrus' default parsers
+/* eslint-disable @typescript-eslint/naming-convention */
 const DOMAINS = {
   "8ch.net": "8chan",
   "8chan.moe": "8chan.moe",
@@ -40,6 +41,7 @@ const DOMAINS = {
   "furry.booru.org": "FurryBooru",
   "gelbooru.com": "Gelbooru",
   "gfycat.com": "Gfycat",
+  "gumroad.com": "Gumroad",
   "i.4cdn.org": "4chan",
   "i.imgur.com": "Imgur",
   "i.warosu.org": "Warosu",
@@ -52,6 +54,7 @@ const DOMAINS = {
   "nitter.eu": "nitter",
   "nitter.net": "nitter",
   "nitter.nixnet.services": "nitter",
+  "patreon.com": "Patreon",
   "pixiv.net": "pixiv",
   "prolikewoah.com": "ProLikeWoah",
   "realbooru.com": "Realbooru",
@@ -75,4 +78,5 @@ const DOMAINS = {
   "booru.funmaker.moe": "Mikubooru",
   "discordapp.com": "Discord",
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 

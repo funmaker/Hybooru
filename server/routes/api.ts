@@ -23,18 +23,18 @@ router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", async (req, r
 
 router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {
   const id = parseInt(req.params.id);
-
+  
   let result;
   if(!isNaN(id)) result = await postsController.get(parseInt(req.params.id));
   else result = null;
-
+  
   res.json(result);
 });
 
 router.get<{ id: string }, PostNavigationResponse, any, { query?: string }>("/post/:id/navigation", async (req, res) => {
   const id = parseInt(req.params.id);
   if(isNaN(id)) throw new HTTPError(400, "Invalid post ID");
-
+  
   const result = await postsController.getNavigation(id, req.query.query || "");
   res.json(result);
 });
@@ -56,12 +56,15 @@ router.use((_req, _res) => {
 });
 
 router.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
+  if((err as any).code === 'ECONNABORTED') return;
+  if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(403, "Bad CSRF Token");
+  if(err.HTTPcode !== 404) console.error(err);
+  if(res.headersSent) return;
   
   const code = err.HTTPcode || 500;
   const error = {
     code,
-    message: err.publicMessage || http.STATUS_CODES[code],
+    message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
   res.status(code).json({ _error: error });

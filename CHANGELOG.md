@@ -17,6 +17,25 @@
 # Unreleased
 
 
+# v1.14.1
+
+- Fixed errors on importing from read-only filesystem
+- Bump required NodeJS version to 20
+
+
+# v1.14.0
+
+- Added support for JPEG XL/.JXL (#58)
+
+
+# v1.13.0
+
+- Added DB_* config override env variables (#53)
+- Fixed filtered Random Post being limited to the first cache page (#55)
+- Fixed github version check getting stuck on request error
+- Removed error messages on ECONNABORTED connections (#56)
+
+
 # v1.12.4
 
 - Fixed github api being spammed on long imports

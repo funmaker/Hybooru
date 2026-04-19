@@ -16,31 +16,31 @@ export const router = PromiseRouter();
 
 router.get<{ id: string }, any, any, { query?: string }>('/posts/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-
+  
   let post;
   if(!isNaN(id)) post = await postsController.get(parseInt(req.params.id));
   else post = null;
-
+  
   let navigation: PostNavigationResponse | undefined;
   if(post && req.query.query) {
     navigation = await postsController.getNavigation(id, req.query.query);
   }
-
+  
   const options: Options = {
     ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,
   };
-
+  
   if(post) {
     options.ogTitle = options.title = postTitle(post);
-
+    
     const tags = Object.keys(post.tags);
     const namespaced = tags.filter(tag => tag.match(namespaceRegex)).sort();
     const unnamespaced = tags.filter(tag => !tag.match(namespaceRegex)).sort();
     options.ogDescription = [...namespaced, ...unnamespaced].slice(0, 128).map(prettifyTag).join(", ");
-
+    
     addOGMedia(options, post);
   }
-
+  
   res.react<PostPageData>({ post, navigation }, options);
 });
 

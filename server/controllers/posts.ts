@@ -117,9 +117,26 @@ export async function random(query: string | null = null): Promise<PostSummary |
     id = post?.id || null;
   } else {
     const key = getCacheKey(query);
-    const cachePage = await getCachedPosts(key);
     
-    id = cachePage.posts[Math.floor(Math.random() * cachePage.posts.length)] || null;
+    key.offset = 0;
+    const firstPage = await getCachedPosts(key);
+    const total = firstPage.total;
+    
+    if(total === 0) {
+      id = null;
+    } else {
+      // Pick a random position across the entire result set
+      const randomPosition = Math.floor(Math.random() * total);
+      
+      // Calculate which cache page contains this position
+      const cacheStart = Math.floor(randomPosition / CACHE_SIZE) * CACHE_SIZE;
+      key.offset = cacheStart;
+      const cachePage = await getCachedPosts(key);
+      
+      // Get the post at the random position within this page
+      const indexInPage = randomPosition - cacheStart;
+      id = cachePage.posts[indexInPage] || null;
+    }
   }
   
   const post: PostSummary | null = await db.queryFirst(SQL`
@@ -262,9 +279,9 @@ function getCacheKey(query: string): CacheKey {
   const parts = query.split(" ")
                      .filter(p => !!p)
                      .map(preparePattern);
-
+  
   if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
-
+  
   const whitelist: string[] = [];
   const blacklist: string[] = [];
   const sha256: string[] = [];
@@ -274,7 +291,7 @@ function getCacheKey(query: string): CacheKey {
   let inbox: undefined | boolean;
   let trash: undefined | boolean;
   let match: RegExpMatchArray | null = null;
-
+  
   for(let part of parts) {
     if(part.startsWith("system:") || part.startsWith("-system:")) {
       if(part === "system:archive" || part === "-system:inbox") inbox = false;
@@ -286,7 +303,7 @@ function getCacheKey(query: string): CacheKey {
     } else if(part.startsWith("order:")) {
       part = part.slice(6);
       let order: 'asc' | 'desc' = "desc";
-
+      
       if(part.endsWith("\\_asc")) {
         order = "asc";
         part = part.slice(0, -5);
@@ -295,7 +312,7 @@ function getCacheKey(query: string): CacheKey {
         order = "desc";
         part = part.slice(0, -6);
       }
-
+      
       if(part in COLUMN_SORTS) {
         sorts.push({ type: 'column', field: COLUMN_SORTS[part], order });
       } else if(configs.posts.tagSorts.includes(part)) {
@@ -328,12 +345,12 @@ function getCacheKey(query: string): CacheKey {
       whitelist.push(part);
     }
   }
-
+  
   // Default sort if none specified
   if(sorts.length === 0) {
     sorts.push({ type: 'column', field: 'posted', order: 'desc' });
   }
-
+  
   return {
     whitelist,
     blacklist,
@@ -359,12 +376,12 @@ let postsCache: Record<string, CacheValue> = {};
 
 async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<CacheValue> {
   const hashed = keyHasher.hash(key);
-
+  
   if(postsCache[hashed]) {
     postsCache[hashed].lastUsed = Date.now();
     return postsCache[hashed];
   }
-
+  
   let { whitelist, blacklist, sha256, md5, sorts, offset, rating, inbox, trash } = key;
   
   let extraWhere = SQL``;
@@ -481,16 +498,16 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   
   if(rating === null) extraWhere = extraWhere.append(SQL` AND posts.rating IS NULL`);
   else if(Array.isArray(rating)) extraWhere = extraWhere.append(SQL` AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
-
+  
   if(inbox !== undefined) extraWhere = extraWhere.append(SQL` AND posts.inbox = ${inbox}`);
   if(trash !== undefined) extraWhere = extraWhere.append(SQL` AND posts.trash = ${trash}`);
-
+  
   // Build tag sort lateral joins and ORDER BY clause
   const tagSortJoins: SQLStatement[] = [];
   const orderByParts: string[] = [];
   let whereNotNull = SQL``;
   let selectTagSorts = SQL``;
-
+  
   for(const sort of sorts) {
     if(sort.type === 'column') {
       // Column-based sort - require NOT NULL for first column sort
@@ -502,7 +519,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       // Tag-based sort - add lateral join
       const alias = `sort_${sort.field}`;
       const nulls = sort.order === 'asc' ? 'NULLS LAST' : 'NULLS FIRST';
-
+      
       tagSortJoins.push(SQL`
         LEFT JOIN LATERAL (
           SELECT MIN(
@@ -516,30 +533,30 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
           WHERE mappings.postid = posts.id
             AND tags.name LIKE ${sort.field + ':%'}
         ) `.append(alias).append(SQL` ON TRUE`));
-
+      
       selectTagSorts = selectTagSorts.append(SQL`, `).append(alias).append(`.val AS `).append(alias);
       orderByParts.push(`${alias}.val ${sort.order} ${nulls}`);
     }
   }
-
+  
   // Add id as tiebreaker using the last sort's order direction
   const lastOrder = sorts[sorts.length - 1]?.order || 'desc';
   orderByParts.push(`posts.id ${lastOrder}`);
-
+  
   const orderByClause = orderByParts.join(', ');
   const tagJoinsSql = tagSortJoins.reduce((acc, join) => acc.append(join), SQL``);
-
+  
   // Ensure WHERE clause is properly formed (extraWhere always starts with AND)
   if(whereNotNull.text === '' && extraWhere.text !== '') {
     whereNotNull = SQL`WHERE TRUE`;
   }
-
+  
   // Build total count query that includes the same filters as the main query
   let totalCountQuery = SQL`SELECT count(1) FROM filtered INNER JOIN posts ON posts.id = filtered.id`;
   if(whereNotNull.text !== '' || extraWhere.text !== '') {
     totalCountQuery = totalCountQuery.append(SQL` `).append(whereNotNull).append(extraWhere);
   }
-
+  
   const result = await db.queryFirst(SQL`
     WITH
       `.append(whitelistCTE || SQL``).append(SQL`
@@ -608,27 +625,27 @@ export interface PostNavigation {
 
 export async function getNavigation(postId: number, query: string): Promise<PostNavigation> {
   const key = getCacheKey(query);
-
+  
   let position = -1;
   let total = 0;
   let prev: number | null = null;
   let next: number | null = null;
-
+  
   // Search through cache pages to find the post
   let currentOffset = 0;
   const maxIterations = 1000; // Safety limit
   let iterations = 0;
-
+  
   while(position === -1 && iterations < maxIterations) {
     iterations++;
     key.offset = currentOffset;
     const cached = await getCachedPosts(key);
     total = cached.total;
-
+    
     const indexInPage = cached.posts.indexOf(postId);
     if(indexInPage !== -1) {
       position = currentOffset + indexInPage;
-
+      
       // Get prev from current page or previous page
       if(indexInPage > 0) {
         prev = cached.posts[indexInPage - 1];
@@ -638,7 +655,7 @@ export async function getNavigation(postId: number, query: string): Promise<Post
         const prevPage = await getCachedPosts(key);
         prev = prevPage.posts[prevPage.posts.length - 1] || null;
       }
-
+      
       // Get next from current page or next page
       if(indexInPage < cached.posts.length - 1) {
         next = cached.posts[indexInPage + 1];
@@ -648,19 +665,19 @@ export async function getNavigation(postId: number, query: string): Promise<Post
         const nextPage = await getCachedPosts(key);
         next = nextPage.posts[0] || null;
       }
-
+      
       break;
     }
-
+    
     // Post not in this page, check next
     if(cached.posts.length < CACHE_SIZE || currentOffset + CACHE_SIZE >= total) {
       // No more pages or reached the end
       break;
     }
-
+    
     currentOffset += CACHE_SIZE;
   }
-
+  
   return { prev, next, position, total };
 }
 

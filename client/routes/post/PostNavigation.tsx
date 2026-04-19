@@ -12,21 +12,21 @@ export default function PostNavigation({ navigation }: PostNavigationProps) {
   const history = useHistory();
   const location = useLocation();
   const query = qsParse(location.search);
-
+  
   const buildLink = useCallback((id: number | null) => {
     if(id === null) return null;
     return `/posts/${id}${qsStringify(query)}`;
   }, [query]);
-
+  
   const prevLink = buildLink(navigation.prev);
   const nextLink = buildLink(navigation.next);
-
+  
   // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (ev: KeyboardEvent) => {
       // Don't navigate if user is typing in an input
       if(ev.target instanceof HTMLInputElement || ev.target instanceof HTMLTextAreaElement) return;
-
+      
       if(ev.key === "ArrowLeft" && prevLink) {
         ev.preventDefault();
         history.push(prevLink);
@@ -35,11 +35,11 @@ export default function PostNavigation({ navigation }: PostNavigationProps) {
         history.push(nextLink);
       }
     };
-
+    
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [history, prevLink, nextLink]);
-
+  
   return (
     <div className="PostNavigation">
       {prevLink ? (
@@ -53,11 +53,11 @@ export default function PostNavigation({ navigation }: PostNavigationProps) {
           <span className="label">Previous</span>
         </span>
       )}
-
+      
       <span className="position">
         {navigation.position + 1} / {navigation.total}
       </span>
-
+      
       {nextLink ? (
         <Link to={nextLink} className="nav-button next">
           <span className="label">Next</span>
