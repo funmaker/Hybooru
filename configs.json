@@ -1,7 +1,7 @@
 {
 	"port": 3939,
 	"host": null,
-	"hydrusDbPath": null,
+	"hydrusDbPath": "/home/funmaker/.local/share/hydrus/test",
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
 	"adminPassword": null,
@@ -22,8 +22,7 @@
 		"pageSize": 72,
 		"cachePages": 5,
 		"cacheRecords": 1024,
-		"maxPreviewSize": 104857600,
-		"tagSorts": ["page", "volume", "chapter", "part"]
+		"maxPreviewSize": 104857600
 	},
 	"tags": {
 		"services": null,
@@ -34,7 +33,11 @@
 		"whitelist": null,
 		"resolveRelations": true,
 		"reportLoops": false,
-		"searchSummary": 39
+		"searchSummary": 39,
+		"sortPresets": {
+			"page": ["creator", "series", "title", "volume", "chapter", "page"],
+			"test": ["book", "act", "chapter", "page"]
+		}
 	},
 	"rating": {
 		"enabled": false,

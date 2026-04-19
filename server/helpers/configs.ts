@@ -30,7 +30,6 @@ interface Configs {
     cachePages: number,
     cacheRecords: number,
     maxPreviewSize: number,
-    tagSorts: string[],
   },
   tags: {
     services: Array<string | number> | null,
@@ -42,6 +41,7 @@ interface Configs {
     resolveRelations: boolean,
     reportLoops: boolean,
     searchSummary: number,
+    sortPresets: Record<string, string[]> | null,
   },
   rating: {
     enabled: boolean,
@@ -83,7 +83,6 @@ let configs: Configs = {
     cachePages: 5,
     cacheRecords: 1024,
     maxPreviewSize: 104857600,
-    tagSorts: ["page", "volume", "chapter", "part"],
   },
   tags: {
     services: null,
@@ -95,6 +94,9 @@ let configs: Configs = {
     resolveRelations: true,
     reportLoops: false,
     searchSummary: 39,
+    sortPresets: {
+      page: ["creator", "series", "title", "volume", "chapter", "page"]
+    },
   },
   rating: {
     enabled: true,

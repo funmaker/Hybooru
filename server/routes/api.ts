@@ -6,7 +6,7 @@ import HTTPError from "../helpers/HTTPError";
 import * as db from "../helpers/db";
 import * as postsController from "../controllers/posts";
 import * as tagsController from "../controllers/tags";
-import { PostNavigationResponse, PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResponse } from "./apiTypes";
+import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResponse } from "./apiTypes";
 
 export const router = PromiseRouter();
 
@@ -28,14 +28,6 @@ router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, 
   if(!isNaN(id)) result = await postsController.get(parseInt(req.params.id));
   else result = null;
   
-  res.json(result);
-});
-
-router.get<{ id: string }, PostNavigationResponse, any, { query?: string }>("/post/:id/navigation", async (req, res) => {
-  const id = parseInt(req.params.id);
-  if(isNaN(id)) throw new HTTPError(400, "Invalid post ID");
-  
-  const result = await postsController.getNavigation(id, req.query.query || "");
   res.json(result);
 });
 

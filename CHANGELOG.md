@@ -16,6 +16,8 @@
 
 # Unreleased
 
+- Tab-based sort presets
+
 
 # v1.14.1
 

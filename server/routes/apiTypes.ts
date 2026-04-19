@@ -145,16 +145,8 @@ export interface PostsSearchPageData {
   results: PostSearchResults;
 }
 
-export interface PostNavigationResponse {
-  prev: number | null;
-  next: number | null;
-  position: number;
-  total: number;
-}
-
 export interface PostPageData {
   post: Post | null;
-  navigation?: PostNavigationResponse;
 }
 
 export interface TagsSearchPageRequest {

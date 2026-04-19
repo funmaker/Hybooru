@@ -9,22 +9,17 @@ import * as githubController from "../controllers/github";
 import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
-import { IndexPageData, Post, PostNavigationResponse, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, RandomPageData, RandomPageRequest, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, RandomPageData, RandomPageRequest, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
 
 
-router.get<{ id: string }, any, any, { query?: string }>('/posts/:id', async (req, res) => {
+router.get<{ id: string }>('/posts/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   
   let post;
   if(!isNaN(id)) post = await postsController.get(parseInt(req.params.id));
   else post = null;
-  
-  let navigation: PostNavigationResponse | undefined;
-  if(post && req.query.query) {
-    navigation = await postsController.getNavigation(id, req.query.query);
-  }
   
   const options: Options = {
     ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,
@@ -41,7 +36,7 @@ router.get<{ id: string }, any, any, { query?: string }>('/posts/:id', async (re
     addOGMedia(options, post);
   }
   
-  res.react<PostPageData>({ post, navigation }, options);
+  res.react<PostPageData>({ post }, options);
 });
 
 router.get<any, any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {

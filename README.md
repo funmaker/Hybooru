@@ -30,7 +30,7 @@ possible)**
 - Negative search
 - Ratings
 - Sorting (date imported, rating, size, etc)
-- Tag-based ordering for manga/comics (eg: page, volume, chapter)
+- Tag-based sorting presets (eg: series/volume/chapter/page)
 - Searching tags and autocomplete
 - Notes and translation overlays
 - tag and post relations (parents/siblings, duplicates/alternatives)
@@ -72,28 +72,9 @@ You can also use `?` to match for single character(eg: `?girl`) and `*` to match
 Patterns prefixed with `-` will be excluded from results. Patterns are matched against tag's name, but
 Hydrus's `namespace:subtag` syntax is also supported.
 
-Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:date`(date posted),
-`order:id`, `order:score`(rating), `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:date_asc`).
-If not specified, posts are sorted by date descending.
-
-### Tag-based Ordering
-
-You can also sort by tag namespaces for reading comics/manga in order. By default, the following namespaces are
-supported: `order:page`, `order:volume`, `order:chapter`, `order:part`. These sort by the numeric value of the
-corresponding tags (e.g., `page:1`, `page:2`, `volume:1`).
-
-Multiple sort fields can be combined for hierarchical sorting:
-- `series:example order:volume order:page` - Sort by volume first, then by page within each volume
-
-Posts without the specified tag are placed at the end (ascending) or beginning (descending) of results.
-Non-numeric tag values (like `page:cover`) are treated as null and sorted accordingly.
-
-The list of sortable namespaces can be configured via `posts.tagSorts` in `configs.json`.
-
-### Post Navigation
-
-When clicking a post from search results, navigation buttons (Previous/Next) appear on the post page, allowing
-you to browse through posts in order. You can also use arrow keys (Left/Right) for keyboard navigation.
+Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:date`,
+`order:id`, `order:score`, `order:size` and [Tag-based Sort Presets](#tag-based-sort-presets). You can also append
+`_desc` or `_asc` to specify order(eg: `order:date_asc`). If not specified, post are sorted by date descending.
 
 ### Rating Filter
 
@@ -107,72 +88,79 @@ that have not been rated(`rating:none`).
 `system:archive` and a non-standard `system:trash` for filtering posts that are respectively in inbox, are not in inbox
 and are in trash. You can use them in the blacklist/whitelist and you can also negate them using `-` prefix in searches.
 
+### Tag-based Sort Presets
+
+Tab-based sorting can be used to properly order hierarchical posts like manga pages. Default `config.json` includes
+`page` preset which orders posts using creator-series-title-volume-chapter-page order, but more presets can be defined
+using `tags.sortPresets` field.
+
 ### Examples
 
-- `1girl blue_* -outdoors rating:3-5 order:score_desc` - Search with tag filters and sort by rating
-- `series:example order:volume order:page` - Read a manga series in order
-- `order:page_asc` - Sort all posts by page number ascending
-
+- `1girl blue_*` - Search posts with `1girl` tag and at least one tag that starts with `blue_`
+- `-outdoors rating:3-5` - Search posts that do not have `outdoors` tag and have rating between 3 and 5 inclusive.
+- `system:trash order:size` - Search posts currently in trash, order by size
+- `series:example order:page` - Search posts tagged `series:example` and order them using some custom `page` order. (by default creator-series-title-volume-chapter-page order)
+- `-*` - Search untagged posts
 
 ## Configuration
 
 Hybooru's config is stored in `configs.json` file in the project's root directory. Restart Hybooru to apply changes.
 
-| Name                         | Type                      | Default                                           | Comment                                                                                                                                                                                                          |
-|------------------------------|---------------------------|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| port                         | number                    | `3939`                                            | HTTP server port. You can use `PORT` envvar to override this.                                                                                                                                                    |
-| host                         | string or null            | `null`                                            | HTTP server host. `null` will listen on all interfaces. Set to `"localhost"` if you are not going to connect to it directly over network. You can use `HOST` envvar to override this.                            |
-| hydrusDbPath                 | string or null            | `null`                                            | Hydrus db or backup location. If null, default platform-dependent locaton is used: `%appdata%/hydrus/db`(Windows), `~/.local/share/hydrus/db`(Linux), `~/Library/Preferences/hydrus/db`(MacOS)                   |
-| appName                      | string                    | `"Hybooru"`                                       | Specify name of your booru (appears as logo).                                                                                                                                                                    |
-| appDescription               | string                    | `"Hydrus-based booru-styled imageboard in React"` | Booru's description used in OpenGraph.                                                                                                                                                                           |
-| adminPassword                | string or null            | `null`                                            | Password used to regenerate database (can be accessed from the cog button). Null disables manual database regeneration. You can also use environmental variable `HYDRUS_ADMIN_PASSWORD` to override the password |
-| isTTY                        | boolean or null           | `null`                                            | Overrides colorful/fancy output. `true` forces, `false` disables, `null` automatically determines. Useful when piping output.                                                                                    |
-| importBatchSize              | number                    | `8192`                                            | Base batch size used during importing. Decrease it if hybooru crashes during import.                                                                                                                             |
-| db                           | PoolConfig                | _local database_                                  | node-postgres config object. See https://node-postgres.com/apis/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password. Can be overridden with `DB_*` environment variables (see below). |
-| posts                        | object                    | _see below_                                       | Options related to posts and files.                                                                                                                                                                              |
-| posts.services               | (string/number)[] or null | `null`                                            | List of names or ids of file services to import. Use `null` to import from all services.                                                                                                                         |
-| posts.filesPathOverride      | string or null            | `null`                                            | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.                                                                                                                 |
-| posts.thumbnailsPathOverride | string or null            | `null`                                            | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.                                                                                                                                 |
-| posts.thumbnailsMode         | `"fit"` or `"fill"`       | `"fit"`                                           | Specifies thumbnail scale mode. Change it to `"fill"` if you are using `scale to fill` in hydrus thumbnail options.                                                                                              |
-| posts.pageSize               | number                    | `72`                                              | Number of posts on single page.                                                                                                                                                                                  |
-| posts.cachePages             | number                    | `5`                                               | Number of pages cached in single cache entry.                                                                                                                                                                    |
-| posts.cacheRecords           | number                    | `1024`                                            | Max number of cache entries.                                                                                                                                                                                     |
-| posts.maxPreviewSize         | number                    | `104857600`                                       | Max size in bytes of post that can be previewed in post page/gallery. Default is 100MB.                                                                                                                          |
-| posts.tagSorts               | string[]                  | `["page", "volume", "chapter", "part"]`           | List of tag namespaces that can be used for `order:*` sorting. Allows sorting posts by tag values (e.g., `order:page`).                                                                                          |
-| tags                         | object                    | _see below_                                       | Options related to tags. All tags below support wildcards.                                                                                                                                                       |
-| tags.services                | (string/number)[] or null | `null`                                            | List of names or ids of tag services to import. Use `null` to import from all services.                                                                                                                          |
-| tags.motd                    | string or object or null  | `null`                                            | Query used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)                                 |
-| tags.untagged                | string                    | `"-*"`                                            | Overrides query used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.                                                                                                    |
-| tags.ignore                  | string[]                  | `[]`                                              | List of tags that will not be imported from Hydrus (posts tagged by these tags will still be imported).                                                                                                          |
-| tags.blacklist               | string[] or null          | `null`                                            | All posts and tags matching any of specified tags will not be imported from Hydrus. Use `null` or empty array to ignore blacklist.                                                                               |
-| tags.whitelist               | string[] or null          | `null`                                            | Only posts matching specified tags will be imported from Hydrus. Use `null` or empty array to ignore whitelist.                                                                                                  |
-| tags.resolveRelations        | boolean                   | `true`                                            | Resolve tag siblings and parents. Can be slow in large databases.                                                                                                                                                |
-| tags.reportLoops             | boolean                   | `false`                                           | Print out all loops detected in tag relationships.                                                                                                                                                               |
-| tags.searchSummary           | number                    | `39`                                              | Number of tags that appear on side menu when searching posts.                                                                                                                                                    |
-| rating                       | object or null            | _see below_                                       | Options related to numerical rating. Set null to remove ratings.                                                                                                                                                 |
-| rating.enabled               | boolean                   | `true`                                            | Enables or disables rating import.                                                                                                                                                                               |
-| rating.service               | string or number or null  | `null`                                            | Name or id of the numerical rating service. Set to `null` to pick any service.                                                                                                                                   |
-| rating.stars                 | number                    | `5`                                               | Number of stars used in rating.                                                                                                                                                                                  |
-| versionCheck                 | object or null            | _see below_                                       | Options related to version checking. Set null to disable.                                                                                                                                                        |
-| versionCheck.enabled         | boolean                   | `true`                                            | Enables or disables version checking.                                                                                                                                                                            |
-| versionCheck.owner           | string                    | `"funmaker"`                                      | GitHub handle of the repo owner. Do not change unless you know what you are doing.                                                                                                                               |
-| versionCheck.repo            | string                    | `"hybooru"`                                       | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                                                |
-| versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                                        |
+| Name                         | Type                      | Default                                                                   | Comment                                                                                                                                                                                                                                                        |
+|------------------------------|---------------------------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| port                         | number                    | `3939`                                                                    | HTTP server port. You can use `PORT` envvar to override this.                                                                                                                                                                                                  |
+| host                         | string or null            | `null`                                                                    | HTTP server host. `null` will listen on all interfaces. Set to `"localhost"` if you are not going to connect to it directly over network. You can use `HOST` envvar to override this.                                                                          |
+| hydrusDbPath                 | string or null            | `null`                                                                    | Hydrus db or backup location. If null, default platform-dependent locaton is used: `%appdata%/hydrus/db`(Windows), `~/.local/share/hydrus/db`(Linux), `~/Library/Preferences/hydrus/db`(MacOS)                                                                 |
+| appName                      | string                    | `"Hybooru"`                                                               | Specify name of your booru (appears as logo).                                                                                                                                                                                                                  |
+| appDescription               | string                    | `"Hydrus-based booru-styled imageboard in React"`                         | Booru's description used in OpenGraph.                                                                                                                                                                                                                         |
+| adminPassword                | string or null            | `null`                                                                    | Password used to regenerate database (can be accessed from the cog button). Null disables manual database regeneration. You can also use environmental variable `HYDRUS_ADMIN_PASSWORD` to override the password                                               |
+| isTTY                        | boolean or null           | `null`                                                                    | Overrides colorful/fancy output. `true` forces, `false` disables, `null` automatically determines. Useful when piping output.                                                                                                                                  |
+| importBatchSize              | number                    | `8192`                                                                    | Base batch size used during importing. Decrease it if hybooru crashes during import.                                                                                                                                                                           |
+| db                           | PoolConfig                | _local database_                                                          | node-postgres config object. See https://node-postgres.com/apis/client for more details. By defaults it attempts to connect to `hybooru` database at `localhost` using `hybooru` as password. Can be overridden with `DB_*` environment variables (see below). |
+| posts                        | object                    | _see below_                                                               | Options related to posts and files.                                                                                                                                                                                                                            |
+| posts.services               | (string/number)[] or null | `null`                                                                    | List of names or ids of file services to import. Use `null` to import from all services.                                                                                                                                                                       |
+| posts.filesPathOverride      | string or null            | `null`                                                                    | Overrides location of post's files. If `null`, `client_files` inside hydrus's db folder is used.                                                                                                                                                               |
+| posts.thumbnailsPathOverride | string or null            | `null`                                                                    | Overrides location of post's thumbnails. If `null`, `filesPathOverride` is used.                                                                                                                                                                               |
+| posts.thumbnailsMode         | `"fit"` or `"fill"`       | `"fit"`                                                                   | Specifies thumbnail scale mode. Change it to `"fill"` if you are using `scale to fill` in hydrus thumbnail options.                                                                                                                                            |
+| posts.pageSize               | number                    | `72`                                                                      | Number of posts on single page.                                                                                                                                                                                                                                |
+| posts.cachePages             | number                    | `5`                                                                       | Number of pages cached in single cache entry.                                                                                                                                                                                                                  |
+| posts.cacheRecords           | number                    | `1024`                                                                    | Max number of cache entries.                                                                                                                                                                                                                                   |
+| posts.maxPreviewSize         | number                    | `104857600`                                                               | Max size in bytes of post that can be previewed in post page/gallery. Default is 100MB.                                                                                                                                                                        |
+| tags                         | object                    | _see below_                                                               | Options related to tags. All tags below support wildcards.                                                                                                                                                                                                     |
+| tags.services                | (string/number)[] or null | `null`                                                                    | List of names or ids of tag services to import. Use `null` to import from all services.                                                                                                                                                                        |
+| tags.motd                    | string or object or null  | `null`                                                                    | Query used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)                                                                               |
+| tags.untagged                | string                    | `"-*"`                                                                    | Overrides query used to determine which posts require tagging. Default `"-*"` matches all posts with no tags.                                                                                                                                                  |
+| tags.ignore                  | string[]                  | `[]`                                                                      | List of tags that will not be imported from Hydrus (posts tagged by these tags will still be imported).                                                                                                                                                        |
+| tags.blacklist               | string[] or null          | `null`                                                                    | All posts and tags matching any of specified tags will not be imported from Hydrus. Use `null` or empty array to ignore blacklist.                                                                                                                             |
+| tags.whitelist               | string[] or null          | `null`                                                                    | Only posts matching specified tags will be imported from Hydrus. Use `null` or empty array to ignore whitelist.                                                                                                                                                |
+| tags.resolveRelations        | boolean                   | `true`                                                                    | Resolve tag siblings and parents. Can be slow in large databases.                                                                                                                                                                                              |
+| tags.reportLoops             | boolean                   | `false`                                                                   | Print out all loops detected in tag relationships.                                                                                                                                                                                                             |
+| tags.searchSummary           | number                    | `39`                                                                      | Number of tags that appear on side menu when searching posts.                                                                                                                                                                                                  |
+| tags.sortPresets             | object                    | `{ "page": ["creator", "series", "title", "volume", "chapter", "page"] }` | Custom tag-based sort presets. Keys of this object represent the name of preset (accessible by `order:<name>`) and the value is list of tag namespaces from more general to more specific.                                                                     |
+| rating                       | object or null            | _see below_                                                               | Options related to numerical rating. Set null to remove ratings.                                                                                                                                                                                               |
+| rating.enabled               | boolean                   | `true`                                                                    | Enables or disables rating import.                                                                                                                                                                                                                             |
+| rating.service               | string or number or null  | `null`                                                                    | Name or id of the numerical rating service. Set to `null` to pick any service.                                                                                                                                                                                 |
+| rating.stars                 | number                    | `5`                                                                       | Number of stars used in rating.                                                                                                                                                                                                                                |
+| versionCheck                 | object or null            | _see below_                                                               | Options related to version checking. Set null to disable.                                                                                                                                                                                                      |
+| versionCheck.enabled         | boolean                   | `true`                                                                    | Enables or disables version checking.                                                                                                                                                                                                                          |
+| versionCheck.owner           | string                    | `"funmaker"`                                                              | GitHub handle of the repo owner. Do not change unless you know what you are doing.                                                                                                                                                                             |
+| versionCheck.repo            | string                    | `"hybooru"`                                                               | GitHub handle of the repo name. Do not change unless you know what you are doing.                                                                                                                                                                              |
+| versionCheck.cacheLifeMs     | number                    | `3600000` (1 hour)                                                        | Lifetime of versions cache. GitHub API is rate-limited, do not change unless you know what you are doing.                                                                                                                                                      |
 
 ### Environment Variables
 
 The following environment variables can be used to override config values:
 
-| Variable               | Overrides         | Description                          |
-|------------------------|-------------------|--------------------------------------|
-| `PORT`                 | `port`            | HTTP server port                     |
-| `HOST`                 | `host`            | HTTP server host                     |
-| `HYDRUS_ADMIN_PASSWORD`| `adminPassword`   | Password for database regeneration   |
-| `DB_HOST`              | `db.host`         | Database hostname                    |
-| `DB_PORT`              | `db.port`         | Database port                        |
-| `DB_USER`              | `db.user`         | Database username                    |
-| `DB_PASSWORD`          | `db.password`     | Database password                    |
-| `DB_NAME`              | `db.database`     | Database name                        |
+| Variable                | Overrides       | Description                        |
+|-------------------------|-----------------|------------------------------------|
+| `PORT`                  | `port`          | HTTP server port                   |
+| `HOST`                  | `host`          | HTTP server host                   |
+| `HYDRUS_ADMIN_PASSWORD` | `adminPassword` | Password for database regeneration |
+| `DB_HOST`               | `db.host`       | Database hostname                  |
+| `DB_PORT`               | `db.port`       | Database port                      |
+| `DB_USER`               | `db.user`       | Database username                  |
+| `DB_PASSWORD`           | `db.password`   | Database password                  |
+| `DB_NAME`               | `db.database`   | Database name                      |
 
 Environment variables take precedence over `configs.json` values.
 
