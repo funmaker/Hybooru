@@ -29,7 +29,9 @@ possible)**
 - Searching by tags
 - Negative search
 - Ratings
-- Sorting (date imported, rating, size, etc)
+- Sorting (date imported, rating, size, tag-based ordering)
+- Tag-based ordering for comics/manga (page, volume, chapter)
+- Post navigation (previous/next buttons with keyboard support)
 - Searching tags and autocomplete
 - Notes and translation overlays
 - tag and post relations (parents/siblings, duplicates/alternatives)
@@ -71,19 +73,46 @@ You can also use `?` to match for single character(eg: `?girl`) and `*` to match
 Patterns prefixed with `-` will be excluded from results. Patterns are matched against tag's name, but
 Hydrus's `namespace:subtag` syntax is also supported.
 
-Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:posted`(date),
-`order:id`, `order:rating`, `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:posted_asc`).
-If not specified, post are sorted by date descending.
+Additionally you can sort results by including `order:*` in query. Supported sorts are: `order:date`(date posted),
+`order:id`, `order:score`(rating), `order:size`. You can also append `_desc` or `_asc` to specify order(eg: `order:date_asc`).
+If not specified, posts are sorted by date descending.
+
+### Tag-based Ordering
+
+You can also sort by tag namespaces for reading comics/manga in order. By default, the following namespaces are
+supported: `order:page`, `order:volume`, `order:chapter`, `order:part`. These sort by the numeric value of the
+corresponding tags (e.g., `page:1`, `page:2`, `volume:1`).
+
+Multiple sort fields can be combined for hierarchical sorting:
+- `series:example order:volume order:page` - Sort by volume first, then by page within each volume
+
+Posts without the specified tag are placed at the end (ascending) or beginning (descending) of results.
+Non-numeric tag values (like `page:cover`) are treated as null and sorted accordingly.
+
+The list of sortable namespaces can be configured via `posts.tagSorts` in `configs.json`.
+
+### Post Navigation
+
+When clicking a post from search results, navigation buttons (Previous/Next) appear on the post page, allowing
+you to browse through posts in order. You can also use arrow keys (Left/Right) for keyboard navigation.
+
+### Rating Filter
 
 If you use a numeric rating service and successfully imported the ratings, you can also filter posts by their ratings
 using `rating:` namespace. You can search posts with specific rating(`rating:3`), range(`rating:2-4`) or query posts
 that have not been rated(`rating:none`).
 
+### System Tags
+
 `system:` tags from Hydrus are not real tags and are not fully supported. Hybooru only supports `system:inbox`,
 `system:archive` and a non-standard `system:trash` for filtering posts that are respectively in inbox, are not in inbox
 and are in trash. You can use them in the blacklist/whitelist and you can also negate them using `-` prefix in searches.
 
-Eg: `1girl blue_* -outdoors rating:3-5 order:rating_desc`
+### Examples
+
+- `1girl blue_* -outdoors rating:3-5 order:score_desc` - Search with tag filters and sort by rating
+- `series:example order:volume order:page` - Read a manga series in order
+- `order:page_asc` - Sort all posts by page number ascending
 
 
 ## Configuration
@@ -110,6 +139,7 @@ Hybooru's config is stored in `configs.json` file in the project's root director
 | posts.cachePages             | number                    | `5`                                               | Number of pages cached in single cache entry.                                                                                                                                                                    |
 | posts.cacheRecords           | number                    | `1024`                                            | Max number of cache entries.                                                                                                                                                                                     |
 | posts.maxPreviewSize         | number                    | `104857600`                                       | Max size in bytes of post that can be previewed in post page/gallery. Default is 100MB.                                                                                                                          |
+| posts.tagSorts               | string[]                  | `["page", "volume", "chapter", "part"]`           | List of tag namespaces that can be used for `order:*` sorting. Allows sorting posts by tag values (e.g., `order:page`).                                                                                          |
 | tags                         | object                    | _see below_                                       | Options related to tags. All tags below support wildcards.                                                                                                                                                       |
 | tags.services                | (string/number)[] or null | `null`                                            | List of names or ids of tag services to import. Use `null` to import from all services.                                                                                                                          |
 | tags.motd                    | string or object or null  | `null`                                            | Query used to search for random image displayed on main page. You can also specify object to specify different tags for different themes(use `light`, `dark` and `auto` as keys)                                 |

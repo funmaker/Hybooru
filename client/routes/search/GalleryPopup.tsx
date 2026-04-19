@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useReducer, useRef } from "react";
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
 import { PostSummary } from "../../../server/routes/apiTypes";
+import useQuery from "../../hooks/useQuery";
 import File from "../post/File";
 import "./GalleryPopup.scss";
 
@@ -14,6 +15,8 @@ interface GalleryPopupProps {
 export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
   const [header, toggleHeader] = useReducer(acc => !acc, true);
   const history = useHistory();
+  let [query] = useQuery();
+  query = query && `?query=${encodeURIComponent(query)}`;
   const offset = useRef(0);
   const velocity = useRef(0);
   const moving = useRef(false);
@@ -128,7 +131,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     const onKeyDown = (ev: KeyboardEvent) => {
       if(ev.key === "ArrowLeft" && hasLeft) setId(id - 1);
       else if(ev.key === "ArrowRight" && hasRight) setId(id + 1);
-      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}`);
+      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}${query}`);
       else if(ev.key === "Escape") setId(null);
     };
     
@@ -144,7 +147,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       document.documentElement.removeEventListener("keydown", onKeyDown);
       document.documentElement.removeEventListener("wheel", onWheel);
     };
-  }, [history, posts, id, setId, hasLeft, hasRight]);
+  }, [history, posts, id, setId, hasLeft, hasRight, query]);
   
   if(id === null || !posts[id]) return null;
   
@@ -156,7 +159,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     <div className="GalleryPopup" style={{ left: `${offset.current}vw` }} ref={wrapper}>
       <div className={`header${header ? " open" : ""}`}>
         <div className="closeBtn" onClick={onClose}>✕</div>
-        <Link to={`/posts/${post.id}`} className="moreBtn">Open Post</Link>
+        <Link to={`/posts/${post.id}${query}`} className="moreBtn">Open Post</Link>
       </div>
       {leftPost &&
         <div key={leftPost.id} className="wrap left">

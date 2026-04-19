@@ -30,6 +30,7 @@ interface Configs {
     cachePages: number,
     cacheRecords: number,
     maxPreviewSize: number,
+    tagSorts: string[],
   },
   tags: {
     services: Array<string | number> | null,
@@ -82,6 +83,7 @@ let configs: Configs = {
     cachePages: 5,
     cacheRecords: 1024,
     maxPreviewSize: 104857600,
+    tagSorts: ["page", "volume", "chapter", "part"],
   },
   tags: {
     services: null,
