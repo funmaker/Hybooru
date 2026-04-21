@@ -16,10 +16,10 @@ export interface PostSummary {
   blurhash?: string | null;
   width?: number | null;
   height?: number | null;
+  size?: number | null;
   extension: string;
   mime: Mime | null;
   posted: string;
-  size: number | null;
 }
 
 export interface PostSearchResults {
@@ -83,7 +83,7 @@ export interface Post {
   width: number | null;
   height: number | null;
   duration: number | null;
-  nunFrames: number | null;
+  numFrames: number | null;
   hasAudio: boolean | null;
   rating: number | null;
   mime: Mime | null;
@@ -114,7 +114,7 @@ export interface Config {
   namespaceColors: Record<string, string>;
   appName: string;
   version: string;
-  expectMotd: string;
+  expectMotd: boolean;
   untaggedQuery: string;
   maxPreviewSize: number;
   passwordSet: boolean;

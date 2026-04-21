@@ -1,4 +1,4 @@
-import pg, { Pool, PoolClient } from 'pg';
+import pg, { Pool, PoolClient, QueryResultRow } from 'pg';
 import SQL, { SQLStatement } from "sql-template-strings";
 import chalk from "chalk";
 import configs from "./configs";
@@ -10,21 +10,25 @@ export const pool = new Pool(configs.db);
 
 let initializationLock: Promise<void> | null = null;
 
-export async function query(sql: SQLStatement, client: Pool | PoolClient = pool) {
+export async function query<T extends QueryResultRow>(sql: SQLStatement, client: Pool | PoolClient = pool) {
   if(client === pool) await initializationLock;
-  return client.query(sql);
+  return client.query<T>(sql);
 }
 
-export async function queryAll(sql: SQLStatement, client: Pool | PoolClient = pool) {
-  if(client === pool) await initializationLock;
-  const { rows } = await client.query(sql);
+export async function queryAll<T extends QueryResultRow>(sql: SQLStatement, client: Pool | PoolClient = pool) {
+  const { rows } = await query<T>(sql, client);
   return rows;
 }
 
-export async function queryFirst(sql: SQLStatement, client: Pool | PoolClient = pool) {
-  if(client === pool) await initializationLock;
-  const { rows } = await client.query(sql);
-  return rows[0] || null;
+export async function queryFirst<T extends QueryResultRow>(sql: SQLStatement, client: Pool | PoolClient = pool) {
+  const { rows } = await query<T>(sql, client);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function queryFirstOrThrow<T extends QueryResultRow>(sql: SQLStatement, client: Pool | PoolClient = pool) {
+  const result = await queryFirst<T>(sql, client);
+  if(!result) throw new Error("Query returned no rows");
+  return result;
 }
 
 export async function isInitialized() {
@@ -37,9 +41,9 @@ export async function isInitialized() {
   
   if(!exists) return false;
   
-  const { hash } = await queryFirst(SQL`SELECT hash FROM meta`);
+  const result = await queryFirst<{ hash: number }>(SQL`SELECT hash FROM meta`);
   
-  return hash === dbImport.setupHash;
+  return result?.hash === dbImport.setupHash;
 }
 
 export function findHydrusDB() {

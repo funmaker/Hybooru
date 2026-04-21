@@ -1,5 +1,5 @@
-import SQL from "sql-template-strings";
-import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResponse, TagsSearchResults } from "../routes/apiTypes";
+import SQL, { SQLStatement } from "sql-template-strings";
+import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResults } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { preparePattern } from "../helpers/utils";
@@ -15,7 +15,31 @@ const SORTS = {
 export async function search(options: TagsSearchRequest & { full: false }): Promise<TagsSearchResults>;
 export async function search(options: TagsSearchRequest & { full: true }): Promise<TagsSearchFullResults>;
 export async function search(options: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults>;
-export async function search({ query = "", sorting, page = 0, pageSize = PAGE_SIZE, full = false }: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults> {
+export async function search(options: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults> {
+  const query = tagSearchQuery(options);
+  
+  const results = await db.queryFirstOrThrow<{
+    tags: Array<{
+      name: string;
+      posts: number;
+      siblings: string[];
+      parents: string[];
+    }>;
+    total: number;
+    pageSize: number;
+  }>(query);
+  
+  if(options.full) {
+    return results;
+  } else {
+    return {
+      ...results,
+      tags: Object.fromEntries(results.tags.map(tag => [tag.name, tag.posts])),
+    };
+  }
+}
+
+export function tagSearchQuery({ query = "", sorting, page = 0, pageSize = PAGE_SIZE }: TagsSearchRequest): SQLStatement {
   if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
   
   let pattern = preparePattern(query.trim());
@@ -38,7 +62,7 @@ export async function search({ query = "", sorting, page = 0, pageSize = PAGE_SI
   
   if(pattern === "") pattern = "%";
   
-  const results: TagsSearchFullResults = await db.queryFirst(SQL`
+  return SQL`
     WITH filtered AS (
           SELECT DISTINCT ON (id)
             COALESCE(better.id, tags.id) AS id,
@@ -82,14 +106,5 @@ export async function search({ query = "", sorting, page = 0, pageSize = PAGE_SI
       LIMIT ${pageSize}
       OFFSET ${page * pageSize}
     ) x
-  `));
-  
-  if(full) {
-    return results;
-  } else {
-    return {
-      ...results,
-      tags: Object.fromEntries(results.tags.map(tag => [tag.name, tag.posts])),
-    };
-  }
+  `);
 }

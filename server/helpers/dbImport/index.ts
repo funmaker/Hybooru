@@ -49,8 +49,6 @@ export async function rebuild() {
   try {
     await postgres.query(setupSQL);
     
-    postsController.clearCache();
-    
     const dbPath = findHydrusDB();
     const resolveRelations = configs.tags.resolveRelations;
     
@@ -110,6 +108,7 @@ export async function rebuild() {
   } finally {
     delete process.env.SQLITE_USE_URI;
     postgres.release();
+    postsController.clearCache();
   }
 }
 

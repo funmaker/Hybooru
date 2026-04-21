@@ -1,10 +1,10 @@
 import SQL, { SQLStatement } from "sql-template-strings";
 import objectHash from "node-object-hash";
 import { PoolClient } from "pg";
-import { Post, PostNote, PostSearchResults, PostSummary } from "../routes/apiTypes";
+import { Post, PostNote, PostSearchResults, PostSummary, Relation } from "../routes/apiTypes";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
-import { MIME_EXT, rangeRatingRegex } from "../helpers/consts";
+import { Mime, MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
 import configs from "../helpers/configs";
 
@@ -59,49 +59,58 @@ export async function search({ query = "", page = 0, tags: includeTags = false, 
   
   if(hashes) {
     hashesSql = hashesSql.append(SQL`
-      'md5', encode(md5, 'hex'),
+      encode(md5, 'hex') AS md5,
     `);
   }
   
   if(blurhash) {
     hashesSql = SQL`
-      'blurhash', blurhash,
-      'width', width,
-      'height', height,
+      blurhash,
+      width,
+      height,
     `;
   }
   
-  const result = await db.queryFirst(SQL`
+  const posts = await db.queryAll<{
+    id: number;
+    sha256: string;
+    hash: string;
+    md5?: string | null;
+    blurhash?: string | null;
+    width?: number | null;
+    height?: number | null;
+    size: number | null;
+    mime: number | null;
+    posted: string;
+  }>(SQL`
     SELECT
-      COALESCE(json_agg(json_build_object(
-        'id', id,
-        'sha256', encode(sha256, 'hex'),
-        'hash', encode(sha256, 'hex'),
-        `.append(hashesSql).append(SQL`
-        'mime', mime,
-        'posted', format_date(posted),
-        'size', size
-      ) ORDER BY rn), '[]') as posts
-    FROM unnest(${cached}::INTEGER[]) WITH ORDINALITY x(cached, rn)
+      id,
+      encode(sha256, 'hex') AS sha256,
+      encode(sha256, 'hex') AS hash,
+      `.append(hashesSql).append(SQL`
+      size,
+      mime,
+      format_date(posted) AS posted
+    FROM unnest(${cached}::INTEGER[]) cached
     INNER JOIN posts ON id = cached
   `), client);
   
-  result.pageSize = pageSize;
-  if(includeTags) result.tags = tags;
-  result.total = total;
-  
-  for(const post of result.posts) {
-    if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
-  }
-  
-  return result;
+  return {
+    posts: posts.map(post => ({
+      ...post,
+      extension: MIME_EXT[post.mime as Mime] || "",
+    })),
+    pageSize,
+    tags: includeTags ? tags : undefined,
+    total,
+  };
 }
 
 export async function random(query: string | null = null): Promise<PostSummary | null> {
   let id: number | null;
   
   if(!query) {
-    const post: { id: number } | null = await db.queryFirst(SQL`
+    const post = await db.queryFirst<{ id: number }>(SQL`
       SELECT id
       FROM posts
       OFFSET floor(random() * (SELECT posts FROM global))
@@ -133,7 +142,13 @@ export async function random(query: string | null = null): Promise<PostSummary |
     }
   }
   
-  const post: PostSummary | null = await db.queryFirst(SQL`
+  const post = await db.queryFirst<{
+    id: number;
+    sha256: string;
+    hash: string;
+    mime: number | null;
+    posted: string;
+  }>(SQL`
     SELECT
       id,
       encode(sha256, 'hex') as sha256,
@@ -144,22 +159,60 @@ export async function random(query: string | null = null): Promise<PostSummary |
     WHERE id = ${id}
   `);
   
-  if(post) post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
+  if(!post) throw new HTTPError(404, "No posts found.");
   
-  return post;
+  return {
+    ...post,
+    extension: MIME_EXT[post.mime as keyof typeof MIME_EXT] || "",
+  };
 }
 
 export async function get(id: number): Promise<Post | null> {
-  const post: Post | null = await db.queryFirst(SQL`
+  const post = await db.queryFirst<{
+    id: number;
+    sha256: string;
+    hash: string;
+    md5: string | null;
+    blurhash: string | null;
+    size: number | null;
+    width: number | null;
+    height: number | null;
+    duration: number | null;
+    numFrames: number | null;
+    nunFrames: number | null;
+    hasAudio: boolean | null;
+    rating: number | null;
+    mime: number | null;
+    inbox: boolean;
+    trash: boolean;
+    posted: string;
+    tags: Record<string, number>;
+    sources: string[];
+    relations: Array<{
+      id: number;
+      sha256: string;
+      hash: string;
+      mime: number | null;
+      posted: string;
+      kind: Relation;
+    }>;
+    notes: Array<{
+      label: string;
+      note: string;
+      rect: null;
+    }>;
+  }>(SQL`
     SELECT
       posts.id,
       encode(posts.sha256, 'hex') AS sha256,
       encode(posts.sha256, 'hex') AS hash,
       encode(posts.md5, 'hex') AS md5,
+      posts.blurhash AS blurhash,
       posts.size,
       posts.width,
       posts.height,
       posts.duration,
+      posts.num_frames AS "numFrames",
       posts.num_frames AS "nunFrames",
       posts.has_audio AS "hasAudio",
       posts.rating,
@@ -206,16 +259,18 @@ export async function get(id: number): Promise<Post | null> {
   `);
   
   if(post) {
-    post.extension = MIME_EXT[post.mime as keyof typeof MIME_EXT] || "";
-    
-    for(const relation of post.relations) {
-      relation.extension = MIME_EXT[relation.mime as keyof typeof MIME_EXT] || "";
-    }
-    
-    post.notes = post.notes.flatMap(note => splitSubnotes(note) || [note]);
+    return {
+      ...post,
+      extension: MIME_EXT[post.mime as keyof typeof MIME_EXT] || "",
+      notes: post.notes.flatMap(note => splitSubnotes(note) || [note]),
+      relations: post.relations.map(relation => ({
+        ...relation,
+        extension: MIME_EXT[relation.mime as Mime] || "",
+      })),
+    };
+  } else {
+    return null;
   }
-  
-  return post;
 }
 
 function splitSubnotes(note: PostNote) {
@@ -367,6 +422,38 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
     return postsCache[hashed];
   }
   
+  const query = getCachedPostsQuery(key);
+  const result = await db.queryFirstOrThrow<{
+    posts: number[];
+    total: number;
+    tags: Record<string, number>;
+  }>(query, client);
+  
+  if(Object.keys(postsCache).length >= configs.posts.cacheRecords) {
+    let minKey: string | null = null;
+    let minDate = Date.now();
+    
+    for(const [key, val] of Object.entries(postsCache)) {
+      if(minKey === null || minDate > val.lastUsed) {
+        minKey = key;
+        minDate = val.lastUsed;
+      }
+    }
+    
+    if(minKey !== null) delete postsCache[minKey];
+  }
+  
+  return postsCache[hashed] = {
+    ...result,
+    lastUsed: Date.now(),
+  };
+}
+
+export function clearCache() {
+  postsCache = {};
+}
+
+export function getCachedPostsQuery(key: CacheKey): SQLStatement {
   let { whitelist, blacklist, sha256, md5, sort, order, offset, rating, inbox, trash } = key;
   
   let extraWhere = SQL``;
@@ -487,7 +574,7 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
   if(inbox !== undefined) extraWhere = extraWhere.append(SQL` AND posts.inbox = ${inbox}`);
   if(trash !== undefined) extraWhere = extraWhere.append(SQL` AND posts.trash = ${trash}`);
   
-  const result = await db.queryFirst(SQL`
+  return SQL`
     WITH
       `.append(whitelistCTE || SQL``).append(SQL`
       `).append(blacklistCTE || SQL``).append(SQL`
@@ -526,28 +613,5 @@ async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<Cache
       LIMIT ${CACHE_SIZE}
       OFFSET ${offset}
     ) x
-  `), client);
-  
-  if(Object.keys(postsCache).length >= configs.posts.cacheRecords) {
-    let minKey: string | null = null;
-    let minDate = Date.now();
-    
-    for(const [key, val] of Object.entries(postsCache)) {
-      if(minKey === null || minDate > val.lastUsed) {
-        minKey = key;
-        minDate = val.lastUsed;
-      }
-    }
-    
-    if(minKey !== null) delete postsCache[minKey];
-  }
-  
-  return postsCache[hashed] = {
-    ...result,
-    lastUsed: Date.now(),
-  };
-}
-
-export function clearCache() {
-  postsCache = {};
+  `);
 }

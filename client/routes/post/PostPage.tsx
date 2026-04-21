@@ -73,7 +73,7 @@ export default function PostPage() {
                 <div>{pageData.post.width !== null && pageData.post.height !== null && `Dimensions: ${pageData.post.width}x${pageData.post.height}`}</div>
                 <div>{pageData.post.mime !== null && MIME_STRING[pageData.post.mime] && `Mime: ${MIME_STRING[pageData.post.mime]}`}</div>
                 <div>{pageData.post.duration !== null && `Duration: ${parseDuration(pageData.post.duration)}`}</div>
-                <div>{pageData.post.nunFrames !== null && `Frames: ${pageData.post.nunFrames}`}</div>
+                <div>{pageData.post.numFrames !== null && `Frames: ${pageData.post.numFrames}`}</div>
                 <div>{pageData.post.hasAudio !== null && `Audio: ${pageData.post.hasAudio ? "Yes" : "No"}`}</div>
                 <div>Posted: {new Date(pageData.post.posted).toLocaleString()}</div>
                 {pageData.post.inbox && <div>In inbox</div>}

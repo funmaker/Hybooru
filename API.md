@@ -62,7 +62,7 @@ Fetches post details by given `id`.
 | width     | number or null                  | Width of the image or video.                                                                                                                            |
 | height    | number or null                  | Height of the image or video.                                                                                                                           |
 | duration  | number or null                  | Duration of the video or audio in milliseconds.                                                                                                         |
-| nunFrames | number or null                  | Number of frames in the video.                                                                                                                          |
+| numFrames | number or null                  | Number of frames in the video.                                                                                                                          |
 | hasAudio  | boolean or null                 | Whenever the video has audio.                                                                                                                           |
 | rating    | number or null                  | Post's rating in 0-1 range.                                                                                                                             |
 | mime      | number or null                  | Hydrus internal mime id. See [HydrusConstants.py](https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py) for more details. |

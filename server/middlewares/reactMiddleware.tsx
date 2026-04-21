@@ -9,6 +9,7 @@ import index from '../views/index.handlebars';
 import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
 import { AnySSRPageData } from "../routes/apiTypes";
+import * as globalController from "../controllers/global";
 
 const removeTags = /[<>]/g;
 const tagsToReplace: Record<string, string> = {
@@ -67,70 +68,73 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
     
-    const theme = req.cookies.theme || Theme.AUTO;
-    const title = options?.title ? `${options?.title} | ${req.config.appName}` : req.config.appName;
-    
-    // noinspection JSUnreachableSwitchBranches
-    switch(req.accepts(['html', 'json'])) {
-      case "html": {
-        if(options?.htmlRedirect) {
-          res.redirect(options.htmlRedirect);
+    (async () => {
+      const theme = req.cookies.theme || Theme.AUTO;
+      const config = await globalController.getConfig();
+      const title = options?.title ? `${options?.title} | ${config.appName}` : config.appName;
+      
+      // noinspection JSUnreachableSwitchBranches
+      switch(req.accepts(['html', 'json'])) {
+        case "html": {
+          if(options?.htmlRedirect) {
+            res.redirect(options.htmlRedirect);
+            break;
+          }
+          
+          const initialDataEx: AnySSRPageData = {
+            ...initialData,
+            _config: config,
+            _theme: theme,
+            _ssrError: false,
+          };
+          
+          let reactContent: string;
+          try {
+            reactContent = ReactDOMServer.renderToString(
+              <StaticRouter location={req.originalUrl} context={{}}>
+                <App initialData={initialDataEx} />
+              </StaticRouter>,
+            );
+          } catch(e) {
+            console.error(chalk.red.bold("Error during SSR!"));
+            console.error(e);
+            reactContent = "There was an error during Server Side Rendering.";
+            initialDataEx._ssrError = true;
+          }
+          
+          const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);
+          
+          res.send(index({
+            reactContent,
+            initialData: initialDataJSON,
+            production: process.env.NODE_ENV === 'production',
+            theme,
+            title,
+            appName: configs.appName,
+            description: configs.appDescription,
+            ogTitle: options?.ogTitle || configs.appName,
+            ogDescription: options?.ogDescription || configs.appDescription,
+            ogType: options?.ogTitle || "website",
+            ogImage: options?.ogImage,
+            ogAudio: options?.ogAudio,
+            ogVideo: options?.ogVideo,
+            ogUrl: options?.ogUrl || `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+            ogSiteName: options?.ogSiteName || configs.appName,
+          }));
           break;
         }
         
-        const initialDataEx: AnySSRPageData = {
-          ...initialData,
-          _config: req.config,
-          _theme: theme,
-          _ssrError: false,
-        };
+        case "json":
+          res.json({
+            ...initialData,
+            _title: title,
+          });
+          break;
         
-        let reactContent: string;
-        try {
-          reactContent = ReactDOMServer.renderToString(
-            <StaticRouter location={req.originalUrl} context={{}}>
-              <App initialData={initialDataEx} />
-            </StaticRouter>,
-          );
-        } catch(e) {
-          console.error(chalk.red.bold("Error during SSR!"));
-          console.error(e);
-          reactContent = "There was an error during Server Side Rendering.";
-          initialDataEx._ssrError = true;
-        }
-        
-        const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);
-        
-        res.send(index({
-          reactContent,
-          initialData: initialDataJSON,
-          production: process.env.NODE_ENV === 'production',
-          theme,
-          title,
-          appName: configs.appName,
-          description: configs.appDescription,
-          ogTitle: options?.ogTitle || configs.appName,
-          ogDescription: options?.ogDescription || configs.appDescription,
-          ogType: options?.ogTitle || "website",
-          ogImage: options?.ogImage,
-          ogAudio: options?.ogAudio,
-          ogVideo: options?.ogVideo,
-          ogUrl: options?.ogUrl || `${req.protocol}://${req.get('host')}${req.originalUrl}`,
-          ogSiteName: options?.ogSiteName || configs.appName,
-        }));
-        break;
+        default:
+          throw new HTTPError(406);
       }
-      
-      case "json":
-        res.json({
-          ...initialData,
-          _title: title,
-        });
-        break;
-      
-      default:
-        throw new HTTPError(406);
-    }
+    })().catch(next);
     
     return res;
   };

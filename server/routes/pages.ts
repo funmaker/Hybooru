@@ -69,6 +69,7 @@ router.post<any, any, SetThemeRequest>('/setTheme', async (req, res) => {
 
 router.get('/', async (req, res) => {
   const stats = await globalController.getStats();
+  const config = await globalController.getConfig();
   const theme = req.cookies.theme as Theme || Theme.AUTO;
   
   let motdQuery: string | undefined;
@@ -82,7 +83,7 @@ router.get('/', async (req, res) => {
   let updateUrl: string | null = null;
   if(releases.length > 0) {
     const newest = releases[0];
-    if(`v${req.config.version}` !== newest.tag_name) {
+    if(`v${config.version}` !== newest.tag_name) {
       updateUrl = newest.html_url;
     }
   }

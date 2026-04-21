@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
 import reactMiddleware from "./middlewares/reactMiddleware";
-import configMiddleware from "./middlewares/configMiddleware";
 import HTTPError from "./helpers/HTTPError";
 import { ErrorPageData } from "./routes/apiTypes";
 import { router } from "./routes";
@@ -28,7 +27,6 @@ if(process.env.NODE_ENV === 'development') {
   app.use('/style.css', express.static('style.css'));
 }
 
-app.use(configMiddleware);
 app.use(reactMiddleware);
 
 app.use('/', router);

@@ -16,6 +16,9 @@
 
 # Unreleased
 
+- Fixed errors if there is no namespaces defined
+- Fixed `'nunFrames'` misspell in `GET /api/post/:id`
+
 
 # v1.14.1
 
