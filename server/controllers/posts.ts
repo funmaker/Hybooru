@@ -32,6 +32,7 @@ interface SearchArgs {
 
 export async function search({ query = "", page = 0, tags: includeTags = false, hashes, blurhash, pageSize = configs.posts.pageSize }: SearchArgs, client?: PoolClient): Promise<PostSearchResults> {
   if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
+  page = Math.max(0, Math.floor(page));
   
   const key = getCacheKey(query);
   
@@ -312,7 +313,7 @@ function splitSubnotes(note: PostNote) {
   return subNotes.length > 0 ? subNotes : null;
 }
 
-interface CacheKey {
+export interface CacheKey {
   whitelist: string[];
   blacklist: string[];
   md5: string[];
@@ -325,7 +326,7 @@ interface CacheKey {
   offset: number;
 }
 
-function getCacheKey(query: string): CacheKey {
+export function getCacheKey(query: string): CacheKey {
   const parts = query.split(" ")
                      .filter(p => !!p)
                      .map(preparePattern);
@@ -550,11 +551,15 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
       `.append(filteredWhere).append(`
     )`);
   } else if(blacklistCTE) {
-    filteredCTE = SQL`filtered AS (
+    filteredCTE = SQL`
+    blacklist_flat AS (
+      SELECT unnest(blacklist.ids) AS id
+      FROM blacklist
+    ),
+    filtered AS (
       SELECT id
       FROM posts
-      CROSS JOIN blacklist
-      WHERE posts.id != ALL(blacklist.ids)
+      WHERE NOT EXISTS(SELECT 1 FROM blacklist_flat WHERE posts.id = blacklist_flat.id)
       `.append(filteredWhere).append(`
     )`);
   } else if(filteredWhere) {

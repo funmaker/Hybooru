@@ -42,12 +42,13 @@ app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _
   if(res.headersSent) return;
   
   const code = err.HTTPcode || 500;
+  const headers = err.headers || {};
   const error = {
     code,
     message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   };
-  res.status(code).react<ErrorPageData>({ _error: error });
+  res.status(code).header(headers).react<ErrorPageData>({ _error: error });
 });
 
 export default app;

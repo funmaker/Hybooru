@@ -16,6 +16,9 @@
 
 # Unreleased
 
+- Added `GET /api/diagnostics`
+- Improved performance of tags page and API endpoints.
+- Improved performance of negative searches.
 - Fixed errors if there is no namespaces defined
 - Fixed `'nunFrames'` misspell in `GET /api/post/:id`
 

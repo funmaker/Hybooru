@@ -33,6 +33,18 @@ CREATE INDEX ON posts(size, id);
 CREATE UNIQUE INDEX ON posts(sha256);
 CREATE INDEX ON posts(md5);
 
+DELETE FROM tag_parents WHERE NOT EXISTS (SELECT 1 FROM tags WHERE id = tagid);
+DELETE FROM tag_parents WHERE NOT EXISTS (SELECT 1 FROM tags WHERE id = parentid);
+CREATE INDEX ON tag_parents(parentid);
+ALTER TABLE tag_parents ADD CONSTRAINT tag_parents_tagid_fkey FOREIGN KEY (tagid) REFERENCES tags(id) ON DELETE CASCADE;
+ALTER TABLE tag_parents ADD CONSTRAINT tag_parents_parentid_fkey FOREIGN KEY (parentid) REFERENCES tags(id) ON DELETE CASCADE;
+
+DELETE FROM tag_siblings WHERE NOT EXISTS (SELECT 1 FROM tags WHERE id = tagid);
+DELETE FROM tag_siblings WHERE NOT EXISTS (SELECT 1 FROM tags WHERE id = betterid);
+CREATE INDEX ON tag_siblings(betterid);
+ALTER TABLE tag_siblings ADD CONSTRAINT tag_siblings_tagid_fkey FOREIGN KEY (tagid) REFERENCES tags(id) ON DELETE CASCADE;
+ALTER TABLE tag_siblings ADD CONSTRAINT tag_siblings_betterid_fkey FOREIGN KEY (betterid) REFERENCES tags(id) ON DELETE CASCADE;
+
 DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
 DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = other_postid);
 ALTER TABLE relations ADD CONSTRAINT relations_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE,
