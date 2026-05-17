@@ -128,7 +128,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     const onKeyDown = (ev: KeyboardEvent) => {
       if(ev.key === "ArrowLeft" && hasLeft) setId(id - 1);
       else if(ev.key === "ArrowRight" && hasRight) setId(id + 1);
-      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}`);
+      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}${history.location.search}`);
       else if(ev.key === "Escape") setId(null);
     };
     
@@ -156,7 +156,7 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     <div className="GalleryPopup" style={{ left: `${offset.current}vw` }} ref={wrapper}>
       <div className={`header${header ? " open" : ""}`}>
         <div className="closeBtn" onClick={onClose}>✕</div>
-        <Link to={`/posts/${post.id}`} className="moreBtn">Open Post</Link>
+        <Link to={`/posts/${post.id}${history.location.search}`} className="moreBtn">Open Post</Link>
       </div>
       {leftPost &&
         <div key={leftPost.id} className="wrap left">

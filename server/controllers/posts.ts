@@ -21,6 +21,8 @@ const SORTS = {
   size: "size",
 };
 
+const CUSTOM_SORTS = configs.tags.sortPresets || {};
+
 interface SearchArgs {
   query?: string;
   page?: number;
@@ -318,7 +320,7 @@ export interface CacheKey {
   blacklist: string[];
   md5: string[];
   sha256: string[];
-  sort: string;
+  sort: string | string[];
   order: string;
   rating: undefined | null | [number, number];
   inbox: undefined | boolean;
@@ -333,51 +335,54 @@ export function getCacheKey(query: string): CacheKey {
   
   if(parts.length > MAX_PARTS) throw new HTTPError(400, `Query can have only up to ${MAX_PARTS} parts.`);
   
-  const whitelist = [];
-  const blacklist = [];
-  const sha256 = [];
-  const md5 = [];
-  let sort = SORTS.date;
-  let order = "desc";
-  let rating: undefined | null | [number, number] = undefined;
-  let inbox: undefined | boolean;
-  let trash: undefined | boolean;
   let match: RegExpMatchArray | null = null;
+  const key: CacheKey = {
+    whitelist: [],
+    blacklist: [],
+    sha256: [],
+    md5: [],
+    sort: SORTS.date,
+    order: "desc",
+    rating: undefined,
+    inbox: undefined,
+    trash: undefined,
+    offset: 0,
+  };
   
   for(let part of parts) {
     if(part.startsWith("system:") || part.startsWith("-system:")) {
-      if(part === "system:archive" || part === "-system:inbox") inbox = false;
-      else if(part === "system:inbox" || part === "-system:archive") inbox = true;
-      else if(part === "-system:trash") trash = false;
-      else if(part === "system:trash") trash = true;
+      if(part === "system:archive" || part === "-system:inbox") key.inbox = false;
+      else if(part === "system:inbox" || part === "-system:archive") key.inbox = true;
+      else if(part === "-system:trash") key.trash = false;
+      else if(part === "system:trash") key.trash = true;
     } else if(part.startsWith("-")) {
-      blacklist.push(part.slice(1));
+      key.blacklist.push(part.slice(1));
     } else if(part.startsWith("order:")) {
       part = part.slice(6);
       
       if(part.endsWith("\\_asc")) {
-        order = "asc";
+        key.order = "asc";
         part = part.slice(0, -5);
-      }
-      if(part.endsWith("\\_desc")) {
-        order = "desc";
+      } else if(part.endsWith("\\_desc")) {
+        key.order = "desc";
         part = part.slice(0, -6);
       }
       
-      if(!(part in SORTS)) throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
-      sort = SORTS[part as keyof typeof SORTS];
+      if(part in CUSTOM_SORTS && Array.isArray(CUSTOM_SORTS[part]) && CUSTOM_SORTS[part].length > 0) key.sort = CUSTOM_SORTS[part];
+      else if(part in SORTS) key.sort = SORTS[part as keyof typeof SORTS];
+      else throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
     } else if(part === "rating:none") {
-      rating = null;
+      key.rating = null;
     } else if(part.startsWith("sha256:")) {
       let hash = part.slice(7);
       if(hash.startsWith("0x")) hash = hash.slice(2);
       if(hash.length % 2 !== 0) hash += "0";
-      sha256.push(`\\x${hash}`);
+      key.sha256.push(`\\x${hash}`);
     } else if(part.startsWith("md5:")) {
       let hash = part.slice(4);
       if(hash.startsWith("0x")) hash = hash.slice(2);
       if(hash.length % 2 !== 0) hash += "0";
-      md5.push(`\\x${hash}`);
+      key.md5.push(`\\x${hash}`);
     } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
       let min = parseInt(match[1]);
       let max = parseInt(match[2]);
@@ -385,24 +390,13 @@ export function getCacheKey(query: string): CacheKey {
       if(isNaN(min) || isNaN(max)) continue;
       if(min > max) [min, max] = [max, min];
       
-      rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
+      key.rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
     } else {
-      whitelist.push(part);
+      key.whitelist.push(part);
     }
   }
   
-  return {
-    whitelist,
-    blacklist,
-    sha256,
-    md5,
-    sort,
-    order,
-    rating,
-    inbox,
-    trash,
-    offset: 0,
-  };
+  return key;
 }
 
 interface CacheValue {
@@ -456,12 +450,6 @@ export function clearCache() {
 
 export function getCachedPostsQuery(key: CacheKey): SQLStatement {
   let { whitelist, blacklist, sha256, md5, sort, order, offset, rating, inbox, trash } = key;
-  
-  let extraWhere = SQL``;
-  let from = SQL`
-    FROM filtered
-    INNER JOIN posts ON posts.id = filtered.id
-  `;
   
   const onlyTagged = whitelist.length > 0 && whitelist.every(pat => blankPattern.test(pat));
   const onlyUntagged = blacklist.some(pat => blankPattern.test(pat));
@@ -521,34 +509,69 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
     blacklistCTE = null;
   }
   
-  let filteredWhere;
-  if(onlyTagged && onlyUntagged) {
-    filteredWhere = `WHERE FALSE`;
-  } else if(onlyTagged) {
-    filteredWhere = `WHERE EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
-  } else if(onlyUntagged) {
-    filteredWhere = `WHERE NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`;
-  } else {
-    filteredWhere = ``;
+  const filteredWhere: SQLStatement[] = [];
+  const joinsSQL = SQL``;
+  let orderBySQL = SQL`ORDER BY posts.id ${order}`;
+  
+  if(Array.isArray(sort)) {
+    orderBySQL = SQL`ORDER BY`;
+    
+    for(let id = 0; id < sort.length; id++) {
+      const pat = `${sort[id].toLowerCase()}:%`;
+      const joinName = `sort_${id}`;
+      joinsSQL.append(SQL`
+        LEFT JOIN LATERAL (
+          SELECT subtag AS tag
+          FROM mappings
+          INNER JOIN tags ON mappings.tagid = tags.id
+          WHERE mappings.postid = posts.id
+            AND name LIKE ${pat}
+          LIMIT 1
+        ) `.append(joinName).append(SQL` ON TRUE`));
+      orderBySQL.append(` ${joinName}.tag COLLATE alphanumeric ${order},`);
+    }
+    
+    orderBySQL.append(` posts.id ${order}`);
+  } else if(sort !== "id") {
+    filteredWhere.push(SQL``.append(`posts."${sort}" IS NOT NULL`));
+    orderBySQL = SQL``.append(`ORDER BY posts."${sort}" ${order}, posts.id ${order}`);
   }
+  
+  if(onlyTagged) filteredWhere.push(SQL`EXISTS(SELECT 1 FROM mappings WHERE postid = id)`);
+  if(onlyUntagged) filteredWhere.push(SQL`NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`);
+  
+  if(rating === null) filteredWhere.push(SQL`posts.rating IS NULL`);
+  else if(Array.isArray(rating)) filteredWhere.push(SQL`posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
+  
+  if(inbox !== undefined) filteredWhere.push(SQL`posts.inbox = ${inbox}`);
+  if(trash !== undefined) filteredWhere.push(SQL`posts.trash = ${trash}`);
+  
+  const filteredWhereSQL = filteredWhere.length > 0
+    ? filteredWhere.reduce((acc, part) => acc.append(SQL` AND `).append(part))
+    : SQL``;
   
   let filteredCTE: SQLStatement;
   if(onlyTagged && onlyUntagged) {
-    filteredCTE = SQL`filtered AS (SELECT 0 AS id WHERE FALSE)`;
+    filteredCTE = SQL`filtered AS (
+      SELECT 0 AS id
+      WHERE FALSE
+    )`;
   } else if(whitelistCTE && blacklistCTE) {
     filteredCTE = SQL`filtered AS (
       SELECT id
-      FROM whitelist
+      FROM posts
+      CROSS JOIN whitelist
       CROSS JOIN blacklist
-      CROSS JOIN LATERAL unnest(whitelist.ids - blacklist.ids) id
-      `.append(filteredWhere).append(`
+      WHERE posts.id = ANY(whitelist.ids - blacklist.ids)
+        AND `.append(filteredWhereSQL).append(`
     )`);
   } else if(whitelistCTE) {
     filteredCTE = SQL`filtered AS (
       SELECT id
-      FROM whitelist
-      CROSS JOIN LATERAL unnest(whitelist.ids) id
-      `.append(filteredWhere).append(`
+      FROM posts
+      CROSS JOIN whitelist
+      WHERE posts.id = ANY(whitelist.ids)
+        AND `.append(filteredWhereSQL).append(`
     )`);
   } else if(blacklistCTE) {
     filteredCTE = SQL`
@@ -560,24 +583,17 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
       SELECT id
       FROM posts
       WHERE NOT EXISTS(SELECT 1 FROM blacklist_flat WHERE posts.id = blacklist_flat.id)
-      `.append(filteredWhere).append(`
+        AND `.append(filteredWhereSQL).append(`
     )`);
-  } else if(filteredWhere) {
+  } else if(filteredWhere.length > 0) {
     filteredCTE = SQL`filtered AS (
       SELECT id
       FROM posts
-      `.append(filteredWhere).append(`
+      WHERE `.append(filteredWhereSQL).append(`
     )`);
   } else {
     filteredCTE = SQL`filtered AS (SELECT id FROM posts)`;
-    from = SQL`FROM posts`;
   }
-  
-  if(rating === null) extraWhere = extraWhere.append(SQL` AND posts.rating IS NULL`);
-  else if(Array.isArray(rating)) extraWhere = extraWhere.append(SQL` AND posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
-  
-  if(inbox !== undefined) extraWhere = extraWhere.append(SQL` AND posts.inbox = ${inbox}`);
-  if(trash !== undefined) extraWhere = extraWhere.append(SQL` AND posts.trash = ${trash}`);
   
   return SQL`
     WITH
@@ -610,11 +626,10 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
       ) AS tags
     FROM (
       SELECT posts.*
-      `).append(from).append(`
-      WHERE posts."${sort}" IS NOT NULL
-      `).append(extraWhere).append(`
-      ORDER BY posts."${sort}" ${order}, posts.id ${order}
-      `).append(SQL`
+      FROM filtered
+      INNER JOIN posts ON posts.id = filtered.id
+      `).append(joinsSQL).append(SQL`
+      `).append(orderBySQL).append(SQL`
       LIMIT ${CACHE_SIZE}
       OFFSET ${offset}
     ) x

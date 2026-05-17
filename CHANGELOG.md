@@ -16,6 +16,7 @@
 
 # Unreleased
 
+- Added Tag-based sort presets
 - Added `GET /api/diagnostics`
 - Improved performance of tags page and API endpoints.
 - Improved performance of negative searches.

@@ -41,6 +41,7 @@ interface Configs {
     resolveRelations: boolean,
     reportLoops: boolean,
     searchSummary: number,
+    sortPresets: Record<string, string[]> | null,
   },
   rating: {
     enabled: boolean,
@@ -93,6 +94,9 @@ let configs: Configs = {
     resolveRelations: true,
     reportLoops: false,
     searchSummary: 39,
+    sortPresets: {
+      page: ["creator", "series", "title", "volume", "chapter", "page"]
+    },
   },
   rating: {
     enabled: true,

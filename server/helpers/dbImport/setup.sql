@@ -1,6 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS intarray;
 
+DROP COLLATION IF EXISTS alphanumeric CASCADE;
+CREATE COLLATION alphanumeric (provider = icu, locale = 'en@colNumeric=yes');
+
 DROP TABLE IF EXISTS meta CASCADE;
 CREATE TABLE meta (
   id INTEGER PRIMARY KEY DEFAULT 39,
