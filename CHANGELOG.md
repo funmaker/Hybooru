@@ -16,6 +16,9 @@
 
 # Unreleased
 
+
+# v1.15.0
+
 - Added Tag-based sort presets
 - Added diagnostics and profiling page `/diagnostics`
 - Added maintenance page with realtime progress that appears while db is busy (eg importing, benchmarking)
