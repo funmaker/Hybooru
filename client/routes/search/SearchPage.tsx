@@ -15,7 +15,7 @@ import "./SearchPage.scss";
 
 export default function SearchPage() {
   const { postsCache, fetching, requestNext, reset, error, resetError } = usePostsCache();
-  const [pagination] = useLocalStorage("pagination", true);
+  const [pagination] = useLocalStorage("pagination", false);
   const [popupEnabled] = useLocalStorage("popup", false);
   const SSR = useSSR();
   const history = useHistory();
@@ -110,7 +110,7 @@ export default function SearchPage() {
   
   useEffect(() => {
     if(!pagination && search.page !== undefined) {
-      history.replace(qsStringify({ ...search, page: undefined }));
+      history.replace(history.location.pathname + qsStringify({ ...search, page: undefined }));
     } else if(pagination && postsCache.page > 1) {
       reset();
     }

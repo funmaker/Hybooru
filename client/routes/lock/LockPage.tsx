@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { LockPageData, ProgressMessage, WebSocketMessage } from "../../../server/routes/apiTypes";
+import { useClearPostsCache } from "../../hooks/usePostsCache";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import Logo from "../../components/Logo";
@@ -10,6 +11,7 @@ import "./LockPage.scss";
 export default function LockPage() {
   const { pageData } = usePageData<LockPageData>();
   const [, setConfig] = useConfig();
+  const clearPostsCache = useClearPostsCache();
   const history = useHistory();
   const [state, setState] = useState<ProgressMessage | string | null>({
     name: "Test",
@@ -37,6 +39,7 @@ export default function LockPage() {
           
           case "end":
             setConfig(message.data);
+            clearPostsCache();
             history.replace(pageData.redirect);
             break;
         }
@@ -49,7 +52,7 @@ export default function LockPage() {
     return () => {
       ws.close();
     };
-  }, [history, pageData, setConfig]);
+  }, [history, pageData, clearPostsCache, setConfig]);
   
   let content;
   

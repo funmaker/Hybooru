@@ -90,10 +90,12 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
           <option value="score_asc">Score (Ascending)</option>
           <option value="size">File Size (Descending)</option>
           <option value="size_asc">File Size (Ascending)</option>
-          {config.sortPresets.map(preset => (<>
-            <option value={preset}>{formatPreset(preset)} (Descending)</option>
-            <option value={preset + "_asc"}>{formatPreset(preset)} (Ascending)</option>
-          </>))} {/* eslint-disable-line react/jsx-closing-tag-location */}
+          {config.sortPresets.map((preset, id) => (
+            <React.Fragment key={id}>
+              <option value={preset}>{formatPreset(preset)} (Descending)</option>
+              <option value={preset + "_asc"}>{formatPreset(preset)} (Ascending)</option>
+            </React.Fragment>
+          ))}
           <option value="id">Id</option>
         </select>
       </div>

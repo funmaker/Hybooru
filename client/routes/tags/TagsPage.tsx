@@ -19,8 +19,6 @@ export default function TagsPage() {
   
   const pageCount = pageData && Math.ceil(pageData.results.total / pageData.results.pageSize);
   
-  console.log(pageData);
-  
   return (
     <Layout className="TagsPage" searchAction="/tags" random={false} simpleSettings>
       <table className="tags">
@@ -55,8 +53,8 @@ function Row({ tag, showNamespaces }: RowProps) {
       <td>{tag.posts}</td>
       <td><TagLink tag={tag.name} showNamespaces={showNamespaces} /></td>
       <td>{namespaceMatch ? namespaceMatch[1] : "General"}</td>
-      <td>{tag.parents.map((parent, id) => <>{id !== 0 && ", "}<TagLink key={parent} tag={parent} showNamespaces={showNamespaces} /></>)}</td>
-      <td>{tag.siblings.map((sibling, id) => <>{id !== 0 && ", "}<TagLink key={sibling} tag={sibling} showNamespaces={showNamespaces} /></>)}</td>
+      <td>{tag.parents.map((parent, id) => <React.Fragment key={parent}>{id !== 0 && ", "}<TagLink tag={parent} showNamespaces={showNamespaces} /></React.Fragment>)}</td>
+      <td>{tag.siblings.map((sibling, id) => <React.Fragment key={sibling}>{id !== 0 && ", "}<TagLink tag={sibling} showNamespaces={showNamespaces} /></React.Fragment>)}</td>
     </tr>
   );
 }

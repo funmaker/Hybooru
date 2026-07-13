@@ -144,3 +144,15 @@ export default function usePostsCache() {
   
   return { postsCache: currentCache, fetching, requestNext, reset, error, resetError } as const;
 }
+
+export function useClearPostsCache() {
+  const postsCache = useContext(PostsCacheContext);
+  
+  return useCallback(() => {
+    for(const key in postsCache) {
+      if(Object.prototype.hasOwnProperty.call(postsCache, key)) {
+        delete postsCache[key];
+      }
+    }
+  }, [postsCache]);
+}

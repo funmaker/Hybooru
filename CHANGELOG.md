@@ -16,6 +16,10 @@
 
 # Unreleased
 
+- Fixed footer not being centered on index page
+- Fixed client-side post cache not being clear after database rebuild
+- Fixed pagination being enabled by default on first visit
+
 
 # v1.15.0
 
