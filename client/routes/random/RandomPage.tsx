@@ -8,14 +8,14 @@ import Spinner from "../../components/Spinner";
 import "./RandomPage.scss";
 
 export default function RandomPage() {
-  const [pageData, loading] = usePageData<RandomPageData>();
+  const { pageData } = usePageData<RandomPageData>();
   const history = useHistory();
   
   useEffect(() => {
     if(!pageData) return;
     
     history.replace(pageData.redirect || "/");
-  }, [history, loading, pageData]);
+  }, [history, pageData]);
   
   return (
     <Layout className="RandomPage">

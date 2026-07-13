@@ -19,7 +19,7 @@ allowing you to access your collection from anywhere, without the need for runni
 It uses its own PostgreSQL database, populated using metadata from Hydrus' SQLite database.
 Files are not cloned and instead served directly from Hydrus's database. You need to
 regenerate the Hybooru's database every time you want to update it. Make sure to
-properly configure `configs.json` file. **Stop Hydrus when you regenerate HyBooru's
+properly configure `configs.json` file. **Stop Hydrus when you regenerate Hybooru's
 database if you plan to use live Hydrus' database (use hydrus backup instead if
 possible)**
 

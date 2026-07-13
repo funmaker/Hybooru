@@ -320,8 +320,8 @@ export interface CacheKey {
   blacklist: string[];
   md5: string[];
   sha256: string[];
-  sort: string | string[];
-  order: string;
+  sort: string;
+  order: "asc" | "desc";
   rating: undefined | null | [number, number];
   inbox: undefined | boolean;
   trash: undefined | boolean;
@@ -368,7 +368,7 @@ export function getCacheKey(query: string): CacheKey {
         part = part.slice(0, -6);
       }
       
-      if(part in CUSTOM_SORTS && Array.isArray(CUSTOM_SORTS[part]) && CUSTOM_SORTS[part].length > 0) key.sort = CUSTOM_SORTS[part];
+      if(part in CUSTOM_SORTS) key.sort = part;
       else if(part in SORTS) key.sort = SORTS[part as keyof typeof SORTS];
       else throw new HTTPError(400, `Invalid sorting: ${part}, expected: ${Object.keys(SORTS).join(", ")}`);
     } else if(part === "rating:none") {
@@ -511,34 +511,21 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
   
   const filteredWhere: SQLStatement[] = [];
   const joinsSQL = SQL``;
-  let orderBySQL = SQL`ORDER BY posts.id ${order}`;
+  let orderBySQL = SQL`ORDER BY posts.id `.append(order);
   
-  if(Array.isArray(sort)) {
-    orderBySQL = SQL`ORDER BY`;
+  if(sort in CUSTOM_SORTS) {
+    orderBySQL = SQL`ORDER BY post_sort_keys.sort_key COLLATE alphanumeric `.append(order);
     
-    for(let id = 0; id < sort.length; id++) {
-      const pat = `${sort[id].toLowerCase()}:%`;
-      const joinName = `sort_${id}`;
-      joinsSQL.append(SQL`
-        LEFT JOIN LATERAL (
-          SELECT subtag AS tag
-          FROM mappings
-          INNER JOIN tags ON mappings.tagid = tags.id
-          WHERE mappings.postid = posts.id
-            AND name LIKE ${pat}
-          LIMIT 1
-        ) `.append(joinName).append(SQL` ON TRUE`));
-      orderBySQL.append(` ${joinName}.tag COLLATE alphanumeric ${order},`);
-    }
-    
-    orderBySQL.append(` posts.id ${order}`);
+    joinsSQL.append(SQL`
+      LEFT JOIN post_sort_keys ON post_sort_keys.preset = ${sort} AND post_sort_keys.postid = posts.id
+    `);
   } else if(sort !== "id") {
     filteredWhere.push(SQL``.append(`posts."${sort}" IS NOT NULL`));
     orderBySQL = SQL``.append(`ORDER BY posts."${sort}" ${order}, posts.id ${order}`);
   }
   
-  if(onlyTagged) filteredWhere.push(SQL`EXISTS(SELECT 1 FROM mappings WHERE postid = id)`);
-  if(onlyUntagged) filteredWhere.push(SQL`NOT EXISTS(SELECT 1 FROM mappings WHERE postid = id)`);
+  if(onlyTagged) filteredWhere.push(SQL`posts.tagged`);
+  if(onlyUntagged) filteredWhere.push(SQL`NOT posts.tagged`);
   
   if(rating === null) filteredWhere.push(SQL`posts.rating IS NULL`);
   else if(Array.isArray(rating)) filteredWhere.push(SQL`posts.rating BETWEEN ${rating[0]} AND ${rating[1]}`);
@@ -548,7 +535,7 @@ export function getCachedPostsQuery(key: CacheKey): SQLStatement {
   
   const filteredWhereSQL = filteredWhere.length > 0
     ? filteredWhere.reduce((acc, part) => acc.append(SQL` AND `).append(part))
-    : SQL``;
+    : SQL`TRUE`;
   
   let filteredCTE: SQLStatement;
   if(onlyTagged && onlyUntagged) {

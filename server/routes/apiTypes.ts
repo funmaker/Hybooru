@@ -119,14 +119,17 @@ export interface Config {
   maxPreviewSize: number;
   passwordSet: boolean;
   thumbnailsMode: ThumbnailsMode;
+  busy: boolean;
+  sortPresets: string[];
 }
 
 // PAGES //
 
-export interface AnySSRPageData {
+export interface InitialData {
   _config: Config;
   _theme: Theme;
   _ssrError: boolean;
+  _error?: ErrorResponse;
   [k: string]: any;
 }
 
@@ -146,7 +149,7 @@ export interface PostsSearchPageData {
 }
 
 export interface PostPageData {
-  post: Post | null;
+  post: Post;
 }
 
 export interface TagsSearchPageRequest {
@@ -167,21 +170,56 @@ export interface RandomPageData {
   redirect: string;
 }
 
-export interface ErrorPageData {
-  _error: {
-    code: number;
-    message: string;
-    stack?: string;
-  };
+export interface LockPageRequest {
+  redirect?: string;
+}
+
+export interface LockPageData {
+  isLocked: boolean;
+  lockName: string | null;
+  redirect: string;
+}
+
+export interface ErrorResponse {
+  code: number;
+  message: string;
+  stack?: string;
 }
 
 // API //
 
-export interface RegenDBRequest {
+export interface PasswordRequest {
   password: string;
 }
 
-export interface RegenDBResponse {}
+export type RegenDBRequest = PasswordRequest;
+
+export interface RegenDBResponse {
+  ok: true;
+}
+
+export type DiagnosticsRequest = PasswordRequest;
+export type SQLQueryPlan = any;
+
+export interface ImportStatsStep {
+  name: string;
+  time: number[];
+}
+
+export interface ImportStats {
+  steps: ImportStatsStep[];
+  siblingLoops: number | null;
+  parentLoops: number | null;
+}
+
+export interface DiagnosticsResponse {
+  benchmark: {
+    _SIZES: number[]; // eslint-disable-line @typescript-eslint/naming-convention
+    [plan: string]: SQLQueryPlan[];
+  };
+  importStats: ImportStats;
+  stats: Stats;
+}
 
 export interface PostsSearchRequest {
   query?: string;
@@ -207,3 +245,20 @@ export interface SetThemeRequest {
   theme: string;
   redirectUrl: string;
 }
+
+// WEBSOCKETS //
+
+export interface ProgressMessage {
+  name: string;
+  value: number;
+  target: number;
+}
+
+export interface WebSocketMessageMap {
+  progress: ProgressMessage;
+  end: Config;
+}
+
+export type WebSocketMessage = {
+  [Name in keyof WebSocketMessageMap]: { type: Name; data: WebSocketMessageMap[Name] };
+}[keyof WebSocketMessageMap];

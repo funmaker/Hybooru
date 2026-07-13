@@ -11,8 +11,8 @@ const SORTS = {
   posts: "used",
 };
 
-export async function search(options: TagsSearchRequest & { full: false }): Promise<TagsSearchResults>;
 export async function search(options: TagsSearchRequest & { full: true }): Promise<TagsSearchFullResults>;
+export async function search(options: TagsSearchRequest & { full: false }): Promise<TagsSearchResults>;
 export async function search(options: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults>;
 export async function search(options: TagsSearchRequest): Promise<TagsSearchResults | TagsSearchFullResults> {
   const query = tagSearchQuery(options);

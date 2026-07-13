@@ -2,50 +2,53 @@ import PromiseRouter from "express-promise-router";
 import { Theme } from "../../client/hooks/useTheme";
 import { qsStringify } from "../../client/helpers/utils";
 import { fileUrl, MIME_STRING, namespaceRegex, postTitle, prettifyTag } from "../helpers/consts";
-import { Options } from "../middlewares/reactMiddleware";
-import configs from "../helpers/configs";
+import { SSROptions } from "../middlewares/reactMiddleware";
+import lockMiddleware from "../middlewares/lockMiddleware";
 import opensearch from "../views/opensearch.handlebars";
+import HTTPError from "../helpers/HTTPError";
+import configs from "../helpers/configs";
+import * as db from "../helpers/db";
 import * as githubController from "../controllers/github";
 import * as postsController from "../controllers/posts";
 import * as globalController from "../controllers/global";
 import * as tagsController from "../controllers/tags";
-import { IndexPageData, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, RandomPageData, RandomPageRequest, SetThemeRequest, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
+import { IndexPageData, LockPageData, LockPageRequest, Post, PostPageData, PostsSearchPageData, PostsSearchPageRequest, PostSummary, RandomPageData, RandomPageRequest, SetThemeRequest, TagsSearchFullResults, TagsSearchPageData, TagsSearchPageRequest } from "./apiTypes";
 
 export const router = PromiseRouter();
 
 
-router.get<{ id: string }>('/posts/:id', async (req, res) => {
+router.get<{ id: string }>('/posts/:id', lockMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
   
   let post;
   if(!isNaN(id)) post = await postsController.get(parseInt(req.params.id));
   else post = null;
   
-  const options: Options = {
+  if(!post) throw new HTTPError(404, "Post not found");
+  
+  const options: SSROptions = {
     ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,
   };
   
-  if(post) {
-    options.ogTitle = options.title = postTitle(post);
-    
-    const tags = Object.keys(post.tags);
-    const namespaced = tags.filter(tag => tag.match(namespaceRegex)).sort();
-    const unnamespaced = tags.filter(tag => !tag.match(namespaceRegex)).sort();
-    options.ogDescription = [...namespaced, ...unnamespaced].slice(0, 128).map(prettifyTag).join(", ");
-    
-    addOGMedia(options, post);
-  }
+  options.ogTitle = options.title = postTitle(post);
+  
+  const tags = Object.keys(post.tags);
+  const namespaced = tags.filter(tag => tag.match(namespaceRegex)).sort();
+  const unnamespaced = tags.filter(tag => !tag.match(namespaceRegex)).sort();
+  options.ogDescription = [...namespaced, ...unnamespaced].slice(0, 128).map(prettifyTag).join(", ");
+  
+  addOGMedia(options, post);
   
   res.react<PostPageData>({ post }, options);
 });
 
-router.get<any, any, any, any, PostsSearchPageRequest>('/posts', async (req, res) => {
+router.get<any, any, any, any, PostsSearchPageRequest>('/posts', lockMiddleware, async (req, res) => {
   const results = await postsController.search({ ...req.query, tags: true, blurhash: true });
   
   res.react<PostsSearchPageData>({ results }, { ogTitle: "Post Search", ogDescription: req.query.query });
 });
 
-router.get<any, any, any, any, TagsSearchPageRequest>('/tags', async (req, res) => {
+router.get<any, any, any, any, TagsSearchPageRequest>('/tags', lockMiddleware, async (req, res) => {
   const results = await tagsController.search({
     ...req.query,
     full: true,
@@ -54,20 +57,45 @@ router.get<any, any, any, any, TagsSearchPageRequest>('/tags', async (req, res) 
   res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });
 });
 
-router.get<any, any, any, any, RandomPageRequest>('/random', async (req, res) => {
+router.get<any, any, any, any, RandomPageRequest>('/random', lockMiddleware, async (req, res) => {
   const post = await postsController.random(req.query.query);
   const redirect = post ? `/posts/${post.id}${qsStringify(req.query)}` : `/posts${qsStringify(req.query)}`;
   
   res.react<RandomPageData>({ redirect }, { ogTitle: "Random Post", ogDescription: req.query.query, htmlRedirect: redirect });
 });
 
-router.post<any, any, SetThemeRequest>('/setTheme', async (req, res) => {
+router.post<any, any, any, SetThemeRequest>('/setTheme', async (req, res) => {
   res.cookie("theme", req.body.theme, { maxAge: 356 * 24 * 60 * 60 * 1000 });
   
   res.redirect(req.body.redirectUrl || "/");
 });
 
-router.get('/', async (req, res) => {
+router.get("/opensearch.xml", async (req, res) => {
+  res.setHeader('Content-Type', 'application/opensearchdescription+xml');
+  res.end(opensearch({
+    appName: configs.appName,
+    appDescription: configs.appDescription,
+    origin: `${req.protocol}://${req.get('host')}`,
+  }));
+});
+
+router.get<any, any, LockPageData, any, LockPageRequest>('/lock', async (req, res) => {
+  const redirect = req.query.redirect ?? "/";
+  
+  res.react({
+    isLocked: db.dbLock.isLocked(),
+    lockName: db.dbLock.lockName,
+    redirect,
+  }, {
+    htmlRedirect: db.dbLock.isLocked() ? undefined : redirect,
+  });
+});
+
+router.get('/diagnostics', async (req, res) => {
+  res.react({});
+});
+
+router.get('/', lockMiddleware, async (req, res) => {
   const stats = await globalController.getStats();
   const config = await globalController.getConfig();
   const theme = req.cookies.theme as Theme || Theme.AUTO;
@@ -77,7 +105,7 @@ router.get('/', async (req, res) => {
   else if(configs.tags.motd) motdQuery = configs.tags.motd;
   
   const motd = typeof motdQuery === "string" && await postsController.random(motdQuery) || null;
-  const options: Options = { ogTitle: "Main Page" };
+  const options: SSROptions = { ogTitle: "Main Page" };
   
   const releases = await githubController.getReleases();
   let updateUrl: string | null = null;
@@ -93,21 +121,7 @@ router.get('/', async (req, res) => {
   res.react<IndexPageData>({ stats, updateUrl, motd }, options);
 });
 
-router.get("/opensearch.xml", async (req, res) => {
-  res.setHeader('Content-Type', 'application/opensearchdescription+xml');
-  res.end(opensearch({
-    appName: configs.appName,
-    appDescription: configs.appDescription,
-    origin: `${req.protocol}://${req.get('host')}`,
-  }));
-});
-
-router.get('/test', async (req, res) => {
-  res.react({});
-});
-
-
-function addOGMedia(options: Options, post: Post | PostSummary) {
+function addOGMedia(options: SSROptions, post: Post | PostSummary) {
   const type = post.mime !== null && MIME_STRING[post.mime] || null;
   const url = fileUrl(post);
   if(type?.startsWith("image/")) {

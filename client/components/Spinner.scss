@@ -13,7 +13,7 @@
     width: 1em;
     height: 1em;
     border-radius: 50%;
-    background: #47a2ff;
+    background: var(--accent-color);
     animation-timing-function: cubic-bezier(0, 1, 1, 0);
 
     &:nth-child(1) {

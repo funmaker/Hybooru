@@ -1,6 +1,8 @@
 import React, { useCallback } from "react";
+import { useHistory } from "react-router";
 import { anyRatingRegex } from "../../server/helpers/consts";
-import { RegenDBRequest } from "../../server/routes/apiTypes";
+import { RegenDBRequest, RegenDBResponse } from "../../server/routes/apiTypes";
+import { qsStringify } from "../helpers/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
 import requestJSON from "../helpers/requestJSON";
 import useConfig from "../hooks/useConfig";
@@ -14,7 +16,8 @@ type SettingsMenuProps = {
 
 export default function SettingsMenu({ open = false, simpleSettings = false, ...rest }: SettingsMenuProps) {
   const [, setQuery] = useQuery();
-  const config = useConfig();
+  const [config] = useConfig();
+  const history = useHistory();
   
   const [pagination, setPagination] = useLocalStorage("pagination", false);
   const [popup, setPopup] = useLocalStorage("popup", false);
@@ -61,15 +64,19 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     const password = prompt("Password");
     
     if(password !== null) {
-      await requestJSON<null, RegenDBRequest>({
-        pathname: "/api/regenDB",
+      await requestJSON<RegenDBResponse, RegenDBRequest>({
+        url: "/api/regendb",
         method: "POST",
         data: { password },
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "X-Hybooru-No-Auth": true,
+        },
       });
       
-      window.location.reload();
+      history.push("/lock" + qsStringify({ redirect: history.location.pathname + history.location.search }));
     }
-  }, []);
+  }, [history]);
   
   let extraSettings: React.ReactNode = null;
   if(!simpleSettings) {
@@ -83,13 +90,17 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
           <option value="score_asc">Score (Ascending)</option>
           <option value="size">File Size (Descending)</option>
           <option value="size_asc">File Size (Ascending)</option>
+          {config.sortPresets.map(preset => (<>
+            <option value={preset}>{formatPreset(preset)} (Descending)</option>
+            <option value={preset + "_asc"}>{formatPreset(preset)} (Ascending)</option>
+          </>))} {/* eslint-disable-line react/jsx-closing-tag-location */}
           <option value="id">Id</option>
         </select>
       </div>
       {config.ratingStars !== null &&
         <div>
           <select value="label" onChange={onRating}>
-            <option value="label" disabled selected hidden>Rating</option>
+            <option value="label" disabled hidden>Rating</option>
             {new Array(config.ratingStars + 1).fill(0)
                                               .map((_, id) => <option key={id} value={id.toString()}>{id}</option>)
                                               .reverse()}
@@ -124,3 +135,5 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     </div>
   );
 }
+
+const formatPreset = (preset: string) => preset.slice(0, 1).toUpperCase() + preset.slice(1).replace(/_/g, " ");

@@ -96,7 +96,7 @@ interface TagProps {
 }
 
 function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
-  const config = useConfig();
+  const [config] = useConfig();
   const [query, setQuery, genLink] = useQuery();
   
   let name = tag.replace(/_/g, " ");

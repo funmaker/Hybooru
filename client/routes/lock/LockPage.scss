@@ -1,0 +1,44 @@
+
+.LockPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 4rem 2rem 2rem;
+  
+  .Logo {
+    font-size: 4rem;
+  }
+  
+  .progressWrap {
+    width: 30rem;
+    max-width: 100%;
+    
+    .info {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin-bottom: 0.25rem;
+      
+      .progress {
+        opacity: 0.75;
+        font-size: 0.75em;
+      }
+    }
+    
+    .bar {
+      width: 100%;
+      border: 1px solid var(--accent-color);
+      border-radius: 0.15rem;
+      line-height: 0;
+      overflow: hidden;
+      
+      .fill {
+        background-color: var(--accent-color);
+        height: 0.8rem;
+        border-radius: 0 0.1rem 0.1rem 0;
+      }
+    }
+  }
+}

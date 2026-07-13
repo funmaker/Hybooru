@@ -22,7 +22,7 @@ export interface ThumbnailProps {
 
 export default function Thumbnail({ id, post, noFade, onClick, useId, label }: ThumbnailProps) {
   const SSR = useSSR();
-  const config = useConfig();
+  const [config] = useConfig();
   const ref = useRef<HTMLImageElement>(null);
   const [thumbnailFade] = useLocalStorage("thumbnailFade", true);
   const [blurhash] = useLocalStorage("blurhash", false);

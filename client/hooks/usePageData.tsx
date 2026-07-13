@@ -1,13 +1,17 @@
-import React, { ContextType, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router";
-import { Canceler } from "axios";
+import axios, { Canceler } from "axios";
+import ClientError from "../helpers/clientError";
 import requestJSON from "../helpers/requestJSON";
+import { InitialData } from "../../server/routes/apiTypes";
+import { qsStringify } from "../helpers/utils";
 
 type UnlistenCallback = () => void;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const PageDataContext = React.createContext({
   pageData: null as any,
+  pageError: null as ClientError | null,
   locationKey: undefined as string | undefined,
   fetch: (): UnlistenCallback => { throw new Error("Not Initialized"); },
   fetching: false,
@@ -20,13 +24,22 @@ interface FetchEmitter {
   key: string | undefined;
 }
 
-export function usePageDataInit(initialData: any): ContextType<typeof PageDataContext> {
-  if(initialData._error) initialData = null;
+interface PageDataProviderProps {
+  initialData: InitialData;
+  children: React.ReactNode;
+}
+
+export function PageDataProvider({ initialData, children }: PageDataProviderProps) {
   const history = useHistory();
-  const [{ locationKey, pageData }, setPageData] = useState({ locationKey: history.location.key, pageData: initialData || null });
   const [fetching, setFetching] = useState(false);
   const fetchEmitter = useRef<FetchEmitter | null>(null);
   const titleCache = useRef<Record<string, string>>({});
+  
+  const [state, setState] = useState({
+    locationKey: history.location.key,
+    pageData: initialData._error ? null : initialData,
+    pageError: initialData._error ? new ClientError(initialData._error) : null,
+  });
   
   useEffect(() => {
     titleCache.current[history.location.pathname] = document.title;
@@ -35,7 +48,7 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
       if(fetchEmitter.current?.key && fetchEmitter.current.key !== location.key) {
         fetchEmitter.current?.cancel("Route Change");
         fetchEmitter.current = null;
-        setPageData(state => (state.locationKey || state.pageData) ? { locationKey: undefined, pageData: null } : state);
+        setState(state => (state.locationKey || state.pageData) ? { locationKey: undefined, pageData: null, pageError: null } : state);
       }
       
       if(titleCache.current[history.location.pathname]) document.title = titleCache.current[history.location.pathname];
@@ -43,10 +56,10 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
   }, [history]);
   
   useEffect(() => {
-    if(typeof pageData?._title === "string") {
-      document.title = titleCache.current[history.location.pathname] = pageData._title;
+    if(typeof state.pageData?._title === "string") {
+      document.title = titleCache.current[history.location.pathname] = state.pageData._title;
     }
-  }, [history, pageData]);
+  }, [history, state.pageData]);
   
   const fetch = useCallback(() => {
     if(fetchEmitter.current) {
@@ -55,38 +68,39 @@ export function usePageDataInit(initialData: any): ContextType<typeof PageDataCo
     }
     
     setFetching(true);
-    let cancelFetch = () => {};
-    requestJSON({
+    let cancelFetch = (reason?: string) => {};
+    requestJSON<any>({
       cancelCb: cancel => cancelFetch = cancel,
     }).then(pageData => {
-      setPageData({ locationKey: history.location.key, pageData });
+      setState({ locationKey: history.location.key, pageData, pageError: null });
     }).catch(error => {
-      console.error("Unable to fetch page data: ", error);
+      if(!error.isCancel) setState({ locationKey: history.location.key, pageData: null, pageError: error });
     }).finally(() => {
       fetchEmitter.current = null;
       setFetching(false);
     });
     
-    fetchEmitter.current = {
+    const self = fetchEmitter.current = {
       listeners: 1,
       unlisten() {
-        this.listeners--;
-        if(this.listeners <= 0) this.cancel("Orphan");
+        self.listeners--;
+        if(self.listeners <= 0) self.cancel("Orphan");
       },
       cancel: cancelFetch,
       key: history.location.key,
     };
-    fetchEmitter.current.unlisten = fetchEmitter.current.unlisten.bind(fetchEmitter.current);
     
     return fetchEmitter.current.unlisten;
   }, [history]);
   
-  return useMemo(() => ({ pageData, locationKey, fetch, fetching }), [pageData, locationKey, fetch, fetching]);
+  const contextValue = useMemo(() => ({ ...state, fetch, fetching }), [state, fetch, fetching]);
+  
+  return <PageDataContext.Provider value={contextValue}>{children}</PageDataContext.Provider>;
 }
 
-export default function usePageData<T>(auto = true, cache = true): [T | null, boolean, () => UnlistenCallback] {
+export default function usePageData<T>(auto = true, cache = true) {
   const currentKey = useLocation().key;
-  const { pageData, fetch, locationKey, fetching } = useContext(PageDataContext);
+  const { pageData, pageError, fetch, locationKey, fetching } = useContext(PageDataContext);
   const cached = useRef(false);
   
   if(locationKey === currentKey && cache) cached.current = true;
@@ -96,9 +110,11 @@ export default function usePageData<T>(auto = true, cache = true): [T | null, bo
     else return fetch();
   }, [fetch, auto, currentKey, locationKey]);
   
-  if(currentKey !== locationKey && !cached.current) {
-    return [null, fetching, fetch];
-  } else {
-    return [pageData, fetching, fetch];
-  }
+  
+  return {
+    pageData: (currentKey !== locationKey && !cached.current) ? null : pageData as T,
+    pageError: (currentKey !== locationKey) ? null : pageError,
+    fetching,
+    refresh: fetch,
+  };
 }

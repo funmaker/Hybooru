@@ -1,7 +1,6 @@
 {
 	"port": 3939,
 	"host": null,
-	"hydrusDbPath": "/home/funmaker/.local/share/hydrus/test",
 	"hydrusDbPath": null,
 	"appName": "Hybooru",
 	"appDescription": "Hydrus-based booru-styled imageboard in React",
@@ -36,8 +35,7 @@
 		"reportLoops": false,
 		"searchSummary": 39,
 		"sortPresets": {
-			"page": ["creator", "series", "title", "volume", "chapter", "page"],
-			"test": ["book", "act", "chapter", "page"]
+			"page": ["creator", "series", "title", "volume", "chapter", "page"]
 		}
 	},
 	"rating": {

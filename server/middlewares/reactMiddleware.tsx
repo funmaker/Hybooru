@@ -8,7 +8,7 @@ import App from "../../client/App";
 import index from '../views/index.handlebars';
 import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
-import { AnySSRPageData } from "../routes/apiTypes";
+import { InitialData } from "../routes/apiTypes";
 import * as globalController from "../controllers/global";
 
 const removeTags = /[<>]/g;
@@ -38,7 +38,7 @@ export interface OGAudio {
   type: string;
 }
 
-export interface Options {
+export interface SSROptions {
   title?: string;
   htmlRedirect?: string;
   ogTitle?: string;
@@ -55,7 +55,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     export interface Response {
-      react: <Data>(initialData: Data, options?: Options) => Response;
+      react: <Data>(initialData: Data, options?: SSROptions) => Response;
     }
   }
 }
@@ -81,7 +81,7 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
             break;
           }
           
-          const initialDataEx: AnySSRPageData = {
+          const initialDataEx: InitialData = {
             ...initialData,
             _config: config,
             _theme: theme,

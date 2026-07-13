@@ -8,7 +8,7 @@ import useConfig from "../../hooks/useConfig";
 import Layout from "../../components/Layout";
 import Thumbnail from "../../components/Thumbnail";
 import Tags from "../../components/Tags";
-import NotFoundPage from "../error/NotFoundPage";
+import ErrorPage from "../error/ErrorPage";
 import File from "./File";
 import SourceLink from "./SourceLink";
 import "./PostPage.scss";
@@ -20,8 +20,8 @@ const RELATION_STRING: Record<Relation, string> = {
 };
 
 export default function PostPage() {
-  const { ratingStars } = useConfig();
-  const [pageData] = usePageData<PostPageData>();
+  const [{ ratingStars }] = useConfig();
+  const { pageData } = usePageData<PostPageData>();
   const [fullHeight] = useLocalStorage("fullHeight", false);
   
   const sortedRelations = useMemo(() => {
@@ -31,12 +31,8 @@ export default function PostPage() {
   
   if(!pageData) {
     return (
-      <Layout className="PostPage" />
+      <Layout className="PostPage" simpleSettings />
     );
-  }
-  
-  if(!pageData.post) {
-    return <NotFoundPage />;
   }
   
   const link = fileUrl(pageData.post);

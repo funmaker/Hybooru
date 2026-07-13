@@ -2,43 +2,41 @@ import React, { useEffect } from 'react';
 import { Route, Switch } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import { hot } from 'react-hot-loader';
-import { AnySSRPageData } from "../server/routes/apiTypes";
-import { usePageDataInit, PageDataContext } from "./hooks/usePageData";
+import { InitialData } from "../server/routes/apiTypes";
+import { PageDataProvider } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
-import { ConfigContext } from "./hooks/useConfig";
+import { ConfigContextProvider } from "./hooks/useConfig";
 import { ThemeProvider } from "./hooks/useTheme";
 import { PostsCacheProvider } from "./hooks/usePostsCache";
 import { QueryProvider } from "./hooks/useQuery";
-import TestPage from "./routes/TestPage";
+import ClientError from "./helpers/clientError";
+import DiagnosticsPage from "./routes/diagnostics/DiagnosticsPage";
 import IndexPage from "./routes/index/IndexPage";
 import SearchPage from "./routes/search/SearchPage";
 import PostPage from "./routes/post/PostPage";
 import RandomPage from "./routes/random/RandomPage";
 import TagsPage from "./routes/tags/TagsPage";
-import NotFoundPage from "./routes/error/NotFoundPage";
+import LockPage from "./routes/lock/LockPage";
+import ErrorPage from "./routes/error/ErrorPage";
 import "./globals.scss";
 
 interface Props {
-  initialData: AnySSRPageData;
+  initialData: InitialData;
 }
 
 const MIN_PAGE_SIZE = 612;
 export const EM_SIZE = 20;
 
+const notFoundError = new ClientError({ code: 404, message: "Page Not Found" });
+
 // eslint-disable-next-line prefer-arrow-callback
 export default hot(module)(function App({ initialData }: Props) {
-  const contextData = usePageDataInit(initialData);
-  
   useEffect(() => {
     const onResize = () => {
       const minSize = Math.min(window.innerWidth, window.innerHeight);
       const fontSize = Math.min(1, minSize / MIN_PAGE_SIZE) * EM_SIZE;
       document.documentElement.style.fontSize = fontSize + "px";
     };
-    
-    if(initialData._error) {
-      toast.error(initialData._error.message);
-    }
     
     if(initialData._ssrError) {
       toast.error("There was an error during Server Side Rendering.");
@@ -52,24 +50,25 @@ export default hot(module)(function App({ initialData }: Props) {
   return (
     <SSRProvider>
       <ThemeProvider init={initialData._theme}>
-        <ConfigContext.Provider value={initialData._config}>
+        <ConfigContextProvider config={initialData._config}>
           <QueryProvider>
-            <PageDataContext.Provider value={contextData}>
+            <PageDataProvider initialData={initialData}>
               <PostsCacheProvider>
                 <Switch>
-                  <Route path="/test" component={TestPage} />
                   <Route path="/tags" component={TagsPage} />
                   <Route path="/posts/:id" component={PostPage} />
                   <Route path="/posts" component={SearchPage} />
                   <Route path="/random" component={RandomPage} />
+                  <Route path="/diagnostics" component={DiagnosticsPage} />
+                  <Route path="/lock" component={LockPage} />
                   <Route path="/" exact component={IndexPage} />
-                  <NotFoundPage />
+                  <ErrorPage error={notFoundError} />
                 </Switch>
                 <ToastContainer />
               </PostsCacheProvider>
-            </PageDataContext.Provider>
+            </PageDataProvider>
           </QueryProvider>
-        </ConfigContext.Provider>
+        </ConfigContextProvider>
       </ThemeProvider>
     </SSRProvider>
   );

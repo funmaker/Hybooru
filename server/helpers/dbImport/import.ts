@@ -3,8 +3,7 @@ import { Database, Statement } from "better-sqlite3";
 import { PoolClient } from "pg";
 import copy from "pg-copy-streams";
 import configs from "../configs";
-import { printProgress } from "./pretty";
-import { Service } from "./index";
+import { Service, updateProgress } from "./index";
 
 export abstract class Import<S = Service> {
   constructor(protected hydrus: Database, protected postgres: PoolClient) {}
@@ -45,18 +44,18 @@ export abstract class Import<S = Service> {
   }
   
   async start() {
-    printProgress(false, this.display);
+    updateProgress(false, this.display);
     
     const batchSize = Math.ceil(configs.importBatchSize * this.batchSizeMul);
     const total = this.total();
     let count = 0;
     
     if(total === 0) {
-      printProgress(true, this.display);
+      updateProgress(true, this.display);
       return;
     }
     
-    printProgress([0, total], this.display);
+    updateProgress([0, total], this.display);
     
     const outputTable = await this.beforeImport();
     
@@ -73,7 +72,7 @@ export abstract class Import<S = Service> {
       count += batchSize;
       
       if(output.writableLength > output.writableHighWaterMark) {
-        printProgress([count, total], this.display);
+        updateProgress([count, total], this.display);
         await new Promise(res => output.once("drain", res));
       } else {
         await new Promise(res => setImmediate(res));
@@ -84,7 +83,7 @@ export abstract class Import<S = Service> {
     
     await this.afterImport();
     
-    printProgress([total, total], this.display);
+    updateProgress([total, total], this.display);
   }
   
   async startEach(services: S[]) {

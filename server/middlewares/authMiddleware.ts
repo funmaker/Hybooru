@@ -6,11 +6,14 @@ export default function authMiddleware(req: express.Request<any>, res: express.R
   if(typeof configs.adminPassword !== "string") throw new HTTPError(400, "Admin password has not been set in configs.json");
   if(req.body?.password === configs.adminPassword) return next();
   
-  const authorization = req.headers["authorization"];
+  const hybooruNoAuth = req.headers["x-hybooru-no-auth"];
+  if(hybooruNoAuth) throw new HTTPError(401, "Invalid password");
   
+  const authorization = req.headers["authorization"];
   if(!authorization || !authorization.startsWith("Basic ")) {
     throw new HTTPError(401, "Not Authorized", {
-      "WWW-Authenticate": 'Basic realm="hybooru"', // eslint-disable-line @typescript-eslint/naming-convention
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      "WWW-Authenticate": 'Basic realm="hybooru"',
     });
   }
   

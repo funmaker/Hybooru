@@ -19,7 +19,7 @@ interface FileProps {
 }
 
 export default function File({ post, link, className, paused, controls = true, autoPlay = !paused, muted, ...rest }: FileProps & React.HTMLAttributes<HTMLElement>) {
-  const config = useConfig();
+  const [config] = useConfig();
   const SSR = useSSR();
   const [error, setError] = useReducer(() => true, false);
   const videoRef = useRef<HTMLVideoElement | null>(null);

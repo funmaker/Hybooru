@@ -11,7 +11,7 @@ import "./TagsPage.scss";
 
 export default function TagsPage() {
   const [showNamespaces] = useLocalStorage("namespaces", false);
-  let [pageData] = usePageData<TagsSearchPageData>();
+  let { pageData } = usePageData<TagsSearchPageData>();
   const pageDataCache = useRef(pageData);
   
   if(pageData) pageDataCache.current = pageData;
@@ -67,7 +67,7 @@ interface TagLinkProps {
 }
 
 function TagLink({ tag, showNamespaces }: TagLinkProps) {
-  const config = useConfig();
+  const [config] = useConfig();
   
   let name = tag.replace(/_/g, " ");
   let color: string | undefined;

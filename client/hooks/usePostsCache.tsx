@@ -47,12 +47,13 @@ export default function usePostsCache() {
   const location = useLocation();
   const history = useHistory();
   const canceller = useRef<Canceler | null>(null);
-  const [fetching, setFetching] = useState(false);
   const postsCache = useContext(PostsCacheContext);
   const search = qsParse(location.search);
   const query = typeof search.query === "string" ? search.query : "";
   const key = JSON.stringify([search.page, query]);
-  const [pageData, pageFetching] = usePageData<PostsSearchPageData>(!postsCache[key], false);
+  const { pageData, pageError, fetching: pageFetching } = usePageData<PostsSearchPageData>(!postsCache[key], false);
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState(!!pageError);
   
   let postsCacheDefault = emptyPage;
   if(postsCache[key]) {
@@ -74,6 +75,7 @@ export default function usePostsCache() {
       if(currentCache.key) {
         postsCache[currentCache.key].fresh = false;
       }
+      setError(false);
       setCurrentCache(postsCache[key]);
     }
   }, [currentCache, pageData, postsCache, key]);
@@ -86,14 +88,14 @@ export default function usePostsCache() {
   }, [history]);
   
   const requestNext = useCallback(async () => {
-    if(canceller.current || pageFetching || !postsCache[key]) return;
+    if(canceller.current || pageFetching || !postsCache[key] || error) return;
     
     try {
       if(postsCache[key].total !== null && postsCache[key].posts.length >= (postsCache[key].total || 0)) return;
       
       setFetching(true);
       const result = await requestJSON<PostsSearchResponse, PostsSearchRequest>({
-        pathname: "/api/post",
+        url: "/api/post",
         search: {
           query,
           page: postsCache[key].page,
@@ -112,12 +114,15 @@ export default function usePostsCache() {
       
       setCurrentCache(postsCache[key]);
     } catch(e) {
-      if(!(e instanceof axios.Cancel)) throw e;
+      if(!(e instanceof axios.Cancel)) {
+        setError(true);
+        throw e;
+      }
     } finally {
       canceller.current = null;
       setFetching(false);
     }
-  }, [pageFetching, postsCache, key, query]);
+  }, [error, key, pageFetching, postsCache, query]);
   
   const reset = useCallback(() => {
     if(pageData) {
@@ -129,10 +134,13 @@ export default function usePostsCache() {
         ...pageData.results,
       };
     } else {
-      postsCache[key] = emptyPage;
+      delete postsCache[key];
     }
-    setCurrentCache(postsCache[key]);
+    setCurrentCache(postsCache[key] ?? emptyPage);
+    setError(false);
   }, [key, pageData, postsCache]);
   
-  return { postsCache: currentCache, fetching, requestNext, reset } as const;
+  const resetError = useCallback(() => setError(false), []);
+  
+  return { postsCache: currentCache, fetching, requestNext, reset, error, resetError } as const;
 }

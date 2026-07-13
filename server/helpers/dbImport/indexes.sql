@@ -27,6 +27,7 @@ CREATE TABLE tag_postids AS
   GROUP BY tagid;
 CREATE UNIQUE INDEX ON tag_postids(tagid);
 
+UPDATE posts SET tagged = EXISTS(SELECT 1 FROM mappings WHERE postid = id);
 CREATE INDEX ON posts(posted, id);
 CREATE INDEX ON posts(rating, id);
 CREATE INDEX ON posts(size, id);
@@ -49,3 +50,6 @@ DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = postid);
 DELETE FROM relations WHERE NOT EXISTS (SELECT 1 FROM posts WHERE id = other_postid);
 ALTER TABLE relations ADD CONSTRAINT relations_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE,
                       ADD CONSTRAINT relations_other_postid_fkey FOREIGN KEY (other_postid) REFERENCES posts(id) ON DELETE CASCADE;
+
+ALTER TABLE post_sort_keys ADD CONSTRAINT post_sort_keys_postid_fkey FOREIGN KEY (postid) REFERENCES posts(id) ON DELETE CASCADE;
+ALTER TABLE post_sort_keys ADD CONSTRAINT post_sort_keys_preset_fkey FOREIGN KEY (preset) REFERENCES sort_presets(name) ON DELETE CASCADE;

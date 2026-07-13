@@ -159,7 +159,7 @@
       {
         "after": true,
         "before": false,
-        "method": "neither"
+        "method": "before"
       }
     ],
     "import/namespace": "error",

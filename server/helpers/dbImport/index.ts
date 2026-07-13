@@ -4,11 +4,11 @@ import chalk from "chalk";
 import SqliteDatabase, { Database } from "better-sqlite3";
 import YAML from "yaml";
 import SQL, { SQLStatement } from "sql-template-strings";
-import { PoolClient } from "pg";
+import { Pool, PoolClient } from "pg";
 import * as postsController from "../../controllers/posts";
-import { Relation } from "../../routes/apiTypes";
+import { ImportStats, Relation } from "../../routes/apiTypes";
 import { preparePattern } from "../utils";
-import { findHydrusDB, pool } from "../db";
+import { findHydrusDB, pool, dbLock } from "../db";
 import { ServiceID } from "../consts";
 import configs from "../configs";
 import { elapsed, printProgress } from "./pretty";
@@ -38,6 +38,7 @@ function hashCode(s: string) {
 }
 
 export const setupHash = hashCode(setupSQL + indexesSQL);
+export let importStats: ImportStats | null = null;
 
 export async function rebuild() {
   console.log(chalk.cyan.bold("\nRebuilding Database!\n"));
@@ -47,6 +48,12 @@ export async function rebuild() {
   await postgres.query("BEGIN");
   
   try {
+    importStats = {
+      steps: [],
+      parentLoops: null,
+      siblingLoops: null,
+    };
+    
     await postgres.query(setupSQL);
     
     const dbPath = findHydrusDB();
@@ -91,15 +98,17 @@ export async function rebuild() {
     
     if(resolveRelations) await applyTagParents(postgres);
     await createIndexes(postgres);
+    await indexPresets(postgres);
     if(resolveRelations) await applyTagSiblings(postgres);
     await countUsage(postgres);
     await calculateStatistics(postgres, options);
     
-    printProgress(false, "Finalizing...");
+    updateProgress(false, "Finalizing...");
     hydrus.close();
     await postgres.query(SQL`UPDATE meta SET hash = ${setupHash}`);
+    await postgres.query(SQL`UPDATE global SET import_stats = ${importStats}`);
     await postgres.query(SQL`COMMIT`);
-    printProgress(true, "Finalizing...");
+    updateProgress(true, "Finalizing...");
     
     console.log(`${chalk.bold.green("\nDatabase rebuild completed")} in ${elapsed(startTime)}\n`);
   } catch(e) {
@@ -109,6 +118,7 @@ export async function rebuild() {
     delete process.env.SQLITE_USE_URI;
     postgres.release();
     postsController.clearCache();
+    importStats = null;
   }
 }
 
@@ -157,7 +167,7 @@ function findServices(allServices: Service[], types: ServiceID[], filter: Array<
 }
 
 async function importOptions(hydrus: Database, postgres: PoolClient) {
-  printProgress(false, "Importing options... ");
+  updateProgress(false, "Importing options... ");
   
   let { options } = hydrus.prepare('SELECT options FROM options').get();
   (global as any).YAML_SILENCE_WARNINGS = true;
@@ -184,13 +194,13 @@ async function importOptions(hydrus: Database, postgres: PoolClient) {
       )
   `);
   
-  printProgress(true, "Importing options... ");
+  updateProgress(true, "Importing options... ");
   
   return options;
 }
 
 async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
-  printProgress(false, "Resolving file relations...");
+  updateProgress(false, "Resolving file relations...");
   
   const groups: Array<{
     mediaId: number;
@@ -249,11 +259,11 @@ async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
     FROM unnest(${relations}::JSON[]) relation
   `);
   
-  printProgress(true, "Resolving file relations...");
+  updateProgress(true, "Resolving file relations...");
 }
 
 async function normalizeTagRelations(postgres: PoolClient) {
-  printProgress([0, 6], "Normalizing tags");
+  updateProgress([0, 6], "Normalizing tags");
   
   const siblingsLoops = await postgres.query(SQL`
     WITH RECURSIVE paths(tagid, visited) AS (
@@ -275,8 +285,9 @@ async function normalizeTagRelations(postgres: PoolClient) {
     WHERE tag_siblings.tagid = loops.tagid AND tag_siblings.betterid = loops.path[2]
     RETURNING path
   `);
+  if(importStats) importStats.siblingLoops = siblingsLoops.rows.length;
   
-  printProgress([1, 6], "Normalizing tags");
+  updateProgress([1, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH RECURSIVE roots(tagid, rootid) AS (
@@ -302,7 +313,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([2, 6], "Normalizing tags");
+  updateProgress([2, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_parents AS (
@@ -316,7 +327,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([3, 6], "Normalizing tags");
+  updateProgress([3, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_parents AS (
@@ -330,7 +341,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([4, 6], "Normalizing tags");
+  updateProgress([4, 6], "Normalizing tags");
   
   await postgres.query(SQL`
     WITH bad_maps AS (
@@ -344,7 +355,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress([5, 6], "Normalizing tags");
+  updateProgress([5, 6], "Normalizing tags");
   
   const parentLoops = await postgres.query(SQL`
     WITH RECURSIVE paths(tagid, visited) AS (
@@ -366,8 +377,9 @@ async function normalizeTagRelations(postgres: PoolClient) {
     WHERE tag_parents.tagid = loops.tagid AND tag_parents.parentid = loops.path[2]
     RETURNING path
   `);
+  if(importStats) importStats.parentLoops = parentLoops.rows.length;
   
-  printProgress([6, 6], "Normalizing tags");
+  updateProgress([6, 6], "Normalizing tags");
   
   if(siblingsLoops.rows.length > 0) {
     console.error(`${chalk.bold.yellow("Warning!")} Detected ${siblingsLoops.rows.length} loops in tag siblings!`);
@@ -411,7 +423,7 @@ async function normalizeTagRelations(postgres: PoolClient) {
 }
 
 async function applyBlacklist(postgres: PoolClient) {
-  printProgress(false, "Applying blacklist...");
+  updateProgress(false, "Applying blacklist...");
   
   const blacklist = configs.tags.blacklist?.map(pat => preparePattern(pat)) || [];
   const tags = blacklist.filter(pattern => !pattern.startsWith("system:"));
@@ -439,11 +451,11 @@ async function applyBlacklist(postgres: PoolClient) {
     `.append(systemWhere));
   }
   
-  printProgress(true, "Applying blacklist...");
+  updateProgress(true, "Applying blacklist...");
 }
 
 async function applyWhitelist(postgres: PoolClient) {
-  printProgress(false, "Applying whitelist...");
+  updateProgress(false, "Applying whitelist...");
   
   const whitelist = configs.tags.whitelist?.map(pat => preparePattern(pat)) || [];
   const tags = whitelist.filter(pattern => !pattern.startsWith("system:"));
@@ -475,11 +487,11 @@ async function applyWhitelist(postgres: PoolClient) {
   }
   
   
-  printProgress(true, "Applying whitelist...");
+  updateProgress(true, "Applying whitelist...");
 }
 
 async function removeIgnored(postgres: PoolClient) {
-  printProgress(false, "Removing ignored tags...");
+  updateProgress(false, "Removing ignored tags...");
   
   const ignored = configs.tags.ignore.map(pat => preparePattern(pat));
   
@@ -504,11 +516,11 @@ async function removeIgnored(postgres: PoolClient) {
     WHERE tag_siblings.tagid = tags.id
   `);
   
-  printProgress(true, "Removing ignored tags...");
+  updateProgress(true, "Removing ignored tags...");
 }
 
 async function applyTagParents(postgres: PoolClient) {
-  printProgress(false, "Resolving tag parents...");
+  updateProgress(false, "Resolving tag parents...");
   
   await postgres.query(SQL`
     WITH RECURSIVE ancestors(tagid, ancestorid) AS (
@@ -526,25 +538,80 @@ async function applyTagParents(postgres: PoolClient) {
     ON CONFLICT DO NOTHING
   `);
   
-  printProgress(true, "Resolving tag parents...");
+  updateProgress(true, "Resolving tag parents...");
 }
 
 async function createIndexes(postgres: PoolClient) {
-  printProgress(false, "Indexing");
+  updateProgress(false, "Indexing");
   
   const stmts = (indexesSQL as string).split(";").map(s => s.trim()).filter(s => s);
-  printProgress([0, stmts.length], "Indexing");
+  updateProgress([0, stmts.length], "Indexing");
   
   let id = 0;
   for(const stmt of stmts) {
     await postgres.query(stmt);
     id++;
-    printProgress([id, stmts.length], "Indexing");
+    updateProgress([id, stmts.length], "Indexing");
   }
 }
 
+export async function indexPresets(postgres: PoolClient | Pool = pool) {
+  if(!configs.tags.sortPresets) return;
+  
+  updateProgress([0, 3], "Indexing sort presets");
+  
+  await postgres.query(SQL`
+    TRUNCATE sort_presets, post_sort_keys;
+  `);
+  
+  updateProgress([1, 3], "Indexing sort presets");
+  
+  await postgres.query(SQL`
+    INSERT INTO sort_presets(name, namespaces)
+    SELECT key, array_agg(items)
+    FROM jsonb_each(${configs.tags.sortPresets}) AS x(key, value)
+    CROSS JOIN jsonb_array_elements_text(value) items
+    GROUP BY key
+  `);
+  
+  updateProgress([2, 3], "Indexing sort presets");
+  
+  await postgres.query(SQL`
+    WITH
+      preset_items AS (
+        SELECT
+          sort_presets.name AS preset,
+          namespace,
+          idx
+        FROM sort_presets
+        CROSS JOIN LATERAL unnest(namespaces) WITH ORDINALITY AS ns(namespace, idx)
+      ),
+      tag_namespaces AS (
+        SELECT DISTINCT ON (postid, namespace)
+          posts.id as postid,
+          preset_items.namespace,
+          tags.name
+        FROM posts
+        CROSS JOIN preset_items
+        INNER JOIN mappings ON mappings.postid = posts.id
+        INNER JOIN tags ON tags.id = mappings.tagid AND tags.name LIKE preset_items.namespace || ':%'
+      )
+    INSERT INTO post_sort_keys(postid, preset, sort_key)
+    SELECT
+      posts.id,
+      preset_items.preset,
+      string_agg(COALESCE(tag_namespaces.name, preset_items.namespace), ' ' ORDER BY preset_items.idx)
+    FROM posts
+    CROSS JOIN preset_items
+    LEFT JOIN tag_namespaces ON tag_namespaces.postid = posts.id AND tag_namespaces.namespace = preset_items.namespace
+    GROUP BY posts.id, preset_items.preset;
+  `);
+  
+  updateProgress([3, 3], "Indexing sort presets");
+}
+
 async function applyTagSiblings(postgres: PoolClient) {
-  printProgress(false, "Resolving tag siblings...");
+  updateProgress(false, "Resolving tag siblings...");
   
   await postgres.query(SQL`
     INSERT INTO tag_postids(tagid, postids)
@@ -554,11 +621,11 @@ async function applyTagSiblings(postgres: PoolClient) {
     GROUP BY tag_siblings.tagid
   `);
   
-  printProgress(true, "Resolving tag siblings...");
+  updateProgress(true, "Resolving tag siblings...");
 }
 
 async function countUsage(postgres: PoolClient) {
-  printProgress(false, "Counting tags usage...");
+  updateProgress(false, "Counting tags usage...");
   
   await postgres.query(SQL`
     UPDATE tags
@@ -567,28 +634,26 @@ async function countUsage(postgres: PoolClient) {
     WHERE tag_postids.tagid = tags.id
   `);
   
-  printProgress(true, "Counting tags usage...");
+  updateProgress(true, "Counting tags usage...");
 }
 
 async function calculateStatistics(postgres: PoolClient, options: any) {
-  printProgress(false, "Calculating statistics...");
+  updateProgress(false, "Calculating statistics...");
   
   const untagged = await postsController.search({ query: configs.tags.untagged }, postgres);
-  const stars = configs.rating?.stars ?? null;
   
   await postgres.query(SQL`
-    INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags, rating_stars)
+    INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags)
     SELECT
       ${options.thumbnail_dimensions[0]} AS thumbnail_width,
       ${options.thumbnail_dimensions[1]} AS thumbnail_height,
       (SELECT COUNT(1) FROM posts) AS posts,
       (SELECT COUNT(1) FROM tags) AS tags,
       (SELECT COUNT(1) FROM mappings) AS mappings,
-      ${untagged.total} AS needs_tags,
-      ${stars} AS rating_stars
+      ${untagged.total} AS needs_tags
   `);
   
-  printProgress(true, "Calculating statistics...");
+  updateProgress(true, "Calculating statistics...");
 }
 
 async function dumpEdgeGraph(postgres: PoolClient, tagId: number, path: string) {
@@ -619,4 +684,17 @@ async function dumpEdgeGraph(postgres: PoolClient, tagId: number, path: string) 
   const text = edges.rows.map(({ start, end, kind }) => `${start}-(${kind === 'parent' ? 88 : 1})>${end}`).join("\n");
   
   await fs.promises.writeFile(path, text);
+}
+
+
+export function updateProgress(progress: boolean | [number, number], name: string) {
+  printProgress(progress, name);
+  
+  if(progress === false) {
+    dbLock.emitProgress({ name, value: 0, target: 1 });
+  } else if(progress === true) {
+    dbLock.emitProgress({ name, value: 1, target: 1 });
+  } else {
+    dbLock.emitProgress({ name, value: progress[0], target: progress[1] });
+  }
 }

@@ -2,18 +2,20 @@ import http from "http";
 import express from "express";
 import PromiseRouter from "express-promise-router";
 import authMiddleware from "../middlewares/authMiddleware";
-import configs from "../helpers/configs";
+import lockMiddleware from "../middlewares/lockMiddleware";
 import HTTPError from "../helpers/HTTPError";
 import * as db from "../helpers/db";
+import * as dbImport from "../helpers/dbImport";
 import * as postsController from "../controllers/posts";
 import * as tagsController from "../controllers/tags";
 import * as globalController from "../controllers/global";
 import * as diagnosticsController from "../controllers/diagnostics";
-import { PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResponse } from "./apiTypes";
+import * as progress from "./progress";
+import { DiagnosticsRequest, DiagnosticsResponse, ErrorResponse, PostsGetResponse, PostsSearchRequest, PostsSearchResponse, RegenDBRequest, RegenDBResponse, TagsSearchRequest, TagsSearchResponse } from "./apiTypes";
 
 export const router = PromiseRouter();
 
-router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, res) => {
+router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", lockMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
   
   let result;
@@ -23,21 +25,21 @@ router.get<{ id: string }, PostsGetResponse, any, any>("/post/:id", async (req, 
   res.json(result);
 });
 
-router.get<any, PostsSearchResponse, any, PostsSearchRequest>("/post", async (req, res) => {
+router.get<any, PostsSearchResponse, any, PostsSearchRequest>("/post", lockMiddleware, async (req, res) => {
   const result = await postsController.search({ ...req.query, tags: false });
   
   res.json(result);
 });
 
-router.get<any, TagsSearchResponse, any, TagsSearchRequest>("/tags", async (req, res) => {
+router.get<any, TagsSearchResponse, any, TagsSearchRequest>("/tags", lockMiddleware, async (req, res) => {
   const result = await tagsController.search(req.query);
   
   res.json(result);
 });
 
-router.get<any, any, any, any>("/diagnostics", authMiddleware, async (req, res) => {
-  const benchmark = await diagnosticsController.doBenchmark();
+router.post<any, DiagnosticsResponse, any, DiagnosticsRequest>("/diagnostics", lockMiddleware, authMiddleware, async (req, res) => {
   const stats = await globalController.getStats();
+  const benchmark = await db.dbLock.lock("Generating Benchmarks", async () => diagnosticsController.doBenchmark());
   
   res.json({
     benchmark,
@@ -45,13 +47,17 @@ router.get<any, any, any, any>("/diagnostics", authMiddleware, async (req, res) 
   });
 });
 
-router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", authMiddleware, async (req, res) => {
-  await db.initialize();
+router.post<any, RegenDBResponse, any, RegenDBRequest>("/regendb", lockMiddleware, authMiddleware, async (req, res) => {
+  db.dbLock
+    .lock("Regenerating Database", async () => await dbImport.rebuild())
+    .catch(console.error);
   
   res.json({
     ok: true,
   });
 });
+
+router.use(progress.router);
 
 router.use((_req, _res) => {
   throw new HTTPError(404);
@@ -65,7 +71,7 @@ router.use((err: Partial<HTTPError>, req: express.Request, res: express.Response
   
   const code = err.HTTPcode || 500;
   const headers = err.headers || {};
-  const error = {
+  const error: ErrorResponse = {
     code,
     message: err.publicMessage || http.STATUS_CODES[code] || "Something Happened",
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,

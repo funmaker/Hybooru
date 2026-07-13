@@ -1,11 +1,13 @@
 import readline from "readline";
 import chalk from "chalk";
 import configs from "../configs";
+import { importStats } from "./index";
 
 const BAR_LENGTH = 20;
 
 let lastProgressName: string | null = null;
 let lastProgressBars = 0;
+let lastProgressTime = Date.now();
 let currentProgressStart = Date.now();
 
 export function elapsed(since: number) {
@@ -17,8 +19,6 @@ export function elapsed(since: number) {
   else return `${Math.floor(duration / 60 / 60)}:${Math.floor(duration / 60 % 60).toString().padStart(2, "0")}:${Math.floor(duration % 60).toString().padStart(2, "0")}`;
 }
 
-export function printProgress(done: boolean, name: string): void;
-export function printProgress(progress: [number, number], name: string): void;
 export function printProgress(progress: boolean | [number, number], name: string) {
   if(lastProgressName !== null && lastProgressName !== name) printProgress(true, lastProgressName);
   
@@ -59,6 +59,18 @@ export function printProgress(progress: boolean | [number, number], name: string
     process.stdout.write(out);
   }
   
+  if(importStats) {
+    let lastStep = importStats.steps[importStats.steps.length - 1];
+    if(lastStep?.name !== name) importStats.steps.push(lastStep = { name, time: [] });
+    
+    if(done) {
+      if(lastStep.time.length === 0) lastStep.time.push(Date.now() - currentProgressStart);
+      else lastStep.time.push(Date.now() - lastProgressTime);
+    } else if(Array.isArray(progress) && progress[0] > 0 && progress[1] < 50) {
+      lastStep.time.push(Date.now() - lastProgressTime);
+    }
+  }
+  
   if(done) {
     lastProgressName = null;
     lastProgressBars = 0;
@@ -67,4 +79,6 @@ export function printProgress(progress: boolean | [number, number], name: string
     lastProgressBars = bar;
     lastProgressName = name;
   }
+  
+  lastProgressTime = Date.now();
 }

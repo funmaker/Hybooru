@@ -14,6 +14,7 @@ html {
 :root {
   --page-background: white;
   --text-color: black;
+  --accent-color: #47a2ff;
 
   &.dimmed {
     overflow: hidden;
@@ -38,14 +39,14 @@ html {
 a {
   text-decoration: none;
   transition: 0.1s color;
-  color: #47a2ff;
+  color: var(--accent-color);
 
   &:hover {
     color: #148cff;
   }
 }
 
-input {
+input, textarea {
   font-size: 1rem;
   height: 2em;
   background-color: rgba(255, 255, 255, 0.05);
@@ -53,6 +54,10 @@ input {
   padding: 0.3em;
   transition: 0.1s color;
   color: var(--text-color);
+  
+  &[disabled] {
+    color: rgba(127, 127, 127);
+  }
 }
 
 button {
@@ -65,13 +70,19 @@ button {
   border: 1px solid rgba(127, 127, 127, 0.5);
   border-radius: 5px;
   color: inherit;
-
-  &:hover, &:focus {
-    background-color: rgba(127, 127, 127, 0.3);
+  
+  &[disabled] {
+    color: rgba(127, 127, 127);
   }
-
-  &:active {
-    background-color: rgba(127, 127, 127, 0.5);
+  
+  &:not([disabled]) {
+    &:hover, &:focus {
+      background-color: rgba(127, 127, 127, 0.3);
+    }
+    
+    &:active {
+      background-color: rgba(127, 127, 127, 0.5);
+    }
   }
 }
 

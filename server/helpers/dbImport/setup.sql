@@ -55,7 +55,7 @@ CREATE TABLE global (
   tags INTEGER NOT NULL,
   mappings INTEGER NOT NULL,
   needs_tags INTEGER NOT NULL,
-  rating_stars INTEGER
+  import_stats JSONB
 );
 
 DROP TABLE IF EXISTS posts CASCADE;
@@ -74,7 +74,8 @@ CREATE TABLE posts (
   mime INTEGER,
   inbox BOOLEAN NOT NULL,
   trash BOOLEAN NOT NULL,
-  posted TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  tagged BOOLEAN NOT NULL DEFAULT FALSE,
+  posted TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 DROP TABLE IF EXISTS relations CASCADE;
@@ -142,4 +143,19 @@ CREATE TABLE tag_siblings (
   betterid INTEGER NOT NULL,
 
   PRIMARY KEY(tagid, betterid)
+);
+
+DROP TABLE IF EXISTS sort_presets CASCADE;
+CREATE TABLE sort_presets (
+  name TEXT PRIMARY KEY,
+  namespaces TEXT[] NOT NULL
+);
+
+DROP TABLE IF EXISTS post_sort_keys CASCADE;
+CREATE TABLE post_sort_keys (
+  postid INTEGER NOT NULL,
+  preset TEXT NOT NULL,
+  sort_key TEXT COLLATE alphanumeric NOT NULL,
+
+  PRIMARY KEY(preset, postid)
 );

@@ -47,7 +47,7 @@ export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputEleme
       query = `*${query}*`;
       
       const result = await requestJSON<TagsSearchResults, TagsSearchRequest>({
-        pathname: "/api/tags",
+        url: "/api/tags",
         search: {
           pageSize: TAGS_COUNT,
           query,
@@ -134,7 +134,7 @@ interface RowProps {
 }
 
 function Row({ tag, posts, onClick, showNamespace }: RowProps) {
-  const config = useConfig();
+  const [config] = useConfig();
   
   let name = tag.replace(/_/g, " ");
   let color: string | undefined;

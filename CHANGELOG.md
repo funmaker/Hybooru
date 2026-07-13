@@ -17,11 +17,17 @@
 # Unreleased
 
 - Added Tag-based sort presets
-- Added `GET /api/diagnostics`
+- Added diagnostics and profiling page `/diagnostics`
+- Added maintenance page with realtime progress that appears while db is busy (eg importing, benchmarking)
+- Added dedicated error page
 - Improved performance of tags page and API endpoints.
 - Improved performance of negative searches.
-- Fixed errors if there is no namespaces defined
+- Fixed errors if there are no namespaces defined
 - Fixed `'nunFrames'` misspell in `GET /api/post/:id`
+- Fixed non-uniform naming. The project is now called `Hybooru`(without capital B) everywhere
+- Fixed automatic redirects to page 1 when linking to other pages
+- Fixed search results disappearing when switching to Auto Paging while on page greater than 1
+- Fixed rating stars ignoring config
 
 
 # v1.14.1

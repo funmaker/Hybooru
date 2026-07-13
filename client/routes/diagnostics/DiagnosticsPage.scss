@@ -1,0 +1,118 @@
+
+.DiagnosticsPage > .content {
+  max-height: 100%;
+  
+  & > .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 2em;
+    gap: 1em;
+    height: 0;
+    min-height: 100%;
+    
+    > .left {
+      flex: 1 0 40em;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    
+    > .right {
+      flex: 10000;
+      min-width: 45em;
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+  }
+  
+  .fetchRow {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 40em;
+    
+    input {
+      flex: 1;
+    }
+  }
+  
+  .buttons {
+    display: flex;
+    gap: 0.5em;
+  }
+  
+  .tableWrap {
+    font-family: monospace;
+    border: 1px solid rgba(127, 127, 127, 0.5);
+    background: rgba(127, 127, 127, 0.05);
+    user-select: none;
+    padding: 0.25em 0;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    width: fit-content;
+    min-width: 40em;
+  }
+  
+  .BenchmarkTable {
+    td, th {
+      padding: 0.1rem 0.5rem;
+    }
+    
+    td {
+      text-align: right;
+    }
+    
+    td.left { text-align: left; }
+    
+    td.clickable {
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.1s;
+      
+      &:hover, &:focus, &.selected {
+        opacity: 0.9;
+        font-weight: bold;
+      }
+      
+      &:active {
+        opacity: 1;
+      }
+    }
+  }
+  
+  .PlanDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    height: 100%;
+    
+    .stats {
+      .row {
+        label {
+          display: inline-block;
+          min-width: 8em;
+        }
+        
+        .errorMessage {
+          font-family: monospace;
+          color: red;
+        }
+      }
+    }
+    
+    textarea {
+      flex: 1 1 20em;
+      resize: none;
+    }
+  }
+  
+  .TimeSpan {
+    white-space: pre;
+    font-family: monospace;
+  }
+  .TimeSpan.cyan { color: cyan }
+  .TimeSpan.green { color: green }
+  .TimeSpan.yellow { color: yellow }
+  .TimeSpan.red { color: red }
+}

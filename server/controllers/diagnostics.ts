@@ -1,7 +1,8 @@
 import chalk, { Chalk } from "chalk";
-import SQL from "sql-template-strings";
+import SQL, { SQLStatement } from "sql-template-strings";
 import { elapsed } from "../helpers/dbImport/pretty";
-import { TagsSearchRequest } from "../routes/apiTypes";
+import { SQLQueryPlan, TagsSearchRequest } from "../routes/apiTypes";
+import { fixedFormatTime } from "../helpers/utils";
 import * as db from "../helpers/db";
 import * as postsController from "./posts";
 import * as tagsController from "./tags";
@@ -11,6 +12,12 @@ const SIZES = [1, 2, 4, 8, 16, 24, 32];
 const PAGE_SIZE = 360; // default pageSize * cachePages
 
 type TestCase = string | [string, number];
+type Results = Record<string, SQLQueryPlan[]>;
+
+interface BenchmarkProgress {
+  target: number;
+  current: number;
+}
 
 export async function doBenchmark() {
   console.log(chalk.cyan.bold("\nRunning benchmarks!\n"));
@@ -32,9 +39,11 @@ export async function doBenchmark() {
   const letter = (id: number) => String.fromCharCode("a".charCodeAt(0) + id % 26);
   
   const startTime = Date.now();
-  const results: Record<string, any> = {};
+  const results: Results = {};
   
-  const postTests: Record<string, TestCase[]> = {
+  results._SIZES = SIZES;
+  
+  const postsTests: Record<string, TestCase[]> = {
     blank: [""],
     tagged: ["*"],
     untagged: ["-*"],
@@ -43,6 +52,8 @@ export async function doBenchmark() {
     alt: sizedSampled(alternate),
     sizeAsc: sizedSampled(alternate, "order:size_asc"),
     sizeDesc: sizedSampled(alternate, "order:size_desc"),
+    pageAsc: sizedSampled(alternate, "order:page_asc"),
+    pageDesc: sizedSampled(alternate, "order:page_desc"),
     rating: sizedSampled(alternate, "rating:2-4"),
     inbox: sizedSampled(alternate, "system:inbox"),
     archive: sizedSampled(alternate, "system:archive"),
@@ -50,6 +61,7 @@ export async function doBenchmark() {
     offset: SIZES.map(offset => ["", offset * PAGE_SIZE]),
     offset4: SIZES.map(offset => [alternate(sample(tags, 4)).join(" "), offset * PAGE_SIZE]),
     offset32: SIZES.map(offset => [alternate(sample(tags, 32)).join(" "), offset * PAGE_SIZE]),
+    offsetPage: SIZES.map(offset => ["order:page", offset * PAGE_SIZE]),
     end: SIZES.map(offset => ["", Math.max(0, stats.posts - offset * PAGE_SIZE)]),
     starLS: sizedEach(id => `*${letter(id)}`),
     starLN: sizedEach(id => `-*${letter(id)}`),
@@ -72,17 +84,23 @@ export async function doBenchmark() {
     tEnd: SIZES.map(offset => ({ page: tagsSearchResult.total / tagsSearchResult.pageSize - offset })),
   };
   
-  const maxNameLength = [...Object.keys(postTests), ...Object.keys(tagsTests)].reduce((acc, val) => val.length > acc ? val.length : acc, 0);
+  const progress: BenchmarkProgress = {
+    target: Object.values(postsTests).reduce((acc, cases) => acc + cases.length, 0)
+          + Object.values(tagsTests).reduce((acc, cases) => acc + cases.length, 0),
+    current: 0,
+  };
+  
+  const maxNameLength = [...Object.keys(postsTests), ...Object.keys(tagsTests)].reduce((acc, val) => val.length > acc ? val.length : acc, 0);
   console.log(chalk.bold(`${" ".repeat(maxNameLength)} ${SIZES.map(size => `${size}`.padStart(6, " ")).join(" ")}`));
   
-  for(const [name, cases] of Object.entries(postTests)) {
+  for(const [name, cases] of Object.entries(postsTests)) {
     process.stdout.write(`${" ".repeat(maxNameLength - name.length)}${name}`);
-    await doTests(name, cases, getPosts, results);
+    await doTests(name, cases, getPosts, results, progress);
   }
   
   for(const [name, cases] of Object.entries(tagsTests)) {
     process.stdout.write(`${" ".repeat(maxNameLength - name.length)}${name}`);
-    await doTests(name, cases, getTags, results);
+    await doTests(name, cases, getTags, results, progress);
   }
   
   console.log();
@@ -96,17 +114,24 @@ export async function doBenchmark() {
   return results;
 }
 
-async function doTests<T>(name: string, cases: T[], callback: (testCase: T) => Promise<any>, results: Record<string, any>) {
+async function doTests<T>(name: string, cases: T[], callback: (testCase: T) => Promise<SQLQueryPlan>, results: Results, progress: BenchmarkProgress) {
+  results[name] = [];
+  
   for(let sizeId = 0; sizeId < SIZES.length; sizeId++) {
     if(sizeId >= cases.length) {
       process.stdout.write(` ${chalk.gray("------")}`);
       continue;
     }
     
+    db.dbLock.emitProgress({
+      name: `Test: ${name} - ${SIZES[sizeId]}`,
+      value: progress.current++,
+      target: progress.target,
+    });
+    
     const testCase = cases[sizeId];
-    const testName = cases.length > 1 ? `${name}_${SIZES[sizeId]}` : name;
-    const result = results[testName] = await callback(testCase);
-    const execTime = result?.["QUERY PLAN"]?.[0]?.["Execution Time"];
+    const result = results[name][sizeId] = await callback(testCase);
+    const execTime = result["Execution Time"];
     
     let color: keyof Chalk = "cyan";
     if(typeof execTime === "number") {
@@ -131,29 +156,27 @@ async function getPosts(testCase: TestCase) {
   key.offset = offset;
   
   const sql = postsController.getCachedPostsQuery(key);
-  
-  return await db.queryFirst<any>(SQL`EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n`.append(sql));
+  return await executeSQL(sql);
 }
 
 async function getTags(testCase: TagsSearchRequest) {
   const sql = tagsController.tagSearchQuery(testCase);
-  
-  return await db.queryFirst<any>(SQL`EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n`.append(sql));
+  return await executeSQL(sql);
 }
 
-function fixedFormatTime(ms: number | undefined) {
-  if(typeof ms !== "number") return "   ???";
+async function executeSQL(sql: SQLStatement) {
+  let plan: SQLQueryPlan = {};
   
-  if(ms < 10) return `${ms.toFixed(2)}ms`;
-  else if(ms < 100) return `${ms.toFixed(1)}ms`;
-  else if(ms < 1000) return ` ${ms.toFixed(0)}ms`;
-  else if(ms < 1000 * 10) return ` ${(ms / 1000).toFixed(2)}s`;
-  else if(ms < 1000 * 60) return ` ${(ms / 1000).toFixed(1)}s`;
-  else if(ms < 1000 * 60 * 10) return ` ${(ms / 1000 / 60).toFixed(2)}m`;
-  else if(ms < 1000 * 60 * 60) return ` ${(ms / 1000 / 60).toFixed(1)}m`;
-  else if(ms < 1000 * 60 * 60 * 10) return ` ${(ms / 1000 / 60 / 60).toFixed(2)}h`;
-  else if(ms < 1000 * 60 * 60 * 24) return ` ${(ms / 1000 / 60 / 60).toFixed(1)}h`;
-  else return `  ${(ms / 1000 / 60 / 60).toFixed(0)}h`;
+  try {
+    const result = await db.queryFirst<SQLQueryPlan>(SQL`EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n`.append(sql));
+    plan = result?.["QUERY PLAN"]?.[0] ?? {};
+  } catch(err) {
+    plan.Error = JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)));
+  }
+  
+  plan.Query = sql.text;
+  plan.QueryParams = sql.values;
+  return plan;
 }
 
 function sample<T>(array: T[]): T;

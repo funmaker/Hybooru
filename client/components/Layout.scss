@@ -1,6 +1,6 @@
 @import "../mixins";
 
-.Layout {
+.Layout:not(.plain) {
   position: absolute;
   top: 0;
   left: 0;
@@ -25,27 +25,20 @@
     &.simple {
       position: fixed;
       height: auto;
+      box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
 
       & > .sidebarContent {
         display: none;
       }
     }
 
-    & > .logo {
-      font-size: 2.5em;
-      font-weight: bold;
-      text-align: center;
+    & > .Logo {
       height: 4rem;
-      transition: background-color 0.1s, box-shadow 0.1s;
+      line-height: 4rem;
       background: var(--page-background);
       box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
       z-index: 3;
-
-      & > * {
-        display: block;
-        height: 100%;
-        width: 100%;
-      }
+      overflow: hidden;
     }
 
     & > .sidebarContent {
@@ -135,20 +128,8 @@
       }
     }
 
-    .progress {
-      position: absolute;
+    .layoutProgress {
       top: calc(100% + 0.175em);
-      left: 0;
-      height: 0.1em;
-      background-color: #148cff;
-      animation: LayoutProgressAnimation 10s ease-out forwards;
-    }
-
-    @keyframes LayoutProgressAnimation {
-      0% { width: 0; opacity: 0; }
-      5% { opacity: 0; }
-      10% { opacity: 1; }
-      100% { width: 100% }
     }
 
     .SettingsMenu {
@@ -194,11 +175,27 @@
     }
 
     & > .content {
-      transition: filter 0.2s  ease;
+      transition: filter 0.2s ease;
     }
 
     & > .header {
       left: 0;
     }
   }
+}
+
+.Layout .layoutProgress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0.1em;
+  background-color: #148cff;
+  animation: LayoutProgressAnimation 10s ease-out forwards;
+}
+
+@keyframes LayoutProgressAnimation {
+  0% { width: 0; opacity: 0; }
+  5% { opacity: 0; }
+  10% { opacity: 1; }
+  100% { width: 100% }
 }

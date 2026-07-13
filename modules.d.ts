@@ -17,3 +17,12 @@ declare module '*.handlebars' {
 declare module '*.sql' {
   export default string;
 }
+
+declare module 'express-promise-router' {
+  import { RouterOptions } from 'express';
+  import { Router } from 'express-ws';
+  
+  function PromiseRouter(options?: RouterOptions): Router;
+  
+  export default PromiseRouter;
+}
