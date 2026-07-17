@@ -16,6 +16,8 @@
 
 # Unreleased
 
+- Fixed import error when using multiple file services (#60)
+
 
 # v1.15.1
 

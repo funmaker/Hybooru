@@ -110,7 +110,7 @@ export abstract class Import<S = Service> {
   async beforeImport() {
     if(this.useTemp) {
       await this.postgres.query(`
-        CREATE TEMP TABLE ${this.outputTable}_temp (LIKE ${this.outputTable});
+        CREATE TEMP TABLE ${this.outputTable}_temp (LIKE ${this.outputTable} INCLUDING DEFAULTS);
       `);
       return `${this.outputTable}_temp`;
     }

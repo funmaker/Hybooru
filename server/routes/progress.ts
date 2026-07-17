@@ -12,11 +12,9 @@ export const connections = new Set<WebSocket>();
 setImmediate(() => {
   router.ws("/progress", (ws, req) => {
     try {
-      console.log("Got connection from: ", req.socket.remoteAddress);
       if(!db.dbLock.isLocked()) ws.close();
       if(db.dbLock.lastMessage) ws.send(JSON.stringify(db.dbLock.lastMessage));
       
-      console.log("Added to list");
       connections.add(ws);
     } catch(err) {
       console.error(err);
