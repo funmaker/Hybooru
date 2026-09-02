@@ -16,6 +16,12 @@
 
 # Unreleased
 
+- Added noIndex to search results, `/random` and `/diagnostics`
+- Added nofollow to tag related links
+- Added canonical URLs to most pages
+- Added soft 404 for SSR pages with empty search results
+- Updated robots.txt to include new pages and allow crawling over unfiltered search results
+
 
 # v1.15.2
 

@@ -1,3 +1,4 @@
+import type ExpressCore from "express-serve-static-core";
 import PromiseRouter from "express-promise-router";
 import { Theme } from "../../client/hooks/useTheme";
 import { qsStringify } from "../../client/helpers/utils";
@@ -16,6 +17,7 @@ import { IndexPageData, LockPageData, LockPageRequest, Post, PostPageData, Posts
 
 export const router = PromiseRouter();
 
+const baseUrl = (req: ExpressCore.Request) => `${req.protocol}://${req.get('host')}`;
 
 router.get<{ id: string }>('/posts/:id', lockMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
@@ -26,8 +28,10 @@ router.get<{ id: string }>('/posts/:id', lockMiddleware, async (req, res) => {
   
   if(!post) throw new HTTPError(404, "Post not found");
   
+  const canonicalUrl = `${baseUrl(req)}/post/${req.params.id}`;
   const options: SSROptions = {
-    ogUrl: `${req.protocol}://${req.get('host')}/post/${req.params.id}`,
+    ogUrl: canonicalUrl,
+    canonicalUrl,
   };
   
   options.ogTitle = options.title = postTitle(post);
@@ -45,7 +49,13 @@ router.get<{ id: string }>('/posts/:id', lockMiddleware, async (req, res) => {
 router.get<any, any, any, any, PostsSearchPageRequest>('/posts', lockMiddleware, async (req, res) => {
   const results = await postsController.search({ ...req.query, tags: true, blurhash: true });
   
-  res.react<PostsSearchPageData>({ results }, { ogTitle: "Post Search", ogDescription: req.query.query });
+  res.react<PostsSearchPageData>({ results }, {
+    ogTitle: "Post Search",
+    ogDescription: req.query.query,
+    canonicalUrl: `${baseUrl(req)}/posts${qsStringify({ page: parseInt(req.query.page) || undefined })}`,
+    noIndex: !!req.query.query,
+    soft404: results.posts.length === 0,
+  });
 });
 
 router.get<any, any, any, any, TagsSearchPageRequest>('/tags', lockMiddleware, async (req, res) => {
@@ -54,14 +64,25 @@ router.get<any, any, any, any, TagsSearchPageRequest>('/tags', lockMiddleware, a
     full: true,
   });
   
-  res.react<TagsSearchPageData>({ results }, { ogTitle: "Tag Search", ogDescription: req.query.query });
+  res.react<TagsSearchPageData>({ results }, {
+    ogTitle: "Tag Search",
+    ogDescription: req.query.query,
+    canonicalUrl: `${baseUrl(req)}/tags${qsStringify({ page: parseInt(req.query.page) || undefined })}`,
+    noIndex: !!req.query.query,
+    soft404: results.tags.length === 0,
+  });
 });
 
 router.get<any, any, any, any, RandomPageRequest>('/random', lockMiddleware, async (req, res) => {
   const post = await postsController.random(req.query.query);
   const redirect = post ? `/posts/${post.id}${qsStringify(req.query)}` : `/posts${qsStringify(req.query)}`;
   
-  res.react<RandomPageData>({ redirect }, { ogTitle: "Random Post", ogDescription: req.query.query, htmlRedirect: redirect });
+  res.react<RandomPageData>({ redirect }, {
+    ogTitle: "Random Post",
+    ogDescription: req.query.query,
+    htmlRedirect: redirect,
+    noIndex: true,
+  });
 });
 
 router.post<any, any, any, SetThemeRequest>('/setTheme', async (req, res) => {
@@ -92,7 +113,9 @@ router.get<any, any, LockPageData, any, LockPageRequest>('/lock', async (req, re
 });
 
 router.get('/diagnostics', async (req, res) => {
-  res.react({});
+  res.react({}, {
+    noIndex: true,
+  });
 });
 
 router.get('/', lockMiddleware, async (req, res) => {
@@ -105,7 +128,11 @@ router.get('/', lockMiddleware, async (req, res) => {
   else if(configs.tags.motd) motdQuery = configs.tags.motd;
   
   const motd = typeof motdQuery === "string" && await postsController.random(motdQuery) || null;
-  const options: SSROptions = { ogTitle: "Main Page" };
+  const options: SSROptions = {
+    ogTitle: "Main Page",
+    ogDescription: configs.appDescription,
+    canonicalUrl: baseUrl(req),
+  };
   
   const releases = await githubController.getReleases();
   let updateUrl: string | null = null;

@@ -91,7 +91,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
           <Link to="/">Main Page</Link>
           <Link to="/posts">All Posts</Link>
           <Link to="/tags">Tags</Link>
-          <Link to="/random">Random</Link>
+          <Link to="/random" rel="nofollow">Random</Link>
           <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
           <ThemeSwitch />
           {extraLink}

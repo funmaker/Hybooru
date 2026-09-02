@@ -76,5 +76,5 @@ function TagLink({ tag, showNamespaces }: TagLinkProps) {
     color = config.namespaceColors[result[1]];
   }
   
-  return <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>;
+  return <Link to={`/posts?query=${encodeURIComponent(tag)}`} rel="nofollow" style={{ color }}>{name}</Link>;
 }

@@ -41,6 +41,7 @@ export interface OGAudio {
 export interface SSROptions {
   title?: string;
   htmlRedirect?: string;
+  canonicalUrl?: string;
   ogTitle?: string;
   ogDescription?: string;
   ogType?: string;
@@ -49,6 +50,8 @@ export interface SSROptions {
   ogVideo?: OGVideo;
   ogUrl?: string;
   ogSiteName?: string;
+  noIndex?: boolean;
+  soft404?: boolean;
 }
 
 declare global {
@@ -72,6 +75,10 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
       const theme = req.cookies.theme || Theme.AUTO;
       const config = await globalController.getConfig();
       const title = options?.title ? `${options?.title} | ${config.appName}` : config.appName;
+      
+      if(options?.noIndex) {
+        res.header('X-Robots-Tag', 'noindex');
+      }
       
       // noinspection JSUnreachableSwitchBranches
       switch(req.accepts(['html', 'json'])) {
@@ -104,6 +111,8 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
           
           const initialDataJSON = JSON.stringify(initialDataEx).replace(removeTags, tag => tagsToReplace[tag] || tag);
           
+          if(options?.soft404) res.status(404);
+          
           res.send(index({
             reactContent,
             initialData: initialDataJSON,
@@ -112,14 +121,16 @@ export default function reactMiddleware(req: express.Request, res: express.Respo
             title,
             appName: configs.appName,
             description: configs.appDescription,
+            canonicalUrl: options?.canonicalUrl || `${req.protocol}://${req.get('host')}${req.originalUrl}`,
             ogTitle: options?.ogTitle || configs.appName,
             ogDescription: options?.ogDescription || configs.appDescription,
             ogType: options?.ogTitle || "website",
             ogImage: options?.ogImage,
             ogAudio: options?.ogAudio,
             ogVideo: options?.ogVideo,
-            ogUrl: options?.ogUrl || `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+            ogUrl: options?.ogUrl,
             ogSiteName: options?.ogSiteName || configs.appName,
+            noIndex: options?.noIndex,
           }));
           break;
         }

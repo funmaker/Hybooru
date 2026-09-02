@@ -2,5 +2,8 @@ User-agent: *
 
 Allow: /
 
-Disallow: /posts?*
-Disallow: /tags?*
+Disallow: /post?*
+Disallow: /posts?*query=*
+Disallow: /tags?*query=*
+Disallow: /random
+Disallow: /diagnostics

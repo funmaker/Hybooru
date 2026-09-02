@@ -127,10 +127,10 @@ function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   return (
     <div>
       {searchMod && <>
-        <Link className="btn" to={addLink} onClick={onAdd}>{addCh}</Link>
-        <Link className="btn" to={delLink} onClick={onDel}>{delCh}</Link>
+        <Link className="btn" to={addLink} rel="nofollow" onClick={onAdd}>{addCh}</Link>
+        <Link className="btn" to={delLink} rel="nofollow" onClick={onDel}>{delCh}</Link>
       </> /* eslint-disable-line react/jsx-closing-tag-location */ }
-      <Link to={`/posts?query=${encodeURIComponent(tag)}`} style={{ color }}>{name}</Link>
+      <Link to={`/posts?query=${encodeURIComponent(tag)}`} rel="nofollow" style={{ color }}>{name}</Link>
       {" "}
       <span>{tags[tag]}</span>
     </div>

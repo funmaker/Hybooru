@@ -26,6 +26,7 @@
       position: fixed;
       height: auto;
       box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
+      transition: 0.1s box-shadow;
 
       & > .sidebarContent {
         display: none;
@@ -37,6 +38,7 @@
       line-height: 4rem;
       background: var(--page-background);
       box-shadow: 0 0 0.5rem 0.5rem var(--page-background);
+      transition: 0.1s background-color, 0.1s box-shadow;
       z-index: 3;
       overflow: hidden;
     }
