@@ -16,6 +16,9 @@
 
 # Unreleased
 
+
+# v1.15.3
+
 - Added noIndex to search results, `/random` and `/diagnostics`
 - Added nofollow to tag related links
 - Added canonical URLs to most pages
