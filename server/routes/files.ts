@@ -1,10 +1,10 @@
 import path from "path";
-import PromiseRouter from "express-promise-router";
+import express from "express";
 import * as db from "../helpers/db";
 import configs from "../helpers/configs";
 import HTTPError from "../helpers/HTTPError";
 
-export const router = PromiseRouter();
+export const router = express.Router();
 
 router.get<{ filename: string }>("/:filename", async (req, res, next) => {
   let root = path.resolve(db.findHydrusDB(), "client_files");

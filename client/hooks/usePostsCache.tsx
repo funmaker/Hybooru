@@ -1,158 +1,139 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { useHistory, useLocation } from "react-router";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import axios, { Canceler } from "axios";
-import { PostsSearchPageData, PostsSearchRequest, PostsSearchResponse, PostSummary } from "../../server/routes/apiTypes";
-import { qsParse } from "../helpers/utils";
+import { PostsSearchPageResponse, PostsSearchRequest, PostsSearchResponse, PostSummary } from "../../types/api";
 import requestJSON from "../helpers/requestJSON";
 import usePageData from "./usePageData";
+import useQuery from "./useQuery";
+import useChange from "./useChange";
+import useAsyncCallback from "./useAsyncCallback";
 
-export interface PostsCacheData {
+export interface PostsCacheEntry {
   key: string | null;
   posts: PostSummary[];
   page: number;
   pageSize: number;
   total: number | null;
   tags: Record<string, number>;
-  fresh: boolean;
 }
 
-const emptyPage: PostsCacheData = {
-  key: null,
-  posts: [],
-  page: 0,
-  pageSize: 1,
-  total: null,
-  tags: {},
-  fresh: true,
-};
+type PostsCache = Record<string, PostsCacheEntry>;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const PostsCacheContext = React.createContext<Record<string, PostsCacheData>>({});
+interface PostsCacheState {
+  postsCache: PostsCache;
+  setPostsCache: SetState<PostsCache>;
+  setPostsCacheEntry: (entry: PostsCacheEntry) => void;
+}
+
+export const PostsCacheContext = React.createContext<PostsCacheState | null>(null);
 
 interface PostsProviderProps {
   children: React.ReactNode;
 }
 
 export function PostsCacheProvider({ children }: PostsProviderProps) {
-  const cacheRef = useRef({});
+  const [postsCache, setPostsCache] = React.useState<PostsCache>({});
+  
+  const setPostsCacheEntry = useCallback((entry: PostsCacheEntry) => {
+    const key = entry.key;
+    if(!key) return;
+    
+    setPostsCache(cache => ({ ...cache, [key]: entry }));
+  }, []);
+  
+  const state = useMemo(() => ({ postsCache, setPostsCache, setPostsCacheEntry }), [postsCache, setPostsCacheEntry]);
   
   return (
-    <PostsCacheContext.Provider value={cacheRef.current}>
+    <PostsCacheContext.Provider value={state}>
       {children}
     </PostsCacheContext.Provider>
   );
 }
 
 export default function usePostsCache() {
-  const location = useLocation();
-  const history = useHistory();
-  const canceller = useRef<Canceler | null>(null);
-  const postsCache = useContext(PostsCacheContext);
-  const search = qsParse(location.search);
-  const query = typeof search.query === "string" ? search.query : "";
+  "use no memo"; // TODO: react/react/pull/35606 react/react/issues/34131
+  
+  const postsCacheContext = useContext(PostsCacheContext);
+  if(!postsCacheContext) throw new Error("usePostsCache must be used within PostsCacheContext");
+  const { postsCache, setPostsCache, setPostsCacheEntry } = postsCacheContext;
+  
+  const { search, query } = useQuery();
   const key = JSON.stringify([search.page, query]);
-  const { pageData, pageError, fetching: pageFetching } = usePageData<PostsSearchPageData>(!postsCache[key], false);
-  const [fetching, setFetching] = useState(false);
+  const { pageData, pageError, fetching: pageFetching } = usePageData<PostsSearchPageResponse>(!postsCache[key]);
+  const cancelRef = useRef<Canceler | null>(null);
   const [error, setError] = useState(!!pageError);
+  const [didRequest, setDidRequest] = useState(false);
+  const fresh = !postsCache[key] || didRequest;
   
-  let postsCacheDefault = emptyPage;
-  if(postsCache[key]) {
-    postsCacheDefault = postsCache[key];
-  } else if(pageData) {
-    postsCacheDefault = postsCache[key] = {
+  const currentCache: PostsCacheEntry = useMemo(() => {
+    if(postsCache[key]) return postsCache[key];
+    else return {
       key,
-      page: 1,
+      posts: [],
+      page: pageData ? 1 : 0,
+      pageSize: 1,
+      total: null,
       tags: {},
-      fresh: true,
-      ...pageData.results,
+      ...pageData?.results,
     };
-  }
+  }, [key, pageData, postsCache]);
   
-  const [currentCache, setCurrentCache] = useState<PostsCacheData>(postsCacheDefault);
-  
-  useEffect(() => {
-    if(postsCache[key] && currentCache !== postsCache[key]) {
-      if(currentCache.key) {
-        postsCache[currentCache.key].fresh = false;
-      }
-      setError(false);
-      setCurrentCache(postsCache[key]);
+  useChange(query, () => {
+    if(cancelRef.current) {
+      cancelRef.current();
+      cancelRef.current = null;
     }
-  }, [currentCache, pageData, postsCache, key]);
+    setDidRequest(false);
+  });
   
   useEffect(() => {
-    return history.listen(() => {
-      if(canceller.current) canceller.current();
-      canceller.current = null;
-    });
-  }, [history]);
+    if(!postsCache[key] && currentCache.total !== null) setPostsCacheEntry(currentCache);
+  }, [currentCache, key, postsCache, setPostsCacheEntry]);
   
-  const requestNext = useCallback(async () => {
-    if(canceller.current || pageFetching || !postsCache[key] || error) return;
+  const [requestNext, fetching] = useAsyncCallback(async () => {
+    if(pageFetching || error || (currentCache.total !== null && currentCache.posts.length >= currentCache.total)) return;
     
     try {
-      if(postsCache[key].total !== null && postsCache[key].posts.length >= (postsCache[key].total || 0)) return;
-      
-      setFetching(true);
+      setDidRequest(true);
       const result = await requestJSON<PostsSearchResponse, PostsSearchRequest>({
         url: "/api/post",
         search: {
           query,
-          page: postsCache[key].page,
+          page: currentCache.page,
           blurhash: true,
         },
-        cancelCb: cancel => canceller.current = cancel,
+        cancelCb: cancel => cancelRef.current = cancel,
       });
       
-      postsCache[key] = {
-        ...postsCache[key],
-        page: postsCache[key].page + 1,
-        posts: [...postsCache[key].posts, ...result.posts],
-        total: result.posts.length === 0 ? postsCache[key].posts.length : postsCache[key].total,
-        fresh: false,
-      };
-      
-      setCurrentCache(postsCache[key]);
+      setPostsCacheEntry({
+        ...currentCache,
+        page: currentCache.page + 1,
+        posts: [...currentCache.posts, ...result.posts],
+        total: result.posts.length === 0 ? currentCache.posts.length : currentCache.total,
+      });
     } catch(e) {
       if(!(e instanceof axios.Cancel)) {
         setError(true);
         throw e;
       }
     } finally {
-      canceller.current = null;
-      setFetching(false);
+      cancelRef.current = null;
     }
-  }, [error, key, pageFetching, postsCache, query]);
+  }, [currentCache, error, pageFetching, query, setPostsCacheEntry]);
   
   const reset = useCallback(() => {
-    if(pageData) {
-      postsCache[key] = {
-        key,
-        page: 1,
-        tags: {},
-        fresh: false,
-        ...pageData.results,
-      };
-    } else {
-      delete postsCache[key];
-    }
-    setCurrentCache(postsCache[key] ?? emptyPage);
+    setPostsCache(({ [key]: value, ...rest }) => rest);
     setError(false);
-  }, [key, pageData, postsCache]);
+  }, [key, setPostsCache]);
   
   const resetError = useCallback(() => setError(false), []);
   
-  return { postsCache: currentCache, fetching, requestNext, reset, error, resetError } as const;
+  return { postsCache: currentCache, fetching, requestNext, reset, fresh, error, resetError };
 }
 
-export function useClearPostsCache() {
-  const postsCache = useContext(PostsCacheContext);
+export function useResetPostsCache() {
+  const postsCacheContext = useContext(PostsCacheContext);
+  if(!postsCacheContext) throw new Error("usePostsCache must be used within PostsCacheContext");
+  const { setPostsCache } = postsCacheContext;
   
-  return useCallback(() => {
-    for(const key in postsCache) {
-      if(Object.prototype.hasOwnProperty.call(postsCache, key)) {
-        delete postsCache[key];
-      }
-    }
-  }, [postsCache]);
+  return useCallback(() => setPostsCache({}), [setPostsCache]);
 }

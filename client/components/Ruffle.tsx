@@ -15,6 +15,8 @@ export interface RuffleProps {
 }
 
 export default function Ruffle({ url, width, height }: RuffleProps) {
+  "use no memo";
+  
   const ref = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -31,7 +33,6 @@ export default function Ruffle({ url, width, height }: RuffleProps) {
         polyfills: false,
       };
       
-      // @ts-ignore
       await import("@ruffle-rs/ruffle");
       if(canceled) return;
       
@@ -50,7 +51,7 @@ export default function Ruffle({ url, width, height }: RuffleProps) {
         player.style.width = player.metadata.width + "px";
         player.style.height = player.metadata.height + "px";
       });
-    })();
+    })().catch(console.error);
     
     return () => {
       canceled = true;

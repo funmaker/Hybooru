@@ -1,6 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
+import { Link, useSearch } from "wouter";
 import { qsParse, qsStringify } from "../helpers/utils";
 import "./Pagination.scss";
 
@@ -11,8 +10,8 @@ interface PaginationProps {
 const BUTTON_COUNT = 9;
 
 export default function Pagination({ count }: PaginationProps) {
-  const location = useLocation();
-  const query = qsParse(location.search);
+  const search = useSearch();
+  const query = qsParse(search);
   const page = typeof query.page === "string" && parseInt(query.page) || 0;
   
   const buttons: React.ReactNode[] = [];

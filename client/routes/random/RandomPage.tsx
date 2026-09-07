@@ -1,21 +1,20 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useHistory } from "react-router";
-import { RandomPageData } from "../../../server/routes/apiTypes";
+import { Link, useLocation } from "wouter";
+import { RandomPageResponse } from "../../../types/api";
 import usePageData from "../../hooks/usePageData";
 import Layout from "../../components/Layout";
 import Spinner from "../../components/Spinner";
 import "./RandomPage.scss";
 
 export default function RandomPage() {
-  const { pageData } = usePageData<RandomPageData>();
-  const history = useHistory();
+  const { pageData } = usePageData<RandomPageResponse>();
+  const [, navigate] = useLocation();
   
   useEffect(() => {
     if(!pageData) return;
     
-    history.replace(pageData.redirect || "/");
-  }, [history, pageData]);
+    navigate(pageData.redirect || "/", { replace: true });
+  }, [navigate, pageData]);
   
   return (
     <Layout className="RandomPage">

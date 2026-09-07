@@ -1,5 +1,5 @@
 import SQL, { SQLStatement } from "sql-template-strings";
-import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResults } from "../routes/apiTypes";
+import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResults } from "../../types/api";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { preparePattern } from "../helpers/utils";
@@ -92,13 +92,13 @@ export function tagSearchQuery({ query = "", sorting, page = 0, pageSize = PAGE_
         'name', name,
         'posts', used,
         'siblings', (
-          SELECT COALESCE(json_agg(siblings.name), '[]')
+          SELECT COALESCE(json_agg(DISTINCT siblings.name), '[]')
           FROM tag_siblings
           LEFT JOIN tags siblings ON tagid = siblings.id
           WHERE betterid = x.id
         ),
         'parents', (
-          SELECT COALESCE(json_agg(parents.name), '[]')
+          SELECT COALESCE(json_agg(DISTINCT parents.name), '[]')
           FROM tag_parents
           LEFT JOIN tags parents ON parentid = parents.id
           WHERE tagid = x.id

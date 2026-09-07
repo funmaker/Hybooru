@@ -1,28 +1,26 @@
-import PromiseRouter from "express-promise-router";
+import express from "express";
 import type WebSocket from "ws";
 import * as db from "../helpers/db";
 import * as globalController from "../controllers/global";
-import { WebSocketMessage } from "./apiTypes";
+import { WebSocketMessage } from "../../types/api";
+import { registerWsRoute } from "./websockets";
 
-export const router = PromiseRouter();
+export const router = express.Router();
 
 export const connections = new Set<WebSocket>();
 
-// Avoids express-ws initialization race condition
-setImmediate(() => {
-  router.ws("/progress", (ws, req) => {
-    try {
-      if(!db.dbLock.isLocked()) ws.close();
-      if(db.dbLock.lastMessage) ws.send(JSON.stringify(db.dbLock.lastMessage));
-      
-      connections.add(ws);
-    } catch(err) {
-      console.error(err);
-      
-      connections.delete(ws);
-      ws.close();
-    }
-  });
+registerWsRoute("/progress", (ws, req) => {
+  try {
+    if(!db.dbLock.isLocked()) ws.close();
+    if(db.dbLock.lastMessage) ws.send(JSON.stringify(db.dbLock.lastMessage));
+    
+    connections.add(ws);
+  } catch(err) {
+    console.error(err);
+    
+    connections.delete(ws);
+    ws.close();
+  }
 });
 
 function sendMessage(ws: WebSocket, msg: WebSocketMessage) {

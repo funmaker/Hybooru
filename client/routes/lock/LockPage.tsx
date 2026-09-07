@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router";
-import { LockPageData, ProgressMessage, WebSocketMessage } from "../../../server/routes/apiTypes";
-import { useClearPostsCache } from "../../hooks/usePostsCache";
+import { useLocation } from "wouter";
+import { LockPageResponse, ProgressMessage, WebSocketMessage } from "../../../types/api";
+import { useResetPostsCache } from "../../hooks/usePostsCache";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import Logo from "../../components/Logo";
@@ -9,21 +9,18 @@ import Layout from "../../components/Layout";
 import "./LockPage.scss";
 
 export default function LockPage() {
-  const { pageData } = usePageData<LockPageData>();
+  const { pageData } = usePageData<LockPageResponse>();
   const [, setConfig] = useConfig();
-  const clearPostsCache = useClearPostsCache();
-  const history = useHistory();
-  const [state, setState] = useState<ProgressMessage | string | null>({
-    name: "Test",
-    target: 2134,
-    value: 1000,
-  });
+  const clearPostsCache = useResetPostsCache();
+  const [, navigate] = useLocation();
+  const [state, setState] = useState<ProgressMessage | string | null>(null);
   
   useEffect(() => {
     if(!pageData) return;
-    if(!pageData.isLocked) return void history.replace(pageData.redirect);
+    if(!pageData.isLocked) return void navigate(pageData.redirect, { replace: true });
     
     const ws = new WebSocket(window.location.origin.replace(/^http/, 'ws') + "/api/progress");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState("Connecting WebSocket");
     
     ws.addEventListener("open", () => setState("Waiting for messages"));
@@ -40,7 +37,7 @@ export default function LockPage() {
           case "end":
             setConfig(message.data);
             clearPostsCache();
-            history.replace(pageData.redirect);
+            navigate(pageData.redirect, { replace: true });
             break;
         }
       } catch(err) {
@@ -52,7 +49,7 @@ export default function LockPage() {
     return () => {
       ws.close();
     };
-  }, [history, pageData, clearPostsCache, setConfig]);
+  }, [navigate, pageData, clearPostsCache, setConfig]);
   
   let content;
   
@@ -67,13 +64,13 @@ export default function LockPage() {
           <div className="fill" style={{ width: (state.value / state.target) * 100 + "%" }}></div>
         </div>
       </div>
-    </>; // eslint-disable-line react/jsx-closing-tag-location
+    </>; // eslint-disable-line @stylistic/jsx-closing-tag-location
   } else {
     content = <>
       <span>{state}</span>
       
       <a href={pageData?.redirect}>Go Back</a>
-    </>; // eslint-disable-line react/jsx-closing-tag-location
+    </>; // eslint-disable-line @stylistic/jsx-closing-tag-location
   }
   
   return (

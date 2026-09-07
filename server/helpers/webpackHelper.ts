@@ -3,7 +3,7 @@ import webpackHotMiddleware from "webpack-hot-middleware";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import express from "express";
 import chalk from 'chalk';
-import webpackClientDevConfig from "../../webpack/client.dev.babel";
+import webpackClientDevConfig from "../../webpack/client.dev";
 
 let cachedRouter: express.Router | null = null; // Cache for Server Side Hot Module Replacement
 

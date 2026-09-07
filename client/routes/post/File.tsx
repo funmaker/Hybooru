@@ -1,5 +1,5 @@
 import React, { useReducer, useRef } from "react";
-import { Post, PostNote, PostSummary } from "../../../server/routes/apiTypes";
+import { Post, PostNote, PostSummary } from "../../../types/api";
 import { fileUrl, Mime } from "../../../server/helpers/consts";
 import { classJoin, parseSize } from "../../helpers/utils";
 import useConfig from "../../hooks/useConfig";
@@ -44,7 +44,7 @@ export default function File({ post, link, className, paused, controls = true, a
     const media = videoRef.current || audioRef.current;
     if(!media) return;
     else if(paused && !media.paused) media.pause();
-    else if(!paused && media.paused) media.play();
+    else if(!paused && media.paused) media.play().catch(console.error);
   });
   
   switch(mime) {
@@ -177,9 +177,10 @@ interface FileWrapProps {
 }
 
 function FileWrap({ className, width, height, link, notes, children }: FileWrapProps) {
-  const style = (width !== undefined && height !== undefined) ? {
-    aspectRatio: `${width} / ${height}`,
-  } : undefined;
+  const style =
+    (width !== undefined && height !== undefined)
+      ? { aspectRatio: `${width} / ${height}` }
+      : undefined;
   
   const domNotes = notes?.map((note, id) => (
     <div key={id}

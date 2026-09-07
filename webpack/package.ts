@@ -1,12 +1,13 @@
 import * as fs from 'fs';
 
-const tryRead = filename => {
+function tryRead(filename: string) {
   try {
     return JSON.parse(fs.readFileSync(filename).toString());
-  } catch(e) {
+  } catch(err) {
+    void err;
     return null;
   }
-};
+}
 
 const pack = {
   ...tryRead("package.json"),

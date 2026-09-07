@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SSRContext = React.createContext(true);
 
 export default function useSSR() {
@@ -11,6 +10,7 @@ export function SSRProvider({ children }: { children: React.ReactNode }) {
   const [SSR, setSSR] = useState(true);
   
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSSR(false);
   }, []);
   

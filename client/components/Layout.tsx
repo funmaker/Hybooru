@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
+import { trimQuery } from "../helpers/utils";
 import ReactForm from "../components/ReactForm";
 import useMeasure from "../hooks/useMeasure";
 import usePageData from "../hooks/usePageData";
@@ -62,10 +63,17 @@ export default function Layout({ className, sidebar, children, extraLink, search
   
   useEffect(() => {
     if(!settingsOpen) return;
+    let done = false;
     const onDocumentClick = () => setSettingsOpen(false);
     
-    document.addEventListener("click", onDocumentClick);
-    return () => document.removeEventListener("click", onDocumentClick);
+    setTimeout(() => {
+      if(!done) document.addEventListener("click", onDocumentClick);
+    }, 0);
+    
+    return () => {
+      done = true;
+      document.removeEventListener("click", onDocumentClick);
+    };
   }, [settingsOpen]);
   
   if(pageError && !noError) return <ErrorPage error={pageError} />;
@@ -96,7 +104,7 @@ export default function Layout({ className, sidebar, children, extraLink, search
           <ThemeSwitch />
           {extraLink}
         </div>
-        <ReactForm className="search" action={searchAction}>
+        <ReactForm className="search" action={searchAction} processFormData={trimQuery}>
           <TagInput name="query" placeholder="Search: flower sky 1girl" />
           <SSRCurtain><a className="settingsButton" href="#" onClick={onOptionsButtonClick}><img src="/static/cog.svg" alt="settings" /></a></SSRCurtain>
           <button hidden /> {/* Capture enter-submit */}

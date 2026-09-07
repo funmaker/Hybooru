@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import useSSR from "../hooks/useSSR";
 
 interface Props {
-  children?: any;
+  children?: React.ReactNode;
 }
 
 export default function SSRCurtain({ children }: Props) {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => setLoaded(true), []);
+  const SSR = useSSR();
   
-  if(loaded) return children || null;
-  else return null;
+  if(SSR) return null;
+  else return children;
 }

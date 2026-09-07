@@ -1,4 +1,4 @@
-@import "../mixins";
+@use "../mixins" as *;
 
 .Layout:not(.plain) {
   position: absolute;

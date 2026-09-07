@@ -1,6 +1,6 @@
 import SQL from "sql-template-strings";
 import packageJSON from "../../package.json";
-import { Config, Stats, ThumbnailsMode } from "../routes/apiTypes";
+import { Config, ImportStats, Stats, ThumbnailsMode } from "../../types/api";
 import * as db from "../helpers/db";
 import configs from "../helpers/configs";
 
@@ -18,6 +18,7 @@ export async function getConfig(): Promise<Config> {
     thumbnailsMode: configs.posts.thumbnailsMode as ThumbnailsMode,
     busy: true,
     sortPresets: configs.tags.sortPresets ? Object.keys(configs.tags.sortPresets) : [],
+    honeyPot: null,
   };
   
   if(!db.dbLock.isLocked()) {
@@ -45,7 +46,7 @@ export async function getConfig(): Promise<Config> {
   return config;
 }
 
-export async function getStats(noLock?: boolean): Promise<Stats> {
+export async function getStats(): Promise<Stats> {
   return await db.queryFirstOrThrow<{
     posts: number;
     tags: number;
@@ -59,4 +60,15 @@ export async function getStats(noLock?: boolean): Promise<Stats> {
       needs_tags as "needsTags"
     FROM global
   `);
+}
+
+export async function getImportStats(): Promise<ImportStats> {
+  const row = await db.queryFirstOrThrow<{
+    importStats: ImportStats;
+  }>(SQL`
+    SELECT
+      import_stats as "importStats"
+    FROM global
+  `);
+  return row.importStats;
 }

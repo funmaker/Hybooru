@@ -1,10 +1,9 @@
 import isNode from 'detect-node';
+import { navigate } from "wouter/use-browser-location";
 import axios, { Canceler, AxiosRequestConfig } from 'axios';
-import history from "./history";
 import { qsStringify } from './utils';
 import ClientError from "./clientError";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const CancelToken = axios.CancelToken;
 
 interface RequestOptions<Req> extends Omit<AxiosRequestConfig<Req>, "cancelToken"> {
@@ -33,7 +32,7 @@ export default async function requestJSON<Res = void, Req = never>({ url = "", s
     const error = new ClientError(err);
     
     if(error.response?.headers?.["x-hybooru-dblock"] === "true") {
-      history.replace(`/lock${qsStringify({ redirect: history.location.pathname + history.location.search })}`);
+      navigate(`/lock${qsStringify({ redirect: location.pathname + location.search })}`);
       error.isCancel = true;
     }
     

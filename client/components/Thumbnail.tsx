@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { BlurhashCanvas } from "react-blurhash-async";
-import { PostSummary, ThumbnailsMode } from "../../server/routes/apiTypes";
+import { PostSummary, ThumbnailsMode } from "../../types/api";
 import { thumbnailUrl } from "../../server/helpers/consts";
 import { classJoin } from "../helpers/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -12,7 +12,6 @@ import { EM_SIZE } from "../App";
 import "./Thumbnail.scss";
 
 export interface ThumbnailProps {
-  id: number;
   post: PostSummary;
   noFade?: boolean;
   onClick?: (ev: React.MouseEvent<HTMLAnchorElement>, post: number) => void;
@@ -20,7 +19,7 @@ export interface ThumbnailProps {
   label?: React.ReactNode;
 }
 
-export default function Thumbnail({ id, post, noFade, onClick, useId, label }: ThumbnailProps) {
+export default function Thumbnail({ post, noFade, onClick, useId, label }: ThumbnailProps) {
   const SSR = useSSR();
   const [config] = useConfig();
   const ref = useRef<HTMLImageElement>(null);
@@ -29,12 +28,11 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
   const [fade] = useState(thumbnailFade && !noFade && !SSR);
   const [loaded, setLoaded] = useReducer(() => true, false);
   const [unknown, setUnknown] = useReducer(() => true, false);
-  let [query] = useQuery();
-  query = query && `?query=${encodeURIComponent(query)}`;
+  const { query, getUrl } = useQuery();
   
   const onClickLink = useCallback((ev: React.MouseEvent<HTMLAnchorElement>) => {
-    if(onClick) onClick(ev, id);
-  }, [onClick, id]);
+    if(onClick) onClick(ev, post.id);
+  }, [onClick, post.id]);
   
   useEffect(() => {
     if(ref.current?.complete && ref.current.naturalWidth === 0) setUnknown();
@@ -48,7 +46,7 @@ export default function Thumbnail({ id, post, noFade, onClick, useId, label }: T
   else aspectRatio = config.thumbnailSize[0] / config.thumbnailSize[1];
   
   return (
-    <Link className="Thumbnail" to={`/posts/${post.id}${query}`} onClick={onClickLink}>
+    <Link className="Thumbnail" to={getUrl(query, `/posts/${post.id}`)} onClick={onClickLink}>
       <div className={classJoin(
              "imgWrap",
              fade && "fade",

@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
-import { useHistory } from "react-router";
+import { useLocation } from "wouter";
 import { anyRatingRegex } from "../../server/helpers/consts";
-import { RegenDBRequest, RegenDBResponse } from "../../server/routes/apiTypes";
+import { RegenDBRequest, RegenDBResponse } from "../../types/api";
 import { qsStringify } from "../helpers/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
 import requestJSON from "../helpers/requestJSON";
@@ -15,9 +15,9 @@ type SettingsMenuProps = {
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export default function SettingsMenu({ open = false, simpleSettings = false, ...rest }: SettingsMenuProps) {
-  const [, setQuery] = useQuery();
+  const { parts, setQuery } = useQuery();
   const [config] = useConfig();
-  const history = useHistory();
+  const [location, navigate] = useLocation();
   
   const [pagination, setPagination] = useLocalStorage("pagination", false);
   const [popup, setPopup] = useLocalStorage("popup", false);
@@ -33,31 +33,22 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
   const toggleBlurhash = useCallback((ev: React.MouseEvent) => { ev.preventDefault(); setBlurhash(!blurhash); }, [blurhash, setBlurhash]);
   
   const onSort = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
-    setQuery(query => {
-      let newQuery = query.trimRight()
-                          .split(" ")
-                          .filter(s => !s.startsWith("order:"))
-                          .join(" ");
-      
-      if(newQuery && !newQuery.endsWith(" ")) newQuery += " ";
-      
-      return newQuery + `order:${ev.target.value}`;
-    });
-  }, [setQuery]);
+    const query = [
+      ...parts.filter(s => !s.startsWith("order:")),
+      `order:${ev.target.value}`,
+    ].join(" ");
+    
+    setQuery(query);
+  }, [parts, setQuery]);
   
   const onRating = useCallback((ev: React.ChangeEvent<HTMLSelectElement>) => {
-    setQuery(query => {
-      let newQuery = query.trimRight()
-                          .split(" ")
-                          .filter(s => !s.match(anyRatingRegex))
-                          .join(" ");
-      
-      if(newQuery && !newQuery.endsWith(" ")) newQuery += " ";
-      
-      if(ev.target.value) return newQuery + `rating:${ev.target.value}`;
-      else return newQuery;
-    });
-  }, [setQuery]);
+    const query = [
+      ...parts.filter(s => !s.match(anyRatingRegex)),
+      `rating:${ev.target.value}`,
+    ].join(" ");
+    
+    setQuery(query);
+  }, [parts, setQuery]);
   
   const onDbRegen = useCallback(async (ev: React.MouseEvent) => {
     ev.preventDefault();
@@ -69,14 +60,13 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
         method: "POST",
         data: { password },
         headers: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           "X-Hybooru-No-Auth": true,
         },
       });
       
-      history.push("/lock" + qsStringify({ redirect: history.location.pathname + history.location.search }));
+      navigate("/lock" + qsStringify({ redirect: location }));
     }
-  }, [history]);
+  }, [location, navigate]);
   
   let extraSettings: React.ReactNode = null;
   if(!simpleSettings) {
@@ -99,7 +89,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
           <option value="id">Id</option>
         </select>
       </div>
-      {config.ratingStars !== null &&
+      {config.ratingStars !== null && (
         <div>
           <select value="label" onChange={onRating}>
             <option value="label" disabled hidden>Rating</option>
@@ -110,9 +100,9 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
             <option value="">Any Rating</option>
           </select>
         </div>
-      }
+      )}
       <hr />
-    </>; // eslint-disable-line react/jsx-closing-tag-location
+    </>; // eslint-disable-line @stylistic/jsx-closing-tag-location
   }
   
   let adminButtons: React.ReactNode = null;
@@ -120,7 +110,7 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
     adminButtons = <>
       <hr />
       <div><a href="#" onClick={onDbRegen}>Rebuild Database</a></div>
-    </>; // eslint-disable-line react/jsx-closing-tag-location
+    </>; // eslint-disable-line @stylistic/jsx-closing-tag-location
   }
   
   if(!open) return null;

@@ -8,7 +8,6 @@ export enum Theme {
 
 type ThemeContextType = [Theme, (t: Theme) => void];
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ThemeContext = React.createContext<ThemeContextType>([Theme.LIGHT, () => {}]);
 
 export default function useTheme() {

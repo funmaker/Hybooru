@@ -1,7 +1,7 @@
-import chalk, { Chalk } from "chalk";
+import chalk, { ChalkInstance } from "chalk";
 import SQL, { SQLStatement } from "sql-template-strings";
 import { elapsed } from "../helpers/dbImport/pretty";
-import { SQLQueryPlan, TagsSearchRequest } from "../routes/apiTypes";
+import { DiagnosticsResponse, SQLQueryPlan, TagsSearchRequest } from "../../types/api";
 import { fixedFormatTime } from "../helpers/utils";
 import * as db from "../helpers/db";
 import * as postsController from "./posts";
@@ -12,7 +12,7 @@ const SIZES = [1, 2, 4, 8, 16, 24, 32];
 const PAGE_SIZE = 360; // default pageSize * cachePages
 
 type TestCase = string | [string, number];
-type Results = Record<string, SQLQueryPlan[]>;
+type Results = DiagnosticsResponse["benchmark"];
 
 interface BenchmarkProgress {
   target: number;
@@ -39,9 +39,10 @@ export async function doBenchmark() {
   const letter = (id: number) => String.fromCharCode("a".charCodeAt(0) + id % 26);
   
   const startTime = Date.now();
-  const results: Results = {};
-  
-  results._SIZES = SIZES;
+  const results: Results = {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    _SIZES: SIZES,
+  };
   
   const postsTests: Record<string, TestCase[]> = {
     blank: [""],
@@ -133,7 +134,7 @@ async function doTests<T>(name: string, cases: T[], callback: (testCase: T) => P
     const result = results[name][sizeId] = await callback(testCase);
     const execTime = result["Execution Time"];
     
-    let color: keyof Chalk = "cyan";
+    let color: keyof ChalkInstance = "cyan";
     if(typeof execTime === "number") {
       if(execTime < 100) color = "green";
       else if(execTime < 1000) color = "yellow";

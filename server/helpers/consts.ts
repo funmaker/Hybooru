@@ -1,6 +1,6 @@
 // https://github.com/hydrusnetwork/hydrus/blob/master/hydrus/core/HydrusConstants.py
 
-import { Post, PostSummary } from "../routes/apiTypes";
+import { Post, PostSummary } from "../../types/api";
 
 export enum ServiceID {
   TAG_REPOSITORY = 0,
@@ -312,7 +312,7 @@ export const rangeRatingRegex = /^rating:(\d+)(?:-(\d+))?$/;
 export const anyRatingRegex = /^rating:(\d+(?:-\d+)?|none)$/;
 
 export const fileUrl = (post: Post | PostSummary) => `/files/f${post.sha256}${post.extension}`;
-export const thumbnailUrl = (post: Post | PostSummary) =>  `/files/t${post.sha256}.thumbnail`;
+export const thumbnailUrl = (post: Post | PostSummary) => `/files/t${post.sha256}.thumbnail`;
 
 export function prettifyTag(tag: string) {
   const match = tag.match(namespaceRegex);

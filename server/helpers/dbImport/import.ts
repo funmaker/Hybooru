@@ -22,15 +22,15 @@ export abstract class Import<S = Service> {
   private totalCount: number | null = null;
   
   total() {
-    if(this.totalCount === null) this.totalCount = this.hydrus.prepare(this.totalQuery()).raw().get()[0];
-    return this.totalCount!;
+    if(this.totalCount === null) this.totalCount = this.hydrus.prepare<[], [number]>(this.totalQuery()).raw().get()?.[0] || 0;
+    return this.totalCount;
   }
   
   resetTotal(total: null | number = null) {
     this.totalCount = total;
   }
   
-  async importBatch(lastKey: any[], limit: number, input: Statement, output: Writable): Promise<any[] | null> {
+  importBatch(lastKey: any[], limit: number, input: Statement<any[], any[]>, output: Writable): any[] | null {
     const rows = input.all(...lastKey, limit);
     
     let buf = "";
@@ -59,14 +59,13 @@ export abstract class Import<S = Service> {
     
     const outputTable = await this.beforeImport();
     
-    const input = this.hydrus.prepare(this.inputQuery()).raw(true);
-    const output: Writable = await this.postgres.query(copy.from(this.outputQuery(outputTable)));
+    const input = this.hydrus.prepare<any[], any[]>(this.inputQuery()).raw(true);
+    const output: Writable = this.postgres.query(copy.from(this.outputQuery(outputTable)));
     
     let lastKey: any[] = this.initialKey;
     
-    // eslint-disable-next-line no-constant-condition
     while(true) {
-      const result = await this.importBatch(lastKey, batchSize, input, output);
+      const result = this.importBatch(lastKey, batchSize, input, output);
       if(!result) break;
       lastKey = result;
       count += batchSize;

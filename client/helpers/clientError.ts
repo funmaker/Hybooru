@@ -1,13 +1,13 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { toast } from "react-toastify";
-import { ErrorResponse } from "../../server/routes/apiTypes";
+import { toast, Id as ToastId } from "react-toastify";
+import { ErrorResponse } from "../../types/api";
 
 export default class ClientError extends Error {
   status: number;
   response: AxiosResponse<ErrorResponse> | null;
   inner: any;
   toastTimeout: NodeJS.Timeout | number | null = null;
-  toastId: React.ReactText | null = null;
+  toastId: ToastId | null = null;
   isCancel: boolean;
   
   constructor(error: AxiosError<ErrorResponse> | ErrorResponse | Error) {

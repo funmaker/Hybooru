@@ -6,7 +6,7 @@ import YAML from "yaml";
 import SQL, { SQLStatement } from "sql-template-strings";
 import { Pool, PoolClient } from "pg";
 import * as postsController from "../../controllers/posts";
-import { ImportStats, Relation } from "../../routes/apiTypes";
+import { ImportStats, Relation } from "../../../types/api";
 import { preparePattern } from "../utils";
 import { findHydrusDB, pool, dbLock } from "../db";
 import { ServiceID } from "../consts";
@@ -30,7 +30,7 @@ function hashCode(s: string) {
   
   for(let i = 0; i < s.length; i++) {
     const chr = s.charCodeAt(i);
-    hash  = ((hash << 5) - hash) + chr;
+    hash = ((hash << 5) - hash) + chr;
     hash |= 0;
   }
   
@@ -61,11 +61,12 @@ export async function rebuild() {
     
     process.env.SQLITE_USE_URI = '1'; // Hack for https://github.com/WiseLibs/better-sqlite3/issues/1354
     const hydrus = new SqliteDatabase(`file:${path.resolve(dbPath, "client.db")}?immutable=1`, { readonly: true });
-    await hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.mappings.db")}?immutable=1' AS mappings`);
-    await hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.master.db")}?immutable=1' AS master`);
+    hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.mappings.db")}?immutable=1' AS mappings`);
+    hydrus.exec(`ATTACH 'file:${path.resolve(dbPath, "client.master.db")}?immutable=1' AS master`);
     
-    const { version } = hydrus.prepare('SELECT version FROM version;').get();
-    if(version < MIN_HYDRUS_VER) throw new Error(`Unsupported Hydrus version(min: v${MIN_HYDRUS_VER}, current: v${version}), Update Hydrus to the newest version.`);
+    const versionRow = hydrus.prepare<[], { version: number }>('SELECT version FROM version;').get();
+    if(!versionRow) throw new Error("Unable to fetch hydrus version.");
+    if(versionRow.version < MIN_HYDRUS_VER) throw new Error(`Unsupported Hydrus version(min: v${MIN_HYDRUS_VER}, current: v${versionRow.version}), Update Hydrus to the newest version.`);
     
     const services = getServices(hydrus);
     const filesServices = findServices(services, [ServiceID.LOCAL_FILE_DOMAIN, ServiceID.FILE_REPOSITORY, ServiceID.LOCAL_FILE_TRASH_DOMAIN], configs.posts.services, true);
@@ -129,7 +130,7 @@ export interface Service {
 }
 
 function getServices(hydrus: Database) {
-  return hydrus.prepare(`
+  return hydrus.prepare<[], Service>(`
     SELECT
       service_id AS id,
       name,
@@ -143,7 +144,7 @@ function findServices(allServices: Service[], types: ServiceID[], filter: Array<
   
   const errorTail = services.length === 0
     ? `No services found with type: ${types.map(type => ServiceID[type]).join(", ")}`
-    : `Services avaliable with type: ${types.map(type => ServiceID[type]).join(", ")}\n${services.map(service => `${service.id}) ${service.name}`)}`;
+    : `Services avaliable with type: ${types.map(type => ServiceID[type]).join(", ")}\n${services.map(service => `${service.id}) ${service.name}`).join(", ")}`;
   
   if(!filter || filter.length === 0) {
     if(required && services.length === 0) throw new Error(errorTail);
@@ -169,9 +170,11 @@ function findServices(allServices: Service[], types: ServiceID[], filter: Array<
 async function importOptions(hydrus: Database, postgres: PoolClient) {
   updateProgress(false, "Importing options... ");
   
-  let { options } = hydrus.prepare('SELECT options FROM options').get();
+  const optionsRow = hydrus.prepare<[], { options: string }>('SELECT options FROM options').get();
+  if(!optionsRow) throw new Error(`Unable to fetch hydrus options.`);
+  
   (global as any).YAML_SILENCE_WARNINGS = true;
-  options = YAML.parse(options);
+  const options = YAML.parse(optionsRow.options);
   (global as any).YAML_SILENCE_WARNINGS = false;
   
   const namespaceColours: Record<string, [number, number, number]> = options.namespace_colours;
@@ -202,12 +205,12 @@ async function importOptions(hydrus: Database, postgres: PoolClient) {
 async function resolveFileRelations(hydrus: Database, postgres: PoolClient) {
   updateProgress(false, "Resolving file relations...");
   
-  const groups: Array<{
+  const groups = hydrus.prepare<[], {
     mediaId: number;
     bestPostId: number;
     duplicates: string | null;
     alternatives: string | null;
-  }> = hydrus.prepare(`
+  }>(`
     SELECT
       duplicate_files.media_id AS "mediaId", duplicate_files.king_hash_id AS "bestPostId",
       group_concat(duplicate_file_members.hash_id) AS duplicates,
@@ -656,6 +659,7 @@ async function calculateStatistics(postgres: PoolClient, options: any) {
   updateProgress(true, "Calculating statistics...");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function dumpEdgeGraph(postgres: PoolClient, tagId: number, path: string) {
   const edges = await postgres.query<{ start: number; end: number; kind: string }>(SQL`
     WITH RECURSIVE

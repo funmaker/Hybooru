@@ -85,7 +85,7 @@ dbLock.lock("Initialization", async () => {
     console.log(chalk.bold.yellow("Tag sort presets change detected, reindexing..."));
     await dbImport.indexPresets();
   }
-}).catch((err) => {
+}).catch(err => {
   console.error("Unable to initialize DB!");
   console.error(err);
   process.exit(1);

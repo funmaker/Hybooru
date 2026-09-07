@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { toast } from "react-toastify";
-import { DiagnosticsRequest, DiagnosticsResponse, SQLQueryPlan } from "../../../server/routes/apiTypes";
+import { DiagnosticsRequest, DiagnosticsResponse, SQLQueryPlan } from "../../../types/api";
 import { fixedFormatTime } from "../../../server/helpers/utils";
 import { classJoin } from "../../helpers/utils";
 import requestJSON from "../../helpers/requestJSON";
@@ -15,8 +15,10 @@ interface FormFields {
 }
 
 export default function DiagnosticsPage() {
+  "use no memo"; // TODO: react/react/issues/35605
+  
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResponse | null>(null);
-  const [selected, setSelected] = useState<SQLQueryPlan | null>(null);
+  const [selected, setSelected] = useState<SQLQueryPlan>(null);
   
   const [onSubmit, fetching] = useAsyncCallback(async (ev: React.FormEvent<HTMLFormElement>) => {
     ev.preventDefault();
@@ -28,7 +30,6 @@ export default function DiagnosticsPage() {
       method: "POST",
       data: { password },
       headers: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         "X-Hybooru-No-Auth": true,
       },
     });
@@ -41,11 +42,11 @@ export default function DiagnosticsPage() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json";
-    input.addEventListener("change", async ev => {
+    input.addEventListener("change", ev => {
       const file = (ev.target as HTMLInputElement).files![0];
       if(!file) return;
       const reader = new FileReader();
-      reader.addEventListener("load", async () => {
+      reader.addEventListener("load", () => {
         try {
           const json = JSON.parse(reader.result as string);
           if(typeof json !== "object" || !json.stats || !json.benchmark) throw new Error("Invalid JSON");
@@ -135,7 +136,7 @@ export default function DiagnosticsPage() {
 
 interface BenchmarkTableProps {
   diagnostics: DiagnosticsResponse;
-  selected?: SQLQueryPlan | null;
+  selected?: SQLQueryPlan;
   onSelect?: (plan: SQLQueryPlan) => void;
 }
 
@@ -279,6 +280,6 @@ async function copyText(name: string, text: string) {
     toast.success(`${name} copied to clipboard!`);
   } catch(err) {
     console.error(err);
-    toast.error(`Failed to copy to clipboard: ${err}`);
+    toast.error(`Failed to copy to clipboard: ${err as any}`);
   }
 }

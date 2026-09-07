@@ -1,10 +1,10 @@
 import EventEmitter from "node:events";
-import { ProgressMessage } from "../routes/apiTypes";
+import { ProgressMessage } from "../../types/api";
 
 export type ProgressCallback = (progress: ProgressMessage) => void;
 type InitFn<T> = (onProgress: ProgressCallback) => Promise<T>;
 
-class DbLock extends EventEmitter {
+class DbLock extends EventEmitter implements IDbLock {
   protected promise: ImperativePromise<void> | null = null;
   public lastMessage: ProgressMessage | null = null;
   public lockName: string | null = null;
@@ -29,10 +29,10 @@ class DbLock extends EventEmitter {
       lock.resolve();
       
       return result;
-    } catch(err) {
+    } catch(err: any) {
       this.lockName = null;
       this.promise = null;
-      lock.reject(err);
+      lock.reject(err instanceof Error ? err : new Error("Rejected promise"));
       
       throw err;
     } finally {
@@ -56,7 +56,7 @@ class DbLock extends EventEmitter {
   }
 }
 
-interface DbLock {
+interface IDbLock {
   on(event: 'progress', listener: (msg: ProgressMessage) => void): this;
   on(event: 'end', listener: () => void): this;
   

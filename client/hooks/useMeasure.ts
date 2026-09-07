@@ -8,8 +8,9 @@ export default function useMeasure() {
   useEffect(() => {
     if(!node) return;
     
-    const observer = new ResizeObserver(([entry]: ResizeObserverEntry[]) => setRect(entry.contentRect as DOMRectReadOnly));
+    const observer = new ResizeObserver(([entry]: ResizeObserverEntry[]) => setRect(entry.contentRect));
     observer.observe(node);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRect(node.getBoundingClientRect());
     
     return () => {

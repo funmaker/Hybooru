@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
-import { IndexPageData } from "../../../server/routes/apiTypes";
+import { Link } from "wouter";
+import { IndexPageResponse } from "../../../types/api";
+import { trimQuery } from "../../helpers/utils";
 import usePageData from "../../hooks/usePageData";
 import useConfig from "../../hooks/useConfig";
 import ReactForm from "../../components/ReactForm";
@@ -14,14 +15,14 @@ import useChange from "../../hooks/useChange";
 import "./IndexPage.scss";
 
 export default function IndexPage() {
-  const { pageData, refresh } = usePageData<IndexPageData>();
+  const { pageData, refresh } = usePageData<IndexPageResponse>();
   const [config] = useConfig();
   const [theme] = useTheme();
   const [showMotd, setShowMotd] = useState(true);
   
   useChange(theme, () => {
     setShowMotd(false);
-    refresh();
+    refresh().catch(console.error);
   });
   
   useChange(pageData, () => {
@@ -30,13 +31,13 @@ export default function IndexPage() {
   
   return (
     <Layout className="IndexPage" plain>
-      {config.expectMotd &&
+      {config.expectMotd && (
         <div className="motdWrap">
-          {showMotd && pageData?.motd &&
+          {showMotd && pageData?.motd && (
             <File post={pageData.motd} link={`/posts/${pageData.motd.id}`} controls={false} muted />
-          }
+          )}
         </div>
-      }
+      )}
       <div className="header">
         <Logo to="/posts" />
       </div>
@@ -47,18 +48,18 @@ export default function IndexPage() {
         <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">GitHub</a>
         <ThemeSwitch />
       </div>
-      <ReactForm className="search" action="/posts">
+      <ReactForm className="search" action="/posts" processFormData={trimQuery}>
         <TagInput name="query" placeholder="Search: flower sky 1girl" />
         <button>Search</button>
       </ReactForm>
-      {pageData &&
+      {pageData && (
         <div className="stats">
           <div>Posts: <span>{pageData.stats.posts}</span></div>
           <div>Tags: <span>{pageData.stats.tags}</span></div>
           <div>Mappings: <span>{pageData.stats.mappings}</span></div>
           <div><Link to={`/posts?query=${encodeURIComponent(config.untaggedQuery)}`}>Untagged: <span>{pageData.stats.needsTags}</span></Link></div>
         </div>
-      }
+      )}
       <div className="footer">
         Running <a href="https://github.com/funmaker/hybooru" target="_blank" rel="noreferrer">Hybooru</a> v{config.version}
         {pageData?.updateUrl && <a className="updateInfo" href={pageData.updateUrl} target="_blank" rel="noreferrer">(Update Avaliable)</a>} <br />

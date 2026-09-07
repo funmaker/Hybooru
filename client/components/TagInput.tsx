@@ -1,11 +1,12 @@
 import React, { InputHTMLAttributes, useCallback, useRef, useState } from "react";
 import { Canceler } from "axios";
-import { TagsSearchRequest, TagsSearchResponse, TagsSearchResults } from "../../server/routes/apiTypes";
+import { TagsSearchRequest, TagsSearchResults } from "../../types/api";
 import { namespaceRegex } from "../../server/helpers/consts";
 import useConfig from "../hooks/useConfig";
 import requestJSON from "../helpers/requestJSON";
 import useLocalStorage from "../hooks/useLocalStorage";
-import { useRTQuery } from "../hooks/useQuery";
+import useQuery from "../hooks/useQuery";
+import useChange from "../hooks/useChange";
 import "./TagInput.scss";
 
 const DEBOUNCE_FREQ = 1000;
@@ -14,84 +15,77 @@ const TAGS_COUNT = 10;
 export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputElement>) {
   const [showNamespace] = useLocalStorage("namespaces", false);
   const [tags, setTags] = useState<Record<string, number> | null>(null);
+  const [box, setBox] = useState<DOMRect | null>(null);
+  const { query } = useQuery();
+  const [value, setValue] = useState(appendSpace(query));
   const inputRef = useRef<HTMLInputElement | null>(null);
   const tagsRef = useRef<HTMLDivElement | null>(null);
-  const box = inputRef.current?.getBoundingClientRect();
-  const timeoutRef = useRef<NodeJS.Timeout | number | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | number | null>(null);
   const blurRef = useRef<NodeJS.Timeout | number | null>(null);
-  const requestRef = useRef<Canceler | null>(null);
+  const cancelRef = useRef<Canceler | null>(null);
   
-  const [query, setQuery] = useRTQuery();
-  const queryRef = useRef(query);
-  queryRef.current = query;
+  useChange(query, query => setValue(appendSpace(query)));
   
-  const stop = useCallback(() => {
-    if(timeoutRef.current) {
-      clearTimeout(timeoutRef.current as any);
-      timeoutRef.current = null;
+  const reset = useCallback(() => {
+    if(debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
     }
-    if(requestRef.current) {
-      requestRef.current();
-      requestRef.current = null;
+    if(cancelRef.current) {
+      cancelRef.current();
+      cancelRef.current = null;
     }
   }, []);
   
-  const reset = useCallback(() => {
-    stop();
+  const tryFetch = useCallback(() => {
+    reset();
     
-    timeoutRef.current = setTimeout(async () => {
-      timeoutRef.current = null;
+    debounceRef.current = setTimeout(async () => {
+      debounceRef.current = null;
       
-      let query = queryRef.current.split(" ").slice(-1)[0];
-      if(query.startsWith("-")) query = query.slice(1);
-      query = `*${query}*`;
+      let lastPart = value.split(" ").slice(-1)[0];
+      if(lastPart.startsWith("-")) lastPart = lastPart.slice(1);
       
       const result = await requestJSON<TagsSearchResults, TagsSearchRequest>({
         url: "/api/tags",
         search: {
           pageSize: TAGS_COUNT,
-          query,
+          query: lastPart ? `*${lastPart}*` : undefined,
         },
-        cancelCb: cancel => requestRef.current = cancel,
+        cancelCb: cancel => cancelRef.current = cancel,
       });
       
       setTags(result.tags);
     }, DEBOUNCE_FREQ);
-  }, [stop]);
+  }, [reset, value]);
   
   const onFocus = useCallback(() => {
-    reset();
-    if(blurRef.current) clearTimeout(blurRef.current as any);
-  }, [reset]);
+    tryFetch();
+    if(blurRef.current) clearTimeout(blurRef.current);
+  }, [tryFetch]);
   
   const onBlur = useCallback(() => {
     blurRef.current = setTimeout(() => {
       blurRef.current = null;
       setTags(null);
-      stop();
+      reset();
     }, 100);
-  }, [stop]);
+  }, [reset]);
   
   const onInputChange = useCallback((ev: React.ChangeEvent<HTMLInputElement>) => {
-    reset();
-    setQuery(ev.target.value, true);
-  }, [reset, setQuery]);
+    tryFetch();
+    setValue(ev.target.value);
+  }, [tryFetch]);
   
   const onRowClick = useCallback((tag: string) => {
-    setQuery(query => {
+    setValue(query => {
       inputRef.current?.focus();
       
       const parts = query.split(" ");
       if(parts[parts.length - 1].startsWith("-")) tag = `-${tag}`;
       parts[parts.length - 1] = tag;
       return parts.join(" ") + " ";
-    }, true);
-  }, [setQuery]);
-  
-  const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
-    if(ev.key === "Enter") {
-      ev.currentTarget.blur();
-    }
+    });
   }, []);
   
   const onKeyDown = useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -105,14 +99,23 @@ export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputEleme
       const dir = ev.key === "ArrowDown" ? 1 : -1;
       targets[cur + dir]?.focus();
     }
+    if(ev.key === "Enter") {
+      ev.currentTarget.blur();
+    }
+  }, []);
+  
+  const inputRefCallback = useCallback((el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    setBox(el ? el.getBoundingClientRect() : null);
   }, []);
   
   return (
     <span className="TagInput" onFocus={onFocus} onBlur={onBlur} onKeyDown={onKeyDown}>
-      <input value={query} {...rest} ref={inputRef}
+      <input value={value}
+             {...rest}
              autoComplete="off" autoCorrect="off"
-             onChange={onInputChange} onKeyPress={onKeyPress} />
-      {tags && box &&
+             onChange={onInputChange} ref={inputRefCallback} />
+      {tags && box && (
         <div className="tags" ref={tagsRef}
              style={{
                left: `${box.x - 1}px`,
@@ -121,10 +124,12 @@ export default function TagInput({ ...rest }: InputHTMLAttributes<HTMLInputEleme
              }}>
           {Object.entries(tags).map(([tag, posts]) => <Row key={tag} tag={tag} posts={posts} onClick={onRowClick} showNamespace={showNamespace} />)}
         </div>
-      }
+      )}
     </span>
   );
 }
+
+const appendSpace = (query: string) => query.endsWith(" ") || !query ? query : query + " ";
 
 interface RowProps {
   tag: string;
@@ -150,7 +155,7 @@ function Row({ tag, posts, onClick, showNamespace }: RowProps) {
     onClick(tag);
   }, [onClick, tag]);
   
-  const onKeyPress = useCallback((ev: React.KeyboardEvent<HTMLAnchorElement>) => {
+  const onKeyDown = useCallback((ev: React.KeyboardEvent<HTMLAnchorElement>) => {
     if(ev.key === "Enter") {
       ev.preventDefault();
       onClick(tag);
@@ -158,7 +163,7 @@ function Row({ tag, posts, onClick, showNamespace }: RowProps) {
   }, [onClick, tag]);
   
   return (
-    <a href="#" className="row" onClick={onRowClick} onKeyPress={onKeyPress}>
+    <a href="#" className="row" onClick={onRowClick} onKeyDown={onKeyDown}>
       <span className="name" style={{ color }}>{name}</span>
       <span className="posts">{posts}</span>
     </a>

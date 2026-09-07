@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useReducer, useRef } from "react";
-import { useHistory } from "react-router";
-import { Link } from "react-router-dom";
-import { PostSummary } from "../../../server/routes/apiTypes";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { Link, useLocation } from "wouter";
+import { PostSummary } from "../../../types/api";
 import File from "../post/File";
+import useQuery from "../../hooks/useQuery";
 import "./GalleryPopup.scss";
 
 interface GalleryPopupProps {
@@ -13,29 +13,30 @@ interface GalleryPopupProps {
 
 export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
   const [header, toggleHeader] = useReducer(acc => !acc, true);
-  const history = useHistory();
+  const [, navigate] = useLocation();
+  const { query, getUrl } = useQuery();
   const offset = useRef(0);
   const velocity = useRef(0);
   const moving = useRef(false);
   const position = useRef(new Map<number, [number, number]>());
-  const lastMove = useRef(Date.now());
+  const lastMove = useRef(0);
   const wrapper = useRef<HTMLDivElement>(null);
   
-  const onBackgroundClick = useCallback<React.MouseEventHandler>(ev => {
-    ev.stopPropagation();
-    ev.preventDefault();
-    
-    if(Math.abs(offset.current) < 1) {
-      setId(null);
-    }
-  }, [setId]);
+  const [leftPost, post, rightPost] = useMemo(() => {
+    const idx = posts.findIndex(post => post.id === id);
+    return [
+      idx > 0 ? posts[idx - 1] : null,
+      (posts as Partial<PostSummary[]>)[idx] || null,
+      idx < posts.length - 1 ? posts[idx + 1] : null,
+    ];
+  }, [id, posts]);
   
   const onClick = useCallback<React.MouseEventHandler>(ev => {
     ev.stopPropagation();
     ev.preventDefault();
     
     if(Math.abs(offset.current) < 1) {
-      const target = ev.currentTarget;
+      const target = ev.currentTarget.querySelector("img");
       let outside = false;
       
       if(target instanceof HTMLImageElement) {
@@ -89,11 +90,8 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
   
   const onClose = useCallback(() => setId(null), [setId]);
   
-  const hasLeft = id !== null && id - 1 >= 0;
-  const hasRight = id !== null && id + 1 < posts.length;
-  
   useEffect(() => {
-    if(id === null) return;
+    if(!post) return;
     let requestId: number;
     
     const onUpdate = () => {
@@ -103,13 +101,18 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       if(!moving.current) {
         const intent = offset.current / 10 + velocity.current * 10;
         
-        if(intent < -1 && hasRight) offset.current = Math.max(-100, offset.current - Math.max(5, (100 + offset.current) / 5));
-        else if(intent > 1 && hasLeft) offset.current = Math.min(100, offset.current + Math.max(5, (100 - offset.current) / 5));
+        if(intent < -1 && rightPost) offset.current = Math.max(-100, offset.current - Math.max(5, (100 + offset.current) / 5));
+        else if(intent > 1 && leftPost) offset.current = Math.min(100, offset.current + Math.max(5, (100 - offset.current) / 5));
         else if(offset.current < 0) offset.current = Math.min(0, offset.current + Math.max(1, -offset.current / 10));
         else if(offset.current > 0) offset.current = Math.max(0, offset.current - Math.max(1, offset.current / 10));
         
-        if((offset.current >= 100 && hasLeft) || (offset.current <= -100 && hasRight)) {
-          setId(id - Math.sign(offset.current));
+        if(offset.current >= 100 && leftPost) {
+          setId(leftPost.id);
+          offset.current = 0;
+          velocity.current = 0;
+        }
+        if((offset.current <= -100 && rightPost)) {
+          setId(rightPost.id);
           offset.current = 0;
           velocity.current = 0;
         }
@@ -120,22 +123,22 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
     
     requestId = requestAnimationFrame(onUpdate);
     return () => cancelAnimationFrame(requestId);
-  }, [hasLeft, hasRight, id, setId]);
+  }, [post, leftPost, rightPost, setId]);
   
   useEffect(() => {
-    if(id === null) return;
+    if(!post) return;
     
     const onKeyDown = (ev: KeyboardEvent) => {
-      if(ev.key === "ArrowLeft" && hasLeft) setId(id - 1);
-      else if(ev.key === "ArrowRight" && hasRight) setId(id + 1);
-      else if(ev.key === "Enter") history.push(`/posts/${posts[id].id}${history.location.search}`);
+      if(ev.key === "ArrowLeft" && leftPost) setId(leftPost.id);
+      else if(ev.key === "ArrowRight" && rightPost) setId(rightPost.id);
+      else if(ev.key === "Enter") navigate(getUrl(query, `/posts/${post.id}`));
       else if(ev.key === "Escape") setId(null);
     };
     
     const onWheel = (ev: WheelEvent) => {
       ev.preventDefault();
-      if(ev.deltaY < 0 && hasLeft) setId(id - 1);
-      else if(ev.deltaY > 0 && hasRight) setId(id + 1);
+      if(ev.deltaY < 0 && leftPost) setId(leftPost.id);
+      else if(ev.deltaY > 0 && rightPost) setId(rightPost.id);
     };
     
     document.documentElement.addEventListener("keydown", onKeyDown);
@@ -144,34 +147,30 @@ export default function GalleryPopup({ posts, id, setId }: GalleryPopupProps) {
       document.documentElement.removeEventListener("keydown", onKeyDown);
       document.documentElement.removeEventListener("wheel", onWheel);
     };
-  }, [history, posts, id, setId, hasLeft, hasRight]);
+  }, [getUrl, leftPost, navigate, post, query, rightPost, setId]);
   
-  if(id === null || !posts[id]) return null;
-  
-  const leftPost = hasLeft ? posts[id - 1] : null;
-  const post = posts[id];
-  const rightPost = hasRight ? posts[id + 1] : null;
+  if(!post) return null;
   
   return (
-    <div className="GalleryPopup" style={{ left: `${offset.current}vw` }} ref={wrapper}>
+    <div className="GalleryPopup" ref={wrapper}>
       <div className={`header${header ? " open" : ""}`}>
         <div className="closeBtn" onClick={onClose}>✕</div>
-        <Link to={`/posts/${post.id}${history.location.search}`} className="moreBtn">Open Post</Link>
+        <Link to={getUrl(query, `/posts/${post.id}`)} className="moreBtn">Open Post</Link>
       </div>
-      {leftPost &&
+      {leftPost && (
         <div key={leftPost.id} className="wrap left">
           <File post={leftPost} draggable={false} controls={false} paused />
         </div>
-      }
+      )}
       {/* eslint-disable-next-line react/no-unknown-property */} { /* TODO: WHY? */ }
-      <div key={post.id} className="wrap" onClick={onBackgroundClick} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerMove={onPointerMove} >
-        <File post={post} draggable={false} controls={false} onClickCapture={onClick} autoPlay />
+      <div key={post.id} className="wrap" onClick={onClick} onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerMove={onPointerMove}>
+        <File post={post} draggable={false} controls={false} autoPlay />
       </div>
-      {rightPost &&
+      {rightPost && (
         <div key={rightPost.id} className="wrap right">
           <File post={rightPost} draggable={false} controls={false} paused />
         </div>
-      }
+      )}
     </div>
   );
 }

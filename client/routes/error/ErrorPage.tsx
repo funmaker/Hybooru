@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import Logo from "../../components/Logo";
 import ClientError from "../../helpers/clientError";
 import Layout from "../../components/Layout";
@@ -9,7 +9,7 @@ interface ErrorPageProps {
   error: ClientError;
 }
 
-export default function ErrorPage({ error }: ErrorPageProps): JSX.Element {
+export default function ErrorPage({ error }: ErrorPageProps) {
   return (
     <Layout className="ErrorPage" plain noError>
       <Logo />

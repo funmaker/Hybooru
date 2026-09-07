@@ -16,6 +16,9 @@
 
 # Unreleased
 
+- Updated codebase to React 19, Express 5, and more
+- Trailing space in search input is now automatically inserted and removed when moving between url and input
+
 
 # v1.15.3
 

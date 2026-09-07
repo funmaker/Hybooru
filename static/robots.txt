@@ -7,3 +7,4 @@ Disallow: /posts?*query=*
 Disallow: /tags?*query=*
 Disallow: /random
 Disallow: /diagnostics
+Disallow: /honeypot

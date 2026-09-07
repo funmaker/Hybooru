@@ -7,6 +7,7 @@
   bottom: 0;
   z-index: 999;
   touch-action: none;
+  user-select: none;
 
   .wrap {
     position: absolute;
@@ -56,7 +57,6 @@
 
     &.open {
       opacity: 1;
-      pointer-events: all;
     }
 
     .closeBtn, .moreBtn {
@@ -65,9 +65,10 @@
       font-size: 2rem;
       color: white;
       cursor: pointer;
-      padding: 1rem;
+      padding: 0.5rem 1rem;
       opacity: 0.75;
       transition: opacity 0.3s;
+      pointer-events: all;
 
       &:hover {
         opacity: 1;

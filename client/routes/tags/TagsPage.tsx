@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
-import { Link } from "react-router-dom";
-import { TagsSearchPageData, TagSummary } from "../../../server/routes/apiTypes";
+import React, { useEffect, useState } from "react";
+import { Link } from "wouter";
+import { TagsSearchPageResponse, TagSummary } from "../../../types/api";
 import { namespaceRegex } from "../../../server/helpers/consts";
 import Layout from "../../components/Layout";
 import Pagination from "../../components/Pagination";
@@ -11,13 +11,15 @@ import "./TagsPage.scss";
 
 export default function TagsPage() {
   const [showNamespaces] = useLocalStorage("namespaces", false);
-  let { pageData } = usePageData<TagsSearchPageData>();
-  const pageDataCache = useRef(pageData);
+  const { pageData, fetching } = usePageData<TagsSearchPageResponse>();
+  const [memoData, setMemoData] = useState(pageData);
   
-  if(pageData) pageDataCache.current = pageData;
-  else pageData = pageDataCache.current;
+  const pageCount = memoData && Math.ceil(memoData.results.total / memoData.results.pageSize);
   
-  const pageCount = pageData && Math.ceil(pageData.results.total / pageData.results.pageSize);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if(!fetching) setMemoData(pageData);
+  }, [fetching, pageData]);
   
   return (
     <Layout className="TagsPage" searchAction="/tags" random={false} simpleSettings>
@@ -32,7 +34,7 @@ export default function TagsPage() {
           </tr>
         </thead>
         <tbody>
-          {pageData?.results.tags.map(tag => <Row key={tag.name} tag={tag} showNamespaces={showNamespaces} />)}
+          {memoData?.results.tags.map(tag => <Row key={tag.name} tag={tag} showNamespaces={showNamespaces} />)}
         </tbody>
       </table>
       {!!pageCount && <Pagination count={pageCount} />}

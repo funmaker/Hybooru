@@ -1,6 +1,8 @@
 import { DependencyList, useCallback, useEffect, useRef, useState } from "react";
 
 export default function useAsyncCallback<T extends(...args: any[]) => Promise<any>>(callback: T, deps: DependencyList) {
+  "use no memo";
+  
   const [loading, setLoading] = useState(false);
   const mounted = useRef(false);
   const executing = useRef(false);
@@ -24,7 +26,7 @@ export default function useAsyncCallback<T extends(...args: any[]) => Promise<an
       executing.current = false;
       if(mounted.current) setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps,react-hooks/use-memo
   }, deps) as T;
   
   return [wrapped, loading] as const;

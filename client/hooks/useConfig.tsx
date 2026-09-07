@@ -1,9 +1,8 @@
-import React, { SetStateAction, useContext, useEffect, useState } from "react";
-import { Config } from "../../server/routes/apiTypes";
+import React, { SetStateAction, useContext, useState } from "react";
+import { Config } from "../../types/api";
 
 type SetConfig = (config: SetStateAction<Config>) => void;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ConfigContext = React.createContext<[Config, SetConfig]>(null as any);
 
 interface ConfigContextProviderProps {

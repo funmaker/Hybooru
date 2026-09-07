@@ -1,7 +1,7 @@
 import SQL, { SQLStatement } from "sql-template-strings";
-import objectHash from "node-object-hash";
+import { hasher } from "node-object-hash";
 import { PoolClient } from "pg";
-import { Post, PostNote, PostSearchResults, PostSummary, Relation } from "../routes/apiTypes";
+import { Post, PostNote, PostSearchResults, PostSummary, Relation } from "../../types/api";
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { Mime, MIME_EXT, rangeRatingRegex } from "../helpers/consts";
@@ -406,7 +406,7 @@ interface CacheValue {
   lastUsed: number;
 }
 
-const keyHasher = objectHash({ alg: "sha1", coerce: false });
+const keyHasher = hasher({ alg: "sha1", coerce: false });
 let postsCache: Record<string, CacheValue> = {};
 
 async function getCachedPosts(key: CacheKey, client?: PoolClient): Promise<CacheValue> {

@@ -1,17 +1,21 @@
 import * as http from 'http';
+import * as expressCore from 'express-serve-static-core';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import morgan from 'morgan';
+import { ErrorResponse, InitialData } from "../types/api";
 import { qsStringify } from "../client/helpers/utils";
 import reactMiddleware from "./middlewares/reactMiddleware";
 import HTTPError from "./helpers/HTTPError";
-import { ErrorResponse } from "./routes/apiTypes";
+import configs from "./helpers/configs";
 import { router } from "./routes";
 import "./helpers/db";
 
 const app = express();
+
+app.set("trust proxy", configs.proxy);
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -36,7 +40,7 @@ app.use((req, res, next) => {
   next(new HTTPError(404));
 });
 
-app.use((err: Partial<HTTPError>, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Partial<HTTPError>, req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<Pick<InitialData, "_error">>, _next: expressCore.NextFunction) => {
   if((err as any).code === 'ECONNABORTED') return;
   if((err as any).code === 'EBADCSRFTOKEN') err = new HTTPError(403, "Bad CSRF Token");
   if(err.HTTPcode !== 404) console.error(err);

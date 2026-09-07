@@ -8,12 +8,13 @@
       "dom.iterable",
       "es2015",
       "es2016",
-      "es2019"
+      "es2019",
+      "es2022"
     ],
     "jsx": "react",
-    "target": "es2016",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "es2018",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -26,6 +27,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": [
+      "node",
+      "webpack-env"
+    ]
   }
 }

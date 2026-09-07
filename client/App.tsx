@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
-import { Route, Switch } from "react-router";
+import { Route, Switch } from "wouter";
 import { toast, ToastContainer } from 'react-toastify';
-import { hot } from 'react-hot-loader';
-import { InitialData } from "../server/routes/apiTypes";
+import { InitialData } from "../types/api";
 import { PageDataProvider } from "./hooks/usePageData";
 import { SSRProvider } from "./hooks/useSSR";
 import { ConfigContextProvider } from "./hooks/useConfig";
 import { ThemeProvider } from "./hooks/useTheme";
 import { PostsCacheProvider } from "./hooks/usePostsCache";
-import { QueryProvider } from "./hooks/useQuery";
 import ClientError from "./helpers/clientError";
 import DiagnosticsPage from "./routes/diagnostics/DiagnosticsPage";
 import IndexPage from "./routes/index/IndexPage";
@@ -20,7 +18,7 @@ import LockPage from "./routes/lock/LockPage";
 import ErrorPage from "./routes/error/ErrorPage";
 import "./globals.scss";
 
-interface Props {
+interface AppProps {
   initialData: InitialData;
 }
 
@@ -29,8 +27,7 @@ export const EM_SIZE = 20;
 
 const notFoundError = new ClientError({ code: 404, message: "Page Not Found" });
 
-// eslint-disable-next-line prefer-arrow-callback
-export default hot(module)(function App({ initialData }: Props) {
+export default function App({ initialData }: AppProps) {
   useEffect(() => {
     const onResize = () => {
       const minSize = Math.min(window.innerWidth, window.innerHeight);
@@ -51,25 +48,23 @@ export default hot(module)(function App({ initialData }: Props) {
     <SSRProvider>
       <ThemeProvider init={initialData._theme}>
         <ConfigContextProvider config={initialData._config}>
-          <QueryProvider>
-            <PageDataProvider initialData={initialData}>
-              <PostsCacheProvider>
-                <Switch>
-                  <Route path="/tags" component={TagsPage} />
-                  <Route path="/posts/:id" component={PostPage} />
-                  <Route path="/posts" component={SearchPage} />
-                  <Route path="/random" component={RandomPage} />
-                  <Route path="/diagnostics" component={DiagnosticsPage} />
-                  <Route path="/lock" component={LockPage} />
-                  <Route path="/" exact component={IndexPage} />
-                  <ErrorPage error={notFoundError} />
-                </Switch>
-                <ToastContainer />
-              </PostsCacheProvider>
-            </PageDataProvider>
-          </QueryProvider>
+          <PageDataProvider initialData={initialData}>
+            <PostsCacheProvider>
+              <Switch>
+                <Route path="/tags" component={TagsPage} />
+                <Route path="/posts/:id" component={PostPage} />
+                <Route path="/posts" component={SearchPage} />
+                <Route path="/random" component={RandomPage} />
+                <Route path="/diagnostics" component={DiagnosticsPage} />
+                <Route path="/lock" component={LockPage} />
+                <Route path="/" component={IndexPage} />
+                <ErrorPage error={notFoundError} />
+              </Switch>
+              <ToastContainer />
+            </PostsCacheProvider>
+          </PageDataProvider>
         </ConfigContextProvider>
       </ThemeProvider>
     </SSRProvider>
   );
-});
+}

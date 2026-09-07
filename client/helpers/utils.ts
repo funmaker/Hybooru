@@ -54,3 +54,8 @@ export function parseDuration(duration: number) {
   
   return text;
 }
+
+export function trimQuery(formData: FormData) {
+  const query = formData.get("query");
+  if(typeof query === "string" && query.endsWith(" ")) formData.set("query", query.slice(0, -1));
+}

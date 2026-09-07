@@ -21,7 +21,6 @@ export default function SourceLink({ url }: SourceProps) {
 
 
 // From Hydrus' default parsers
-/* eslint-disable @typescript-eslint/naming-convention */
 const DOMAINS = {
   "8ch.net": "8chan",
   "8chan.moe": "8chan.moe",
@@ -78,5 +77,4 @@ const DOMAINS = {
   "booru.funmaker.moe": "Mikubooru",
   "discordapp.com": "Discord",
 };
-/* eslint-enable @typescript-eslint/naming-convention */
 

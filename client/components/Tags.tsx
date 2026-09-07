@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo } from "react";
+import { Link } from "wouter";
 import useConfig from "../hooks/useConfig";
 import { namespaceRegex } from "../../server/helpers/consts";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -72,20 +72,15 @@ function Namespace({ header, members, tags, searchMod, sorted, showNamespaces }:
   );
 }
 
-function addTag(query: string, tag: string): string {
-  const parts = query.split(" ");
-  const partsClean = parts.filter(p => p && p !== tag && p !== `-${tag}`);
-  
-  if(!parts.includes(tag)) return [...partsClean, tag].join(" ");
-  else return partsClean.join(" ");
+function appendTag(parts: string[], tag: string, neg = false): string {
+  return [
+    ...parts.filter(part => part !== tag && part !== `-${tag}`),
+    neg ? `-${tag}` : tag,
+  ].join(" ");
 }
 
-function delTag(query: string, tag: string): string {
-  const parts = query.split(" ");
-  const partsClean = parts.filter(p => p && p !== tag && p !== `-${tag}`);
-  
-  if(!parts.includes(`-${tag}`)) return [...partsClean, `-${tag}`].join(" ");
-  else return partsClean.join(" ");
+function removeTag(parts: string[], tag: string): string {
+  return parts.filter(part => part !== tag && part !== `-${tag}`).join(" ");
 }
 
 interface TagProps {
@@ -97,40 +92,44 @@ interface TagProps {
 
 function Tag({ searchMod, tag, tags, showNamespace }: TagProps) {
   const [config] = useConfig();
-  const [query, setQuery, genLink] = useQuery();
+  const { parts, getUrl } = useQuery();
   
-  let name = tag.replace(/_/g, " ");
-  let color: string | undefined;
+  const {
+    name, namespace,
+    link, addLink, delLink,
+    addCh, delCh,
+  } = useMemo(() => {
+    let name = tag.replace(/_/g, " ");
+    let namespace = null;
+    let result;
+    if((result = name.match(namespaceRegex))) {
+      namespace = result[1];
+      if(!showNamespace) name = result[2];
+    }
+    
+    const contains = parts.includes(tag);
+    const containsNeg = parts.includes(`-${tag}`);
+    
+    return {
+      name,
+      namespace,
+      link: getUrl(tag),
+      addLink: contains ? getUrl(removeTag(parts, tag)) : getUrl(appendTag(parts, tag)),
+      delLink: containsNeg ? getUrl(removeTag(parts, tag)) : getUrl(appendTag(parts, tag, true)),
+      addCh: contains ? "•" : "+",
+      delCh: containsNeg ? "•" : "-",
+    };
+  }, [getUrl, parts, showNamespace, tag]);
   
-  const result = name.match(namespaceRegex);
-  if(result) {
-    if(!showNamespace) name = result[2];
-    color = config.namespaceColors[result[1]];
-  }
-  
-  const parts = query.split(" ");
-  const addLink = genLink(addTag(query, tag));
-  const delLink = genLink(delTag(query, tag));
-  const addCh = parts.includes(tag) ? "•" : "+";
-  const delCh = parts.includes(`-${tag}`) ? "•" : "-";
-  
-  const onAdd = useCallback<React.MouseEventHandler>(ev => {
-    ev.preventDefault();
-    setQuery(query => addTag(query, tag));
-  }, [setQuery, tag]);
-  
-  const onDel = useCallback<React.MouseEventHandler>(ev => {
-    ev.preventDefault();
-    setQuery(query => delTag(query, tag));
-  }, [setQuery, tag]);
+  const color = namespace && config.namespaceColors[namespace] || undefined;
   
   return (
     <div>
       {searchMod && <>
-        <Link className="btn" to={addLink} rel="nofollow" onClick={onAdd}>{addCh}</Link>
-        <Link className="btn" to={delLink} rel="nofollow" onClick={onDel}>{delCh}</Link>
-      </> /* eslint-disable-line react/jsx-closing-tag-location */ }
-      <Link to={`/posts?query=${encodeURIComponent(tag)}`} rel="nofollow" style={{ color }}>{name}</Link>
+        <Link className="btn" to={addLink} rel="nofollow">{addCh}</Link>
+        <Link className="btn" to={delLink} rel="nofollow">{delCh}</Link>
+      </> /* eslint-disable-line @stylistic/jsx-closing-tag-location */ }
+      <Link to={link} rel="nofollow" style={{ color }}>{name}</Link>
       {" "}
       <span>{tags[tag]}</span>
     </div>

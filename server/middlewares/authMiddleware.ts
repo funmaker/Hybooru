@@ -1,8 +1,8 @@
-import express from "express";
+import * as expressCore from "express-serve-static-core";
 import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
 
-export default function authMiddleware(req: express.Request<any>, res: express.Response<any>, next: express.NextFunction) {
+export default function authMiddleware(req: expressCore.RequestEx<any, any, any>, res: expressCore.ResponseEx<any>, next: expressCore.NextFunction) {
   if(typeof configs.adminPassword !== "string") throw new HTTPError(400, "Admin password has not been set in configs.json");
   if(req.body?.password === configs.adminPassword) return next();
   
@@ -12,14 +12,13 @@ export default function authMiddleware(req: express.Request<any>, res: express.R
   const authorization = req.headers["authorization"];
   if(!authorization || !authorization.startsWith("Basic ")) {
     throw new HTTPError(401, "Not Authorized", {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       "WWW-Authenticate": 'Basic realm="hybooru"',
     });
   }
   
   const base64Credentials = authorization.split(" ")[1];
   const credentials = Buffer.from(base64Credentials, "base64").toString("utf-8");
-  const [username, password] = credentials.split(":");
+  const [, password] = credentials.split(":");
   
   if(password === configs.adminPassword) return next();
   else throw new HTTPError(401, "Invalid password");

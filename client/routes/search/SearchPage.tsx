@@ -1,78 +1,57 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { useHistory } from "react-router";
-import { PostSummary } from "../../../server/routes/apiTypes";
+import useLocationParts from "../../hooks/useLocationParts";
 import { qsParse, qsStringify } from "../../helpers/utils";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useSSR from "../../hooks/useSSR";
-import usePostsCache, { PostsCacheData } from "../../hooks/usePostsCache";
+import usePostsCache from "../../hooks/usePostsCache";
+import useChange from "../../hooks/useChange";
 import Layout from "../../components/Layout";
 import Tags from "../../components/Tags";
-import Thumbnail, { ThumbnailProps } from "../../components/Thumbnail";
+import Thumbnail from "../../components/Thumbnail";
 import Pagination from "../../components/Pagination";
 import Spinner from "../../components/Spinner";
 import GalleryPopup from "./GalleryPopup";
 import "./SearchPage.scss";
 
 export default function SearchPage() {
-  const { postsCache, fetching, requestNext, reset, error, resetError } = usePostsCache();
+  const { postsCache, fetching, requestNext, fresh, reset, error, resetError } = usePostsCache();
   const [pagination] = useLocalStorage("pagination", false);
   const [popupEnabled] = useLocalStorage("popup", false);
   const SSR = useSSR();
-  const history = useHistory();
-  const search = qsParse(history.location.search);
-  const lastPostsCache = useRef<PostsCacheData>(postsCache);
+  const [location, navigate] = useLocationParts();
+  const search = qsParse(location.search);
   const popupPushed = useRef(false);
   const scrollRestore = useRef<null | number>(null);
-  const noFade = !!lastPostsCache.current?.key && lastPostsCache.current.key !== postsCache.key && !postsCache.fresh;
-  lastPostsCache.current = postsCache;
   
-  const usePagination = pagination || SSR || search.page !== undefined;
+  const usePagination = pagination || SSR;
   const pageCount = Math.ceil((postsCache.total || 0) / postsCache.pageSize);
   const end = postsCache.total && postsCache.posts.length >= postsCache.total;
   
-  let popup: number | null = parseInt(history.location.hash.slice(1));
-  if(isNaN(popup) || popup >= postsCache.posts.length || SSR) popup = null;
-  
-  useEffect(() => {
-    return history.listen((location, action) => {
-      requestAnimationFrame(() => {
-        if(scrollRestore.current !== null) {
-          document.documentElement.scrollTop = scrollRestore.current;
-          scrollRestore.current = null;
-        }
-      });
-      
-      if(action === "POP" && popupPushed.current) popupPushed.current = false;
-    });
-  }, [history]);
+  let popup: number | null = parseInt(location.hash);
+  if(postsCache.posts.every(post => post.id !== popup) || SSR) popup = null;
   
   const setPopup = useCallback((id: number | null) => {
     if(popupPushed.current && id === null) {
       scrollRestore.current = document.documentElement.scrollTop;
-      history.goBack();
+      history.back();
       popupPushed.current = false;
     } else if(popupPushed.current && id !== null) {
-      history.replace({ ...history.location, hash: id.toString() });
-    } else if(id !== null && !history.location.hash) {
-      history.push({ ...history.location, hash: id.toString() });
+      navigate({ ...location, hash: id.toString() }, { replace: true });
+    } else if(id !== null && !location.hash) {
+      navigate({ ...location, hash: id.toString() });
       popupPushed.current = true;
     } else {
-      history.replace({ ...history.location, hash: "" });
+      navigate({ ...location, hash: "" }, { replace: true });
     }
     
-    if(id !== null && lastPostsCache.current?.posts[id]) {
-      const postId = lastPostsCache.current.posts[id].id;
-      document.getElementById(postId.toString())?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    if(id !== null) {
+      document.getElementById(id.toString())?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
     }
-  }, [history]);
+  }, [location, navigate]);
   
-  useEffect(() => {
-    const ssrPopup = parseInt(history.location.hash.slice(1));
-    
-    if(history.location.hash && popup === null) history.replace({ ...history.location, hash: "" });
-    
-    if(SSR && ssrPopup) setPopup(ssrPopup);
-  }, [history, popup, SSR, setPopup]);
+  useChange(location.hash, newHash => {
+    if(!newHash) popupPushed.current = false;
+  });
   
   const checkScroll = useCallback(() => {
     if(usePagination) return;
@@ -82,7 +61,7 @@ export default function SearchPage() {
     const bottomPosition = window.pageYOffset + window.innerHeight;
     const bodyHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
     
-    if(bodyHeight - bottomPosition < window.innerHeight * 0.25) requestNext();
+    if(bodyHeight - bottomPosition < window.innerHeight * 0.25) requestNext().catch(console.error);
   }, [requestNext, usePagination]);
   
   const onThumbnailClick = useCallback((ev: React.MouseEvent, id: number) => {
@@ -97,6 +76,10 @@ export default function SearchPage() {
     resetError();
   }, [resetError]);
   
+  useEffect(() => {
+    if(!popup && location.hash) setPopup(null);
+  }, [location.hash, popup, setPopup]);
+  
   useEffect(() => checkScroll(), [checkScroll, postsCache]);
   useEffect(() => {
     checkScroll();
@@ -109,12 +92,13 @@ export default function SearchPage() {
   }, [checkScroll]);
   
   useEffect(() => {
-    if(!pagination && search.page !== undefined) {
-      history.replace(history.location.pathname + qsStringify({ ...search, page: undefined }));
-    } else if(pagination && postsCache.page > 1) {
+    if(!usePagination && search.page !== undefined) {
+      navigate({ ...location, search: qsStringify({ ...search, page: undefined }) });
+    }
+    if(usePagination && search.page === undefined && postsCache.page > 1) {
       reset();
     }
-  }, [SSR, history, pagination, postsCache.page, reset, search]);
+  }, [location, navigate, postsCache.page, reset, search, usePagination]);
   
   let footer = <div className={`bottomPad${end ? " end" : ""}`} />;
   if(usePagination) footer = <Pagination count={pageCount} />;
@@ -129,11 +113,12 @@ export default function SearchPage() {
   }
   
   return (
-    <Layout className="SearchPage" dimmed={popup !== null}
+    <Layout className="SearchPage"
+            dimmed={popup !== null}
             extraLink={postsCache.total !== null && <div className="total">Results: {postsCache.total}</div>}
             sidebar={<Tags tags={postsCache.tags} searchMod />}>
       <div className="posts">
-        <Thumbnails posts={postsCache.posts} noFade={noFade} onClick={onThumbnailClick} />
+        {postsCache.posts.map(post => <Thumbnail key={post.id} post={post} noFade={!fresh} onClick={onThumbnailClick} useId />)}
         {new Array(16).fill(null).map((v, id) => <div key={id} className="placeholder" />)}
       </div>
       {footer}
@@ -141,10 +126,3 @@ export default function SearchPage() {
     </Layout>
   );
 }
-
-type ThumbnailsPosts = { posts: PostSummary[] } & Partial<ThumbnailProps>;
-
-// eslint-disable-next-line prefer-arrow-callback,@typescript-eslint/naming-convention
-const Thumbnails = React.memo(function Thumbnails({ posts, ...rest }: ThumbnailsPosts) {
-  return <>{posts.map((post, id) => <Thumbnail key={post.id} {...rest} id={id} post={post} useId />)}</>;
-});

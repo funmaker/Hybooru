@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import pg from "pg";
 import { Theme } from "../../client/hooks/useTheme";
 import chalk from "chalk";
-import { ThumbnailsMode } from "../routes/apiTypes";
+import { ThumbnailsMode } from "../../types/api";
 import * as jp from "./jsonpatch";
 
 interface Configs {
@@ -14,6 +14,7 @@ interface Configs {
   appDescription: string,
   adminPassword: string | null,
   isTTY: boolean | null,
+  proxy: string | string[] | boolean,
   importBatchSize: number,
   pageSize?: number, // deprecated
   cachePages?: number, // deprecated
@@ -51,6 +52,9 @@ interface Configs {
     /** @deprecated */
     serviceName?: string | null,
   } | null,
+  honeypot: {
+    enabled: boolean,
+  } | null,
   versionCheck: {
     enabled: boolean,
     owner: string,
@@ -67,6 +71,7 @@ let configs: Configs = {
   appDescription: "Hydrus-based booru-styled imageboard in React",
   adminPassword: null,
   isTTY: null,
+  proxy: false,
   importBatchSize: 8192,
   db: {
     user: "hybooru",
@@ -103,6 +108,9 @@ let configs: Configs = {
     enabled: true,
     stars: 5,
     service: null,
+  },
+  honeypot: {
+    enabled: false,
   },
   versionCheck: {
     enabled: true,
