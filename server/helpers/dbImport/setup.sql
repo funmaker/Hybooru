@@ -51,6 +51,8 @@ CREATE TABLE global (
   id INTEGER PRIMARY KEY DEFAULT 39,
   thumbnail_width INTEGER NOT NULL,
   thumbnail_height INTEGER NOT NULL,
+  rating_stars INTEGER,
+  rating_allow_zero BOOLEAN NOT NULL,
   posts INTEGER NOT NULL,
   tags INTEGER NOT NULL,
   mappings INTEGER NOT NULL,

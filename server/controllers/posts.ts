@@ -2,11 +2,13 @@ import SQL, { SQLStatement } from "sql-template-strings";
 import { hasher } from "node-object-hash";
 import { PoolClient } from "pg";
 import { Post, PostNote, PostSearchResults, PostSummary, Relation } from "../../types/api";
-import * as db from "../helpers/db";
-import HTTPError from "../helpers/HTTPError";
+import { starsToRating } from "../../client/helpers/utils";
 import { Mime, MIME_EXT, rangeRatingRegex } from "../helpers/consts";
 import { preparePattern } from "../helpers/utils";
+import HTTPError from "../helpers/HTTPError";
 import configs from "../helpers/configs";
+import * as db from "../helpers/db";
+import * as globalController from "./global";
 
 const MAX_PARTS = 40;
 const TAGS_SAMPLE_MAX = 256;
@@ -36,7 +38,7 @@ export async function search({ query = "", page = 0, tags: includeTags = false, 
   if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
   page = Math.max(0, Math.floor(page));
   
-  const key = getCacheKey(query);
+  const key = await getCacheKey(query);
   
   const cached = [];
   let start = page * pageSize;
@@ -122,7 +124,7 @@ export async function random(query: string | null = null): Promise<PostSummary |
     
     id = post?.id || null;
   } else {
-    const key = getCacheKey(query);
+    const key = await getCacheKey(query);
     
     key.offset = 0;
     const firstPage = await getCachedPosts(key);
@@ -328,7 +330,7 @@ export interface CacheKey {
   offset: number;
 }
 
-export function getCacheKey(query: string): CacheKey {
+export async function getCacheKey(query: string): Promise<CacheKey> {
   const parts = query.split(" ")
                      .filter(p => !!p)
                      .map(preparePattern);
@@ -383,14 +385,19 @@ export function getCacheKey(query: string): CacheKey {
       if(hash.startsWith("0x")) hash = hash.slice(2);
       if(hash.length % 2 !== 0) hash += "0";
       key.md5.push(`\\x${hash}`);
-    } else if(configs.rating?.enabled && (match = part.match(rangeRatingRegex))) {
-      let min = parseInt(match[1]);
-      let max = parseInt(match[2]);
-      if(match[2] === undefined) max = min;
-      if(isNaN(min) || isNaN(max)) continue;
-      if(min > max) [min, max] = [max, min];
+    } else if((match = part.match(rangeRatingRegex))) {
+      const config = await globalController.getConfig();
       
-      key.rating = [min / configs.rating.stars - Number.EPSILON, max / configs.rating.stars + Number.EPSILON];
+      if(config.rating) {
+        let min = parseInt(match[1]);
+        let max = parseInt(match[2]);
+        if(match[2] === undefined) max = min;
+        if(isNaN(min) || isNaN(max)) continue;
+        if(min > max) [min, max] = [max, min];
+        key.rating = [starsToRating(config.rating.numStars, config.rating.allowZero, min - 0.5), starsToRating(config.rating.numStars, config.rating.allowZero, max + 0.5)];
+      } else {
+        key.whitelist.push(part);
+      }
     } else {
       key.whitelist.push(part);
     }

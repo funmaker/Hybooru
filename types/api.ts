@@ -108,7 +108,10 @@ export enum ThumbnailsMode {
 
 export interface Config {
   thumbnailSize: [number, number];
-  ratingStars: number | null;
+  rating: {
+    numStars: number;
+    allowZero: boolean;
+  } | null;
   namespaceColors: Record<string, string>;
   appName: string;
   version: string;

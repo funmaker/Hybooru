@@ -153,7 +153,7 @@ async function getPosts(testCase: TestCase) {
   if(Array.isArray(testCase)) [query, offset] = testCase;
   else query = testCase;
   
-  const key = postsController.getCacheKey(query);
+  const key = await postsController.getCacheKey(query);
   key.offset = offset;
   
   const sql = postsController.getCachedPostsQuery(key);

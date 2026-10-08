@@ -76,7 +76,6 @@ export async function rebuild() {
     const ratingsService = configs.rating && findServices(services, [ServiceID.LOCAL_RATING_NUMERICAL], ratingsServiceFilter)[0] || null;
     if(configs.rating && !ratingsService) {
       console.error(chalk.yellow("Unable to locate any numerical rating service! Rating disabled."));
-      configs.rating = null;
     }
     
     await new Posts(hydrus, postgres, ratingsService).startEach(filesServices);
@@ -102,7 +101,7 @@ export async function rebuild() {
     await indexPresets(postgres);
     if(resolveRelations) await applyTagSiblings(postgres);
     await countUsage(postgres);
-    await calculateStatistics(postgres, options);
+    await calculateStatistics(postgres, options, ratingsService);
     
     updateProgress(false, "Finalizing...");
     hydrus.close();
@@ -127,6 +126,7 @@ export interface Service {
   id: number;
   name: string;
   type: ServiceID;
+  dictionary: string;
 }
 
 function getServices(hydrus: Database) {
@@ -134,7 +134,8 @@ function getServices(hydrus: Database) {
     SELECT
       service_id AS id,
       name,
-      service_type AS type
+      service_type AS type,
+      dictionary_string AS dictionary
     FROM services
   `).all();
 }
@@ -640,16 +641,28 @@ async function countUsage(postgres: PoolClient) {
   updateProgress(true, "Counting tags usage...");
 }
 
-async function calculateStatistics(postgres: PoolClient, options: any) {
+async function calculateStatistics(postgres: PoolClient, options: any, ratingService: Service | null) {
   updateProgress(false, "Calculating statistics...");
   
   const untagged = await postsController.search({ query: configs.tags.untagged }, postgres);
   
+  let ratingDesc = null;
+  if(ratingService) {
+    try {
+      ratingDesc = tryParseDictionary(ratingService.dictionary);
+    } catch(err) {
+      console.error(chalk.yellow("There was an error while trying to parse rating service dictionary! Rating disabled."));
+      console.error(err);
+    }
+  }
+  
   await postgres.query(SQL`
-    INSERT INTO global(thumbnail_width, thumbnail_height, posts, tags, mappings, needs_tags)
+    INSERT INTO global(thumbnail_width, thumbnail_height, rating_stars, rating_allow_zero, posts, tags, mappings, needs_tags)
     SELECT
       ${options.thumbnail_dimensions[0]} AS thumbnail_width,
       ${options.thumbnail_dimensions[1]} AS thumbnail_height,
+      ${ratingDesc?.numStars ?? null},
+      ${ratingDesc?.allowZero ?? false},
       (SELECT COUNT(1) FROM posts) AS posts,
       (SELECT COUNT(1) FROM tags) AS tags,
       (SELECT COUNT(1) FROM mappings) AS mappings,
@@ -657,6 +670,32 @@ async function calculateStatistics(postgres: PoolClient, options: any) {
   `);
   
   updateProgress(true, "Calculating statistics...");
+}
+
+function tryParseDictionary(dictionary: string) {
+  const [type, version, data] = JSON.parse(dictionary);
+  if(type !== 21) throw new Error(`Unknown serialized type. Expected 21, got ${type}`);
+  
+  const dict: Record<string, any> = {};
+  if(version === 1) {
+    for(const [key, value] of data[0]) {
+      dict[key] = value;
+    }
+  } else if(version === 2) {
+    for(const [key, value] of data) {
+      if(key[0] === 0 && value[0] === 0) dict[key[1]] = value[1];
+    }
+  } else {
+    throw new Error(`Unsupported dictionary serialization version. Expected 1 or 2, got ${version}`);
+  }
+  console.log(dict);
+  
+  if(typeof dict.num_stars !== "number") throw new Error(`Field 'num_stars' should be a number, got ${dict.num_stars}`);
+  if(typeof dict.allow_zero !== "boolean") throw new Error(`Field 'allow_zero' should be a boolean, got ${dict.allow_zero}`);
+  return {
+    numStars: dict.num_stars,
+    allowZero: dict.allow_zero,
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

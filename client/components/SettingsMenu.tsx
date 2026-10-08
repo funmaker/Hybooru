@@ -89,13 +89,14 @@ export default function SettingsMenu({ open = false, simpleSettings = false, ...
           <option value="id">Id</option>
         </select>
       </div>
-      {config.ratingStars !== null && (
+      {config.rating && (
         <div>
           <select value="label" onChange={onRating}>
             <option value="label" disabled hidden>Rating</option>
-            {new Array(config.ratingStars + 1).fill(0)
-                                              .map((_, id) => <option key={id} value={id.toString()}>{id}</option>)
+            {new Array(config.rating.numStars).fill(0)
+                                              .map((_, id) => <option key={id} value={id + 1}>{id + 1}</option>)
                                               .reverse()}
+            {config.rating.allowZero && <option value={0}>0</option>}
             <option value="none">Not Rated</option>
             <option value="">Any Rating</option>
           </select>

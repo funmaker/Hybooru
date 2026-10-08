@@ -41,8 +41,7 @@
 	},
 	"rating": {
 		"enabled": false,
-		"service": null,
-		"stars": 5
+		"service": null
 	},
 	"versionCheck": {
 		"enabled": true,

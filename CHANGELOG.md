@@ -15,6 +15,9 @@
 
 # Unreleased
 
+- Deprecated `rating.stars` - star count is now fetched during the import process
+- Fixed wrong handling of rating services with `allow_zero = 0` (#63)
+
 
 # v1.16.1
 

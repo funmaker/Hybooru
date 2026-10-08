@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { PostPageResponse, Relation } from "../../../types/api";
 import { fileUrl, MIME_STRING } from "../../../server/helpers/consts";
-import { parseDuration, parseSize } from "../../helpers/utils";
+import { parseDuration, parseSize, ratingToStars } from "../../helpers/utils";
 import usePageData from "../../hooks/usePageData";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import useConfig from "../../hooks/useConfig";
@@ -19,7 +19,7 @@ const RELATION_STRING: Record<Relation, string> = {
 };
 
 export default function PostPage() {
-  const [{ ratingStars }] = useConfig();
+  const [{ rating }] = useConfig();
   const { pageData } = usePageData<PostPageResponse>();
   const [fullHeight] = useLocalStorage("fullHeight", false);
   
@@ -37,20 +37,20 @@ export default function PostPage() {
   
   const link = fileUrl(pageData.post);
   
-  let rating;
-  if(ratingStars !== null) {
+  let ratingStars;
+  if(rating) {
     if(pageData.post.rating !== null) {
-      const stars = Math.round(pageData.post.rating * ratingStars);
-      rating = (
+      const stars = ratingToStars(rating.numStars, rating.allowZero, pageData.post.rating);
+      ratingStars = (
         <div className="rating">
           <span className="gold">{"★".repeat(stars)}</span>
-          <span className="gray">{"☆".repeat(ratingStars - stars)}</span>
+          <span className="gray">{"☆".repeat(rating.numStars - stars)}</span>
         </div>
       );
     } else {
-      rating = (
+      ratingStars = (
         <div className="rating">
-          <span className="gray">{"★".repeat(ratingStars)}</span>
+          <span className="gray">{"★".repeat(rating.numStars)}</span>
         </div>
       );
     }
@@ -62,7 +62,7 @@ export default function PostPage() {
     <Layout className={`PostPage${fullHeight ? " fullHeight" : ""}`}
             simpleSettings
             sidebar={<>
-              {rating}
+              {ratingStars}
               <div className="namespace">
                 <b>Statistics</b>
                 <div>{pageData.post.size !== null && `Size: ${parseSize(pageData.post.size)}`}</div>

@@ -59,3 +59,23 @@ export function trimQuery(formData: FormData) {
   const query = formData.get("query");
   if(typeof query === "string" && query.endsWith(" ")) formData.set("query", query.slice(0, -1));
 }
+
+export function ratingToStars(numStars: number, allowZero: boolean, rating: number) {
+  if(allowZero) {
+    return Math.round(rating * numStars);
+  } else {
+    return Math.round(rating * (numStars - 1)) + 1;
+  }
+}
+
+export function starsToRating(numStars: number, allowZero: boolean, stars: number) {
+  if(stars > numStars) stars = numStars;
+  
+  if(allowZero) {
+    if(stars < 0) stars = 0;
+    return stars / numStars;
+  } else {
+    if(stars < 1) stars = 1;
+    return (stars - 1) / (numStars - 1);
+  }
+}

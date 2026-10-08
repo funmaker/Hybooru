@@ -7,7 +7,7 @@ import configs from "../helpers/configs";
 export async function getConfig(): Promise<Config> {
   const config: Config = {
     thumbnailSize: [128, 128],
-    ratingStars: configs.rating?.enabled ? configs.rating.stars : null,
+    rating: null,
     namespaceColors: {},
     appName: configs.appName,
     version: packageJSON.version,
@@ -25,10 +25,13 @@ export async function getConfig(): Promise<Config> {
     const dbConfig = await db.queryFirstOrThrow<{
       thumbnailSize: [number, number];
       ratingStars: number | null;
+      ratingAllowZero: boolean;
       namespaceColors: Record<string, string>;
     }>(SQL`
       SELECT
         ARRAY[ global.thumbnail_width, global.thumbnail_height ] as "thumbnailSize",
+        rating_stars as "ratingStars",
+        rating_allow_zero as "ratingAllowZero",
         CASE WHEN COUNT(namespaces.name) > 0
           THEN json_object_agg(COALESCE(namespaces.name, ''), namespaces.color)
           ELSE '{}'::JSON
@@ -39,6 +42,13 @@ export async function getConfig(): Promise<Config> {
     `);
     
     config.thumbnailSize = dbConfig.thumbnailSize;
+    config.rating =
+      dbConfig.ratingStars !== null
+        ? {
+          numStars: dbConfig.ratingStars,
+          allowZero: dbConfig.ratingAllowZero,
+        }
+        : null;
     config.namespaceColors = dbConfig.namespaceColors;
     config.busy = false;
   }

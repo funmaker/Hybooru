@@ -48,7 +48,8 @@ interface Configs {
   rating: {
     enabled: boolean,
     service: string | number | null,
-    stars: number,
+    /** @deprecated */
+    stars?: number,
     /** @deprecated */
     serviceName?: string | null,
   } | null,
@@ -111,7 +112,6 @@ let configs: Configs = {
   },
   rating: {
     enabled: true,
-    stars: 5,
     service: null,
   },
   versionCheck: {
@@ -146,6 +146,7 @@ function deepMerge<T extends Object>(base: T, object: T): T {
 
 const movedOptions = {
   "rating.serviceName": "rating.service",
+  "rating.stars": null,
   "pageSize": "posts.pageSize",
   "filesPathOverride": "posts.filesPathOverride",
   "thumbnailsPathOverride": "posts.thumbnailsPathOverride",
@@ -161,9 +162,11 @@ try {
   
   for(const [from, to] of Object.entries(movedOptions)) {
     const value = jp.query(configs, from);
-    if(value) {
+    if(value && to) {
       console.error(`${chalk.bold.yellow("Warning!")} Config option ${from} is deprecated and will be removed in future releases, use ${to} instead!`);
       if(jp.query(configs, to) === undefined) configs = jp.patch(configs, to, value);
+    } else if(value) {
+      console.error(`${chalk.bold.yellow("Warning!")} Config option ${from} is deprecated and will be removed in future releases!`);
     }
   }
 } catch(e) {
