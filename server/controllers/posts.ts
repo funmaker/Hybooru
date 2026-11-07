@@ -35,8 +35,11 @@ interface SearchArgs {
 }
 
 export async function search({ query = "", page = 0, tags: includeTags = false, hashes, blurhash, pageSize = configs.posts.pageSize }: SearchArgs, client?: PoolClient): Promise<PostSearchResults> {
-  if(pageSize > configs.posts.pageSize) pageSize = configs.posts.pageSize;
+  pageSize = Math.max(0, Math.min(Math.floor(pageSize), configs.posts.pageSize));
   page = Math.max(0, Math.floor(page));
+  
+  if(!Number.isSafeInteger(pageSize)) throw new HTTPError(400, "pageSize must be a positive integer");
+  if(!Number.isSafeInteger(page)) throw new HTTPError(400, "page must be a positive integer");
   
   const key = await getCacheKey(query);
   

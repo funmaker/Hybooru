@@ -3,6 +3,7 @@ import { TagsSearchFullResults, TagsSearchRequest, TagsSearchResults } from "../
 import * as db from "../helpers/db";
 import HTTPError from "../helpers/HTTPError";
 import { preparePattern } from "../helpers/utils";
+import configs from "../helpers/configs";
 
 const PAGE_SIZE = 50;
 
@@ -39,8 +40,11 @@ export async function search(options: TagsSearchRequest): Promise<TagsSearchResu
 }
 
 export function tagSearchQuery({ query = "", sorting, page = 0, pageSize = PAGE_SIZE }: TagsSearchRequest): SQLStatement {
-  if(pageSize > PAGE_SIZE) pageSize = PAGE_SIZE;
+  pageSize = Math.max(0, Math.min(Math.floor(pageSize), configs.posts.pageSize));
   page = Math.max(0, Math.floor(page));
+  
+  if(!Number.isSafeInteger(pageSize)) throw new HTTPError(400, "pageSize must be a positive integer");
+  if(!Number.isSafeInteger(page)) throw new HTTPError(400, "page must be a positive integer");
   
   const pattern = preparePattern(query.trim());
   

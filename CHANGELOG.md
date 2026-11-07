@@ -15,6 +15,9 @@
 
 # Unreleased
 
+- Fixed `pageSize` parameter in `/api/post` and `/api/tags` being treated as string (#64)
+- `/api/post` and `/api/tags` now throw http error 400 if `page` and `pageSize` parameters are not valid numbers
+
 
 # v1.17.0
 
